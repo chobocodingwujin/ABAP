@@ -1,0 +1,204 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050009</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050009</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Open SQL - C.R.U.D</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R05009</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050009.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 제대로 데이터가 반영될라면 dbTable 과 Type이 동일</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gt_board TYPE TABLE OF ztcl1board05,
+       gs_board TYPE ztcl1board05.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Main Logic</font>
+<font color ="#0000FF">**********************************************************************</font>
+CLEAR : gt_board, gs_board.
+
+<font color ="#0000FF">*-- Creation of Single record</font>
+
+gs_board-seqno    = 1.
+gs_board-author   = sy-uname.
+gs_board-comp     = '1000'. "보통 1000
+gs_board-zyear    = sy-datum. " zyear 4자리 날짜는 8자리인데 알아서 짤림
+gs_board-zip_code = '113870'. " ctrl + space바
+gs_board-zzone    = 'A'.
+
+
+INSERT ztcl1board05 FROM gs_board.
+
+IF sy-subrc EQ 0.
+  COMMIT WORK.
+ENDIF.
+
+<font color ="#0000FF">*-- Creation of multiple record</font>
+
+gs_board-seqno    = 2.
+gs_board-author   = sy-uname.
+gs_board-comp     = '2000'.   " 보통 1000
+gs_board-zyear    = sy-datum. " zyear 4자리 날짜는 8자리인데 알아서 짤림
+gs_board-zip_code = '113870'. " ctrl + space바
+gs_board-zzone    = 'A'.
+
+APPEND gs_board TO gt_board.
+
+CLEAR gs_board.
+gs_board-seqno    = 3.
+gs_board-author   = sy-uname.
+gs_board-comp     = '3000'.                                 "보통 1000
+gs_board-zyear    = sy-datum. " zyear 4자리 날짜는 8자리인데 알아서 짤림
+gs_board-zip_code = '113871'. " ctrl + space바
+gs_board-zzone    = 'C'.
+
+APPEND gs_board TO gt_board.
+
+INSERT ztcl1board05 FROM TABLE gt_board
+                    ACCEPTING DUPLICATE KEYS.
+
+<font color ="#0000FF">*-- Update of single record</font>
+CLEAR gs_board.
+<font color ="#0000FF">*--Set PK</font>
+gs_board-seqno  = 1.
+gs_board-author = sy-uname.
+
+<font color ="#0000FF">*-- Set normal field for update</font>
+gs_board-comp  = '3000'.
+gs_board-zyear = '2024'.
+
+UPDATE ztcl1board05 FROM gs_board.
+
+<font color ="#0000FF">*--Update after get single record</font>
+CLEAR gs_board.
+SELECT SINGLE *
+  INTO CORRESPONDING FIELDS OF gs_board
+  FROM ztcl1board05
+ WHERE seqno  EQ 3
+   AND author EQ sy-uname.
+
+
+gs_board-comp  = '4500'.
+gs_board-zyear = '2024'.
+
+
+UPDATE ztcl1board05 FROM gs_board.
+
+
+<font color ="#0000FF">*CLEAR gs_board. set을 사용할 땐 굳이 update set과 관련이 없다 그래서 딱히 필요x</font>
+
+<font color ="#0000FF">*--Using SET mode</font>
+
+UPDATE ztcl1board05
+SET comp     = '1000'
+    zyear    = '2000'
+    zip_code = '555555'
+WHERE seqno  EQ 2
+  AND author EQ sy-uname.
+
+<font color ="#0000FF">*-- Update multiple record</font>
+CLEAR : gt_board, gs_board.
+<font color ="#0000FF">*--Set PK</font>
+gs_board-seqno = 1.
+gs_board-author = 'LSW'.
+
+<font color ="#0000FF">*--Set normal field for update</font>
+gs_board-kind = 'C1'.
+gs_board-title = 'MULTIPLE TITLE'.
+
+APPEND gs_board TO gt_board.
+
+CLEAR gs_board.
+
+gs_board-seqno = 2.
+gs_board-author = 'LEE'.
+
+gs_board-kind = 'D1'.
+gs_board-title = 'MULTIPLE TITLE2'.
+
+APPEND gs_board TO gt_board.
+
+UPDATE ztcl1board05 FROM TABLE gt_board.
+
+<font color ="#0000FF">*-- Delete of single record</font>
+CLEAR gs_board.
+
+<font color ="#0000FF">*-- Set PK</font>
+gs_board-seqno = 3.
+gs_board-author = 'KIM'.
+
+DELETE ztcl1board05 FROM gs_board.
+
+<font color ="#0000FF">*-- Delete of multiple record</font>
+CLEAR : gs_board, gt_board.
+
+gs_board-seqno = 1.
+gs_board-author = 'LSW'.
+
+APPEND gs_board TO gt_board.
+
+gs_board-seqno = 2.
+gs_board-author = 'LEE'.
+
+APPEND gs_board TO gt_board.
+
+DELETE ztcl1board05 FROM TABLE gt_board.
+
+DELETE FROM ztcl1board05
+    WHERE seqno = 3.
+
+<font color ="#0000FF">*--Using MODIFY : single record</font>
+CLEAR : gs_board.
+
+gs_board-seqno = 5.
+gs_board-author = sy-uname.
+gs_board-title = 'NEW INSERTED'.
+
+MODIFY ztcl1board05 FROM gs_board.
+
+gs_board-seqno = 5.
+gs_board-author = sy-uname.
+gs_board-title = 'NEW UPDATED'.
+
+MODIFY ztcl1board05 FROM gs_board.
+
+CLEAR : gt_board, gs_board.
+<font color ="#0000FF">*--update record</font>
+gs_board-seqno = 2.
+gs_board-author = sy-uname.
+gs_board-title = 'UPDATED BY MODIFY'.
+APPEND gs_board TO gt_board.
+
+<font color ="#0000FF">*--create record</font>
+gs_board-seqno = 6.
+gs_board-author = sy-uname.
+gs_board-title = 'CREATED BY MODIFY'.
+APPEND gs_board TO gt_board.
+
+MODIFY ztcl1board05 FROM TABLE gt_board.
+
+
+
+
+IF sy-subrc EQ 0.
+  COMMIT WORK.
+ELSE.
+  ROLLBACK WORK.
+ENDIF.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

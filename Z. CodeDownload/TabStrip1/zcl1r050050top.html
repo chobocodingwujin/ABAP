@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050050TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050050TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050050TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZCL1R050050TOP                           - Report ZCL1R050050</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050050 MESSAGE-ID zscl1msg05.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : scarr, spfli.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TAB Strip controls</font>
+<font color ="#0000FF">**********************************************************************</font>
+CONTROLS gc_tab TYPE TABSTRIP. " 마땅한 prefix가 없음 TAB Strip object
+
+DATA : gv_subscreen TYPE sy-dynnr. " Subscreen number
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Class instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_container TYPE REF TO cl_gui_custom_container, " 탭에 뿌릴 예정이라 커스텀
+       go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- For ALV in First tab</font>
+DATA : gt_spfli TYPE TABLE OF spfli,
+       gs_spfli TYPE spfli.
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gt_fcat    TYPE lvc_t_fcat,
+       gs_fcat    TYPE lvc_s_fcat,
+       gs_layout  TYPE lvc_s_layo,
+       gs_variant TYPE disvariant.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Common variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- Screen element</font>
+DATA : gs_scarr TYPE scarr.
+
+DATA : gv_okcode TYPE sy-ucomm.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

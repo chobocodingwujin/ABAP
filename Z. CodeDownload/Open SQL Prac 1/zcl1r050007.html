@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050007</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050007</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Practice 2</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R05007</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050007.
+
+DATA : BEGIN OF gs_bkpf_bseg,
+         bukrs TYPE bkpf-bukrs,
+         belnr TYPE bkpf-belnr,
+         gjahr TYPE bkpf-gjahr,
+         buzei TYPE bseg-buzei,
+         budat TYPE bkpf-budat,
+         bktxt TYPE bkpf-bktxt,
+         wrbtr TYPE bseg-wrbtr,
+         waers TYPE bkpf-waers,
+         sgtxt TYPE bseg-sgtxt,
+       END OF gs_bkpf_bseg,
+       gt_bkpf_bseg LIKE TABLE OF gs_bkpf_bseg.
+
+CLEAR : gt_bkpf_bseg, gs_bkpf_bseg.
+
+gs_bkpf_bseg-bukrs = '1000'.
+gs_bkpf_bseg-belnr = '0010000007'.
+gs_bkpf_bseg-gjahr = '2025'.
+gs_bkpf_bseg-buzei = '0002'.
+gs_bkpf_bseg-budat = sy-datum.
+gs_bkpf_bseg-bktxt = 'Document header'.
+gs_bkpf_bseg-wrbtr = 15000.
+gs_bkpf_bseg-waers = 'KRW'.
+gs_bkpf_bseg-sgtxt = 'Line item'.
+
+APPEND gs_bkpf_bseg TO gt_bkpf_bseg.
+
+CLEAR gs_bkpf_bseg.
+
+gs_bkpf_bseg-bukrs = '1000'.
+gs_bkpf_bseg-belnr = '0010000006'.
+gs_bkpf_bseg-gjahr = '2024'.
+gs_bkpf_bseg-buzei = '0001'.
+gs_bkpf_bseg-budat = sy-datum.
+gs_bkpf_bseg-bktxt = 'Document insert header'.
+gs_bkpf_bseg-wrbtr = 7000.
+gs_bkpf_bseg-waers = 'KRW'.
+gs_bkpf_bseg-sgtxt = 'Line item insert'.
+
+INSERT gs_bkpf_bseg INTO gt_bkpf_bseg INDEX 1.
+
+READ TABLE gt_bkpf_bseg INTO gs_bkpf_bseg INDEX 2.
+
+
+gs_bkpf_bseg-bktxt = 'Document header updated'.
+gs_bkpf_bseg-wrbtr = 12000.
+gs_bkpf_bseg-waers = 'USD'.
+gs_bkpf_bseg-sgtxt = 'Line item updated'.
+
+MODIFY gt_bkpf_bseg FROM gs_bkpf_bseg INDEX 2 TRANSPORTING bktxt wrbtr waers sgtxt.
+
+cl_demo_output=&gt;display( gt_bkpf_bseg ).
+
+
+DATA : BEGIN OF gs_sflight.
+         INCLUDE STRUCTURE scarr.
+DATA :   connid    TYPE sflight-connid,
+         fldate    TYPE sflight-fldate,
+         price     TYPE sflight-price,
+         currency  TYPE sflight-currency,
+         planetype TYPE sflight-planetype,
+       END OF gs_sflight,
+       gt_sflight LIKE TABLE OF gs_sflight.
+
+TYPES : BEGIN OF ts_scustom,
+          id     TYPE scustom-id,
+          name   TYPE scustom-name,
+          form   TYPE scustom-form,
+          street TYPE scustom-street,
+          city   TYPE scustom-city,
+          email  TYPE scustom-email,
+        END OF ts_scustom.
+
+DATA gt_scustom TYPE TABLE OF ts_scustom.
+
+SELECT id name form street city email
+  FROM scustom
+  INTO CORRESPONDING FIELDS OF TABLE gt_scustom
+  WHERE id GE 24
+  AND form NE 'Firma'
+  AND region EQ 'PA'.
+
+<font color ="#0000FF">*cl_demo_output=&gt;display( gt_scustom ).</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

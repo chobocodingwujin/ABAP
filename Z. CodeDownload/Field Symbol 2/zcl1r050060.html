@@ -1,0 +1,76 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050060</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050060</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Field Symbol</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R050060</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT ZCL1R050060 MESSAGE-ID zcl1msg05.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gt_scarr TYPE TABLE OF scarr,
+       gt_spfil TYPE TABLE OF spfli.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Common variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+FIELD-SYMBOLS &lt;fs_tab&gt; TYPE STANDARD TABLE.
+
+DATA : gv_tab_name(10).
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* SELECTION-SCREEN</font>
+<font color ="#0000FF">**********************************************************************</font>
+SELECTION-SCREEN BEGIN OF BLOCK pa1 WITH FRAME TITLE TEXT-t01.
+  PARAMETERS : pa_scarr RADIOBUTTON GROUP rb1,
+               pa_spfli RADIOBUTTON GROUP rb1.
+SELECTION-SCREEN END OF BLOCK pa1.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+
+<font color ="#0000FF">*-- Assign to Field-symbols</font>
+  CASE abap_true.
+    WHEN pa_scarr.
+      gv_tab_name = 'SCARR'.
+      ASSIGN gt_scarr TO &lt;fs_tab&gt;.
+    WHEN pa_spfli.
+      gv_tab_name = 'SPFLI'.
+      ASSIGN gt_spfil TO &lt;fs_tab&gt;.
+    WHEN OTHERS.
+  ENDCASE.
+
+<font color ="#0000FF">*-- Select data</font>
+  SELECT * FROM (gv_tab_name) " 붙임 괄호
+    INTO CORRESPONDING FIELDS OF TABLE &lt;fs_tab&gt;.
+
+  cl_demo_output=&gt;DISPLAY( &lt;fs_tab&gt; ).
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* T01 Condition</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_SCARR         Scarr</font>
+<font color ="#0000FF">* PA_SPFLI         Spfli</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050048</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050048</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Edit, Read Only</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R050048</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zcl1r050048top.html">zcl1r050048top</a>.  " Global Data
+
+
+include <a href ="zcl1r050048s01.html">zcl1r050048s01</a>.  " Selection screen
+include <a href ="zcl1r050048c01.html">zcl1r050048c01</a>.  " class
+include <a href ="zcl1r050048o01.html">zcl1r050048o01</a>.  " PBO-Modules
+include <a href ="zcl1r050048i01.html">zcl1r050048i01</a>.  " PAI-Modules
+include <a href ="zcl1r050048f01.html">zcl1r050048f01</a>.  " FORM-Routines
+
+<font color ="#0000FF">**********************************************************************</font>
+INITIALIZATION.
+  PERFORM set_init_value.
+
+<font color ="#0000FF">**********************************************************************</font>
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM set_output.
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+  PERFORM get_main_data.
+  PERFORM set_screen.
+
+CALL SCREEN 100.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* TITLE100 --&gt; Ｃｏｍｐａｎｙ　ｄａｔａ</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* E01 삭제할 행 선택하셔</font>
+<font color ="#0000FF">* I01 No data change</font>
+<font color ="#0000FF">* T01 Condition</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_BUKRS D       .</font>
+<font color ="#0000FF">* PA_GJAHR D       .</font>
+<font color ="#0000FF">* SO_BUDAT D       .</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCL1BKPF05</font>
+<font color ="#0000FF">*004</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCL1MSG05</font>
+<font color ="#0000FF">*000   &</font>
+<font color ="#0000FF">*001   & &</font>
+<font color ="#0000FF">*005   No data found!!</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

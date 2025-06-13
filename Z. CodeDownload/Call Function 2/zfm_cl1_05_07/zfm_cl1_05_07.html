@@ -1,0 +1,52 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZFM_CL1_05_07</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for function: ZFM_CL1_05_07</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] 25.02.03 오후 실습</b></font>
+<hr>
+<pre width="100">
+FUNCTION zfm_cl1_05_07.
+<font color ="#0000FF">*"----------------------------------------------------------------------</font>
+<font color ="#0000FF">*"*"Local Interface:</font>
+<font color ="#0000FF">*"  IMPORTING</font>
+<font color ="#0000FF">*"     REFERENCE(IV_BUKRS) TYPE  BUKRS</font>
+<font color ="#0000FF">*"     REFERENCE(IV_GJAHR) TYPE  GJAHR</font>
+<font color ="#0000FF">*"     REFERENCE(IV_BELNR) TYPE  BELNR_D</font>
+<font color ="#0000FF">*"  EXPORTING</font>
+<font color ="#0000FF">*"     REFERENCE(ES_BKPF) TYPE  BKPF</font>
+<font color ="#0000FF">*"     REFERENCE(EV_MESSAGE) TYPE  CHAR50</font>
+<font color ="#0000FF">*"  TABLES</font>
+<font color ="#0000FF">*"      ET_BSEG STRUCTURE  BSEG</font>
+<font color ="#0000FF">*"----------------------------------------------------------------------</font>
+
+<font color ="#0000FF">*       <a href ="global-zfm_cl1_05_07.html">Global data declarations</a></font>
+  SELECT SINGLE bukrs belnr gjahr bktxt budat
+    FROM bkpf
+    INTO CORRESPONDING FIELDS OF es_bkpf
+    WHERE bukrs EQ iv_bukrs
+      AND gjahr EQ iv_gjahr
+      AND belnr EQ iv_belnr.
+
+  IF es_bkpf IS INITIAL.
+    ev_message = TEXT-e04.
+    EXIT.
+  ENDIF.
+
+  SELECT bukrs belnr gjahr buzei wrbtr
+    FROM bseg
+    INTO CORRESPONDING FIELDS OF TABLE et_bseg
+    WHERE bukrs EQ iv_bukrs
+      AND gjahr EQ iv_gjahr
+      AND belnr EQ iv_belnr.
+
+ENDFUNCTION.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

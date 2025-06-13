@@ -1,0 +1,189 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050019F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050019F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050019F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZCL1R050019F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_value .
+<font color ="#0000FF">*-- String seperate!!</font>
+  gv_year  = sy-datum(4).   " 전역 변수에 초기값 세팅할수 있음 년도만 가져옴
+  gv_month = sy-datum+4(2). " + 건너뛸 숫자 괄호는 내가 + 다음 가져올 숫자
+  gv_day   = sy-datum+6(2).
+<font color ="#0000FF">* PARAMETERS 값 선언</font>
+  pa_bukrs = '0001'.
+  pa_gstrp = sy-datum.
+<font color ="#0000FF">* SELECT-OPTION 값 선언</font>
+<font color ="#0000FF">* 다양한 형태의 값을 넣을 수 있어서 인터널 테이블이다</font>
+  so_matnr-sign = 'I'.
+  so_matnr-option = 'BT'.
+  so_matnr-low = 'C7HSA'.
+  so_matnr-high = 'GTX9A-BS'.
+
+  APPEND so_matnr.
+
+  so_werks-sign = 'I'.
+  so_werks-option = 'EQ'.
+  so_werks-low = '0001'.
+
+  APPEND so_werks.
+<font color ="#0000FF">* 위에서 APPEND했으니 값이 덮어져 나오는걸 방지하기 위해 CLEAR</font>
+  CLEAR so_werks.
+
+  so_werks-sign = 'I'.
+  so_werks-option = 'EQ'.
+  so_werks-low = '0003'.
+
+  APPEND so_werks.
+<font color ="#0000FF">* 위에서 APPEND했으니 값이 덮어져 나오는걸 방지하기 위해 CLEAR</font>
+  CLEAR so_werks.
+
+  so_werks-sign = 'I'.
+  so_werks-option = 'EQ'.
+  so_werks-low = '1010'.
+
+  APPEND so_werks.
+<font color ="#0000FF">* 위에서 APPEND했으니 값이 덮어져 나오는걸 방지하기 위해 CLEAR</font>
+  CLEAR so_werks.
+
+  so_werks-sign = 'I'.
+  so_werks-option = 'EQ'.
+  so_werks-low = '1020'.
+
+  APPEND so_werks.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form check_param</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM check_param .
+<font color ="#0000FF">*-- CHECK company code</font>
+  CLEAR gv_bukrs.
+  SELECT SINGLE bukrs INTO (gv_bukrs)
+    FROM t001
+    WHERE bukrs EQ pa_bukrs.
+
+  IF sy-subrc NE 0.
+    MESSAGE s001 WITH pa_bukrs TEXT-e01 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_base_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_base_data .
+<font color ="#0000FF">* 쌈뽕하게 만든 itab과 wa에 대해 청소한번해주고</font>
+  CLEAR : gt_plan, gs_plan.
+<font color ="#0000FF">* select를 해주는데 join병에 걸리지 말고 where부분에</font>
+<font color ="#0000FF">* parameters와 select-option에서 가져올 값을 where에 조건으로 선언</font>
+  SELECT bukrs gstrp matnr werks gamng gmein plnum aufnr rueck
+    FROM ztcl1pp_05
+    INTO CORRESPONDING FIELDS OF TABLE gt_plan
+    WHERE bukrs EQ pa_bukrs  " 파라미터는 내가 SQL문에다가 연산자 박아버림 EQ
+    AND   gstrp EQ pa_gstrp  " 근데 셀렉트 옵션즈는 연산자를 갖고 있다
+    AND   matnr IN so_matnr  " 인터널 테이블 비어있음 -&gt; IN 참조할 조건이 없으므로 패스
+    AND   werks IN so_werks.
+
+<font color ="#0000FF">*  셀렉션 스크린 존재 이유 : 이 프로그램을 실행하기 위한 조건을 달아준다</font>
+<font color ="#0000FF">*  그래서 당연히 조건을 걸어준다</font>
+<font color ="#0000FF">* text 테이블에 대해 따로 클리어</font>
+
+  IF gt_plan IS INITIAL.
+    MESSAGE s009 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_text_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_text_data .
+  CLEAR gt_t001w.
+<font color ="#0000FF">*-- Get Plant name</font>
+  SELECT werks name1
+    FROM t001w
+    INTO CORRESPONDING FIELDS OF TABLE gt_t001w
+    WHERE spras EQ sy-langu.
+
+  gt_backup = gt_t001w.
+
+  SORT gt_backup BY werks ASCENDING.
+  DELETE ADJACENT DUPLICATES FROM gt_backup COMPARING werks.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form make_diplay_plan</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM make_diplay_plan .
+<font color ="#0000FF">*-- make display plan</font>
+  LOOP AT gt_plan INTO gs_plan .
+
+  gv_tabix = sy-tabix.
+
+  CLEAR gs_t001w.
+<font color ="#0000FF">*   물물교환 read table하는 조건을 줄테니 그에 맞는 답을 다오</font>
+<font color ="#0000FF">*   Get Plant name</font>
+  READ TABLE gt_backup INTO gs_backup WITH KEY werks = gs_plan-werks
+                                      BINARY SEARCH.
+
+  IF  sy-subrc EQ 0.
+    gs_plan-name1 = gs_backup-name1.
+
+  ENDIF.
+<font color ="#0000FF">*   Set remark</font>
+  IF gs_plan-matnr EQ 'MEGA_125' OR
+     gs_plan-matnr EQ 'XQ125'.
+
+    gs_plan-remark = 'KG'.
+
+  ENDIF.
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    CASE gs_plan-matnr.</font>
+<font color ="#0000FF">*    	WHEN 'MEGA_125' OR 'XQ125'.</font>
+<font color ="#0000FF">*        gs_plan-remark = 'KG'.</font>
+<font color ="#0000FF">*    ENDCASE.</font>
+
+  MODIFY gt_plan FROM gs_plan INDEX gv_tabix TRANSPORTING name1 remark.
+
+ENDLOOP.
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

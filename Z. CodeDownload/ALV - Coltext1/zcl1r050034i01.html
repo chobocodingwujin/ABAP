@@ -1,0 +1,48 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050034I01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050034I01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050034I01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZCL1R050034I01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  EXIT  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE exit INPUT.
+
+  CASE gv_okcode.
+    WHEN 'BACK' OR 'EXIT' OR 'CANC'.
+<font color ="#0000FF">* 클래스 내에서 사용된 변수들을 청소</font>
+      CALL METHOD : go_alv_grid-&gt;free,
+                    go_container-&gt;free.
+<font color ="#0000FF">* 해제 순서를 어길 시 덤프 발생 메모리에 올렸던 객체들을 날린다 리소스 관리 차원에서</font>
+      FREE : go_alv_grid, go_container.
+<font color ="#0000FF">* 스크린 해제 바로 이전 스크린 0 뜻이 이전 스크린을 의미</font>
+      LEAVE TO SCREEN 0. " Back to previous screen
+  ENDCASE.
+
+<font color ="#0000FF">* 클래스 내에서 사용된 변수들을 청소</font>
+<font color ="#0000FF">*      CALL METHOD : go_alv_grid-&gt;free,</font>
+<font color ="#0000FF">*                    go_container-&gt;free.</font>
+<font color ="#0000FF">* 해제 순서를 어길 시 덤프 발생</font>
+<font color ="#0000FF">*      FREE : go_alv_grid, go_container.</font>
+<font color ="#0000FF">* 스크린 해제 바로 이전 스크린 0 뜻이 이전 스크린을 의미</font>
+<font color ="#0000FF">*      LEAVE TO SCREEN 0. " Back to previous screen</font>
+<font color ="#0000FF">* 굳이 OKCODE 따질 게 없으니 위 구문처럼 해도 괜찮다</font>
+
+ENDMODULE.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

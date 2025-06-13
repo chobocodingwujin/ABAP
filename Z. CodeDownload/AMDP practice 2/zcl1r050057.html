@@ -1,0 +1,58 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050057</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050057</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] AMDP practice 2</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R0500567</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050057 MESSAGE-ID zcl1msg05.
+
+<font color ="#0000FF">**********************************************************************'</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_docu,
+         bukrs TYPE bkpf-bukrs,
+         belnr TYPE bkpf-belnr,
+         gjahr TYPE bkpf-gjahr,
+         budat TYPE bkpf-budat,
+         blart TYPE bkpf-blart,
+         bktxt TYPE bkpf-bktxt,
+         waers TYPE bkpf-waers,
+       END OF gs_docu,
+       gt_docu LIKE TABLE OF gs_docu.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* SELECTION-SCREEN</font>
+<font color ="#0000FF">**********************************************************************</font>
+SELECTION-SCREEN BEGIN OF BLOCK pa1 WITH FRAME TITLE TEXT-t01.
+  PARAMETERS : pa_bukrs TYPE bkpf-bukrs OBLIGATORY,
+               pa_gjahr TYPE bkpf-gjahr.
+SELECTION-SCREEN END OF BLOCK pa1.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+  CALL METHOD zcl_amdp05_02=&gt;get_docu
+    EXPORTING
+      iv_bukrs = pa_bukrs
+      iv_gjahr = pa_gjahr
+    IMPORTING
+      et_docu  = gt_docu.
+
+cl_demo_output=&gt;display( gt_docu ).
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

@@ -1,0 +1,158 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050003</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050003</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] ITAB Data access</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R05003</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050003.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_data, " 각각의 필드가 어떤건지 주석 달아주기
+         carrid   TYPE scarr-carrid,    " 항공사 코드
+         connid   TYPE spfli-connid,    " 연결항공편 번호
+         fldate   TYPE sflight-fldate,  " 운항일자
+         carrname TYPE scarr-carrname,  " 항공사명
+         cityfrom TYPE spfli-cityfrom,  " 출발도시 ★소유자 - 종속 관계 생각하기★
+         cityto   TYPE spfli-cityto,    " 도착도시
+         size     TYPE i,               " Length
+       END OF gs_data,
+       gt_data LIKE TABLE OF gs_data.
+
+DATA : gt_data2 LIKE TABLE OF gs_data,
+       gt_data3 LIKE gt_data, "  O / gt_data3 LIKE TABLE OF gt_data. ← X
+       gs_data3 LIKE LINE OF gt_data. " Work area
+
+<font color ="#0000FF">* DATA : gs_scarr TYPE LINE OF scarr. " &lt;- X / scarr 자리에 table type이 와야댐</font>
+DATA : gt_info  TYPE zlvc_t_info05. " Ref.to table type
+DATA : gs_info  TYPE LINE OF zlvc_t_info05.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Data access</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 가비지 데이터 날려야댐</font>
+<font color ="#0000FF">*-- 1. Work area에 Data를 할당한다. (CARRID &lt;- 'LH', CONNID &lt;- 0400)</font>
+" 그냥 사용 전 후로 설거지 해주는거임 근데 누구를 클리어해주냐가 중요함
+CLEAR : gt_data, gs_data.
+
+gs_data-carrid   = 'LH'.   " 위에서 만든(gs_data)work area 껍데기에 감싸져 있으니까
+gs_data-connid   = '0400'. " ★소유자 - 종속 관계 생각하기★ '싱글 쿼테이션'
+gs_data-fldate   = sy-datum. " System data
+gs_data-carrname = 'Luft Hanza'.
+gs_data-cityfrom = 'Seoul'.
+gs_data-cityto   = 'Busan'.
+
+APPEND gs_data TO gt_data.
+
+CLEAR gs_data.
+gs_data-carrid   = 'AA'.
+gs_data-connid   = '0100'.
+" 날짜는 N타입이여서 8자로돼있음, 날짜는 숫자로만, 시간도 N타입 시분초 숫자로만 이루어진 6자리만
+gs_data-fldate   = '20250105'.
+gs_data-carrname = 'American Airline'.
+
+INSERT gs_data INTO TABLE gt_data.
+
+CLEAR gs_data.
+gs_data-carrid   = 'AA'.
+gs_data-connid   = '0200'.
+gs_data-fldate   = '20250105'.
+" 그냥 이 조건에 부합하는 데이터가 이만개 삼만개 있어도 맨위에있는 것만 가져옴
+gs_data-carrname = 'American Airline'.
+
+"뭔가 읽어올때를 위해 조건을 디테일하게 주는게 맞다
+INSERT gs_data INTO TABLE gt_data.
+
+CLEAR : gs_data.
+gs_data-carrid   ='CA'.
+gs_data-connid   = '0700'.
+gs_data-fldate   = '20250101'.
+gs_data-carrname = 'Canada airline'.
+
+INSERT gs_data INTO gt_data INDEX 1.
+
+<font color ="#0000FF">*-- CASE 1 : WITH KEY</font>
+CLEAR gs_data.
+READ TABLE gt_data INTO gs_data WITH KEY carrid = 'AA'
+                                         connid = '0200'.
+" gs_data 밥만얻어먹고 gt_data 조건다알아서 처리해서 넘겨줌
+" gt_data carrid란 필드에서 AA
+" work area니까 하나의 데이터만 된다
+
+<font color ="#0000FF">*-- CASE 2 : INDEX</font>
+CLEAR gs_data.
+READ TABLE gt_data INTO gs_data INDEX 2.
+
+CLEAR gs_data.
+gs_data-carrid   = 'CA'.
+gs_data-connid   = '0700'.
+gs_data-fldate   = '20250105'.
+gs_data-carrname = 'Canada airline'.
+gs_data-size     = 17. " &lt;- Update data
+
+MODIFY gt_data FROM gs_data INDEX 1 TRANSPORTING size.
+" modify 할 때 index 넣는게 좋다
+" 값을 반영하고자 하는 필드만 internal table에 반영하는 법 -&gt;TRANSPORTING size
+
+" 조건이 없기에 데이터 싹 날림 DELETE gt_data.
+<font color ="#0000FF">* 상세  조건을 줌으로써 하나의 레코드를 지운다 조건에 의해서 데이터 삭제할 때 where 두 개 이상이면 AND로 이어준다</font>
+
+<font color ="#0000FF">*DELETE gt_data WHERE carrid EQ 'AA'</font>
+<font color ="#0000FF">*                 AND connid EQ '0100'.</font>
+
+<font color ="#0000FF">*cl_demo_output=&gt;display( gt_data ).</font>
+
+LOOP AT gt_data INTO gs_data.
+
+<font color ="#0000FF">*-- Assign value</font>
+  gs_data-size = gs_data-size + 1.
+
+<font color ="#0000FF">*-- Apply to itab</font>
+  MODIFY gt_data FROM gs_data INDEX sy-tabix TRANSPORTING size.
+
+  WRITE :/ gs_data-carrid, gs_data-connid, gs_data-carrname.
+
+ENDLOOP.
+
+WRITE sy-uline. " underline 위에 내용이랑 구분지을라고
+
+LOOP AT gt_data INTO gs_data WHERE carrid EQ 'AA'.
+  WRITE :/ gs_data-carrid, gs_data-connid, gs_data-carrname.
+
+ENDLOOP.
+
+
+
+
+
+<font color ="#0000FF">*-- Process set data : gt_data -&gt; gt_data2</font>
+INSERT LINES OF gt_data FROM 2 TO 3 INTO TABLE gt_data2.
+
+INSERT LINES OF gt_data FROM 2 TO 3 INTO gt_data2 INDEX 2.
+
+APPEND LINES OF gt_data FROM 2 TO 3 TO gt_data2.
+
+BREAK-POINT.
+
+<font color ="#0000FF">* DELETE gt_data. " CLEAR gt_data. 같다</font>
+
+
+<font color ="#0000FF">* 빨간색 버튼 왼쪽 내부 프로그램 내에서/오른쪽 SAP가 아닌 웹페이지에서 아밥을 호출 외부 디버깅 버튼</font>
+<font color ="#0000FF">* 그냥 오른쪽 버튼이 만능이니까 오른쪽 써서 브레이크 포인트 쓰셈</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

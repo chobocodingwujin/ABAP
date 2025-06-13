@@ -1,0 +1,161 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050022</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050022</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Modify screen</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R050022</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050022 MESSAGE-ID zcl1msg05.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : scarr, spfli, sflight, sbook.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Selection screen</font>
+<font color ="#0000FF">**********************************************************************</font>
+SELECTION-SCREEN BEGIN OF BLOCK pa1 WITH FRAME TITLE TEXT-t01.
+
+  PARAMETERS pa_bukrs TYPE bkpf-bukrs.
+
+  SELECTION-SCREEN SKIP.
+
+  PARAMETERS : pa_carr TYPE scarr-carrid    MODIF ID car,
+               pa_conn TYPE spfli-connid    MODIF ID con,
+               pa_fldt TYPE sflight-fldate  MODIF ID fld,
+               pa_id   TYPE sbook-bookid    MODIF ID bid.
+
+  SELECTION-SCREEN SKIP.
+
+  SELECT-OPTIONS : so_from  FOR spfli-cityfrom MODIF ID cit,
+                   so_to    FOR spfli-cityto   MODIF ID cit,
+                   so_type  FOR sbook-custtype MODIF ID cus,
+                   so_smoke FOR sbook-smoker   MODIF ID cus.
+
+SELECTION-SCREEN END OF BLOCK pa1.
+
+SELECTION-SCREEN BEGIN OF BLOCK pa2 WITH FRAME TITLE TEXT-t02.
+  PARAMETERS : pa_scarr RADIOBUTTON GROUP rb1 USER-COMMAND evt,
+               pa_spfli RADIOBUTTON GROUP rb1,
+               pa_fligh RADIOBUTTON GROUP rb1,
+               pa_sbook RADIOBUTTON GROUP rb1.
+
+  SELECTION-SCREEN ULINE.
+
+  PARAMETERS : pa_city  AS CHECKBOX USER-COMMAND evt,
+               pa_cust  AS CHECKBOX USER-COMMAND evt.
+SELECTION-SCREEN END OF BLOCK pa2.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* INITIALIZATION</font>
+<font color ="#0000FF">**********************************************************************</font>
+INITIALIZATION.
+  pa_bukrs = '1000'.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* AT SELECTION-SCREEN OUTPUT</font>
+<font color ="#0000FF">**********************************************************************</font>
+AT SELECTION-SCREEN OUTPUT.
+<font color ="#0000FF">* 스크린의 엘리먼트는 스크린에서 루프를 돌려야한다 이 스크린 내부 모든 속성 풀스캔</font>
+   LOOP AT SCREEN. " 무적권해야댐 이 루프 안에서 대상을 찾고 모든 작업을 수행
+
+     IF screen-name EQ 'PA_BUKRS'. "name 을 이용해서 해당 이름을 찾음
+       screen-input = 0." ON : 1 , OFF : 0
+     ENDIF.
+
+<font color ="#0000FF">* 루프 엣 스크린을 따로 만드는 것도 괜찮은 방법</font>
+
+<font color ="#0000FF">* 모디프를 개별적으로 찾느냐 pa_carr이름을 써도 되긴하는데 모디프 아이디 사용해서</font>
+
+     CASE 'X'.
+     	WHEN pa_scarr.
+        IF screen-group1 EQ 'CAR'.
+          screen-input = 0.
+        ELSE.
+          screen-input = 1.
+        ENDIF.
+     	WHEN pa_spfli.
+        IF screen-group1 EQ 'CON'.
+          screen-input = 0.
+        ELSE.
+          screen-input = 1.
+        ENDIF.
+      WHEN pa_fligh.
+        IF screen-group1 EQ 'FLD'.
+          screen-input = 0.
+        ELSE.
+          screen-input = 1.
+        ENDIF.
+      WHEN pa_sbook.
+        IF screen-group1 EQ 'BID'.
+          screen-input = 0.
+        ELSE.
+          screen-input = 1.
+        ENDIF.
+     ENDCASE.
+
+     MODIFY SCREEN. " 해야 내용이 수정됨 read only 모드가 된다
+
+   ENDLOOP. " 무적권 해야댐
+
+LOOP AT SCREEN.
+
+  IF screen-group1 = 'CIT'.
+    IF pa_city = 'X'.
+      screen-active = 1.
+    ELSE.
+      screen-active = 0.
+    ENDIF.
+  ELSEIF screen-group1 = 'CUS'.
+    IF pa_cust = 'X'.
+      screen-active = 1.
+    ELSE.
+      screen-active = 0.
+    ENDIF.
+  ENDIF.
+
+  MODIFY SCREEN.
+
+ENDLOOP.
+
+<font color ="#0000FF">* 모디프를 개별적으로 찾느냐 pa_carr이름을 써도 되긴하는데 모디프 아이디 사용해서</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* T01 Condition</font>
+<font color ="#0000FF">* T02 Attribute</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_BUKRS D       .</font>
+<font color ="#0000FF">* PA_CARR D       .</font>
+<font color ="#0000FF">* PA_CITY         City(From & To)</font>
+<font color ="#0000FF">* PA_CONN D       .</font>
+<font color ="#0000FF">* PA_CUST         Customer</font>
+<font color ="#0000FF">* PA_FLDT D       .</font>
+<font color ="#0000FF">* PA_FLIGH         Sflight</font>
+<font color ="#0000FF">* PA_ID D       .</font>
+<font color ="#0000FF">* PA_SBOOK         Sbook</font>
+<font color ="#0000FF">* PA_SCARR         Scarr</font>
+<font color ="#0000FF">* PA_SPFLI         Spfli</font>
+<font color ="#0000FF">* SO_FROM D       .</font>
+<font color ="#0000FF">* SO_SMOKE D       .</font>
+<font color ="#0000FF">* SO_TO D       .</font>
+<font color ="#0000FF">* SO_TYPE D       .</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

@@ -1,0 +1,140 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050020</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050020</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Include Program Event Prac 2</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R050020</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050020 MESSAGE-ID zcl1msg05.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLE 써라</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : scarr, spfli, sflight.
+
+DATA : BEGIN OF gs_airplan,
+         carrid   TYPE scarr-carrid,
+         connid   TYPE spfli-connid,
+         fldate   TYPE sflight-fldate,
+         carrname TYPE scarr-carrname,
+         airpfrom TYPE spfli-airpfrom,
+         price    TYPE sflight-price,
+         currency TYPE sflight-currency,
+       END OF gs_airplan,
+       gt_airplan LIKE TABLE OF gs_airplan.
+
+DATA : gv_tabix TYPE sy-tabix,
+       gv_carr  TYPE scarr-carrid,
+       gv_conn  TYPE spfli-connid,
+       gv_date  TYPE sflight-fldate.
+
+SELECTION-SCREEN BEGIN OF BLOCK pa1 WITH FRAME TITLE TEXT-t01.
+
+  PARAMETERS pa_carr TYPE scarr-carrid OBLIGATORY.
+
+  SELECT-OPTIONS : so_conn FOR spfli-connid,
+                   so_date FOR sflight-fldate.
+
+SELECTION-SCREEN END OF BLOCK pa1.
+
+INITIALIZATION.
+
+  pa_carr = 'AA'.
+
+  CLEAR so_conn.
+  so_conn-sign = 'I'.
+  so_conn-option = 'EQ'.
+  so_conn-low = '0017'.
+
+  APPEND so_conn.
+
+  CLEAR so_conn.
+  so_conn-sign = 'I'.
+  so_conn-option = 'EQ'.
+  so_conn-low = '0064'.
+
+  APPEND so_conn.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* SELECTION-SCREEN</font>
+<font color ="#0000FF">**********************************************************************</font>
+AT SELECTION-SCREEN.
+
+  CLEAR gv_carr.
+  SELECT SINGLE carrid INTO ( gv_carr )
+    FROM scarr
+    WHERE carrid EQ pa_carr.
+
+  IF sy-subrc NE 0.
+    MESSAGE s001 WITH pa_carr TEXT-e01 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+
+
+<font color ="#0000FF">* 데이터가 빈칸이어도 작동을 해야하는 데</font>
+<font color ="#0000FF">* 파라미터는 값이 비어있으면 작동안하고 셀렉트 옵션즈는 패스한다</font>
+<font color ="#0000FF">* 셀렉트 옵션이 빈칸인데 유효성을 판별할 이유가 있는지</font>
+
+START-OF-SELECTION.
+  CLEAR : gt_airplan, gs_airplan.
+
+  SELECT a~carrid b~connid fldate carrname airpfrom price currency
+    FROM scarr AS a INNER JOIN spfli AS b
+      ON a~carrid EQ b~carrid
+                    INNER JOIN sflight AS c
+      ON b~carrid EQ c~carrid
+     AND b~connid EQ c~connid
+    INTO CORRESPONDING FIELDS OF TABLE gt_airplan
+    WHERE a~carrid EQ pa_carr
+      AND b~connid IN so_conn
+      AND fldate   IN so_date.
+
+  LOOP AT gt_airplan INTO gs_airplan.
+
+    gv_tabix = sy-tabix.
+
+    IF sy-subrc EQ 0.
+      gs_airplan-currency = 'KRW'.
+    ENDIF.
+
+    MODIFY gt_airplan FROM gs_airplan INDEX gv_tabix TRANSPORTING currency.
+
+<font color ="#0000FF">* TRANSPROTING 사용해서 정확한 필드에 넣어주기!</font>
+  ENDLOOP.
+
+  cl_demo_output=&gt;display( gt_airplan ).
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* E01 유효하지 않은 항공사 코드입니다.</font>
+<font color ="#0000FF">* T01 condition</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_CARR D       .</font>
+<font color ="#0000FF">* SO_CONN D       .</font>
+<font color ="#0000FF">* SO_DATE D       .</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCL1MSG05</font>
+<font color ="#0000FF">*001   & &</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

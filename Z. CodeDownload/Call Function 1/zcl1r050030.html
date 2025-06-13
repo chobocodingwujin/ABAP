@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050030</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050030</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Function Module</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R050030</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050030 MESSAGE-ID zcl1msg05.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Common variable 펑션의 수행을 받아낼 변수들</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_txt50       TYPE skat-txt50,
+       gv_subrc       TYPE sy-subrc,
+       gv_message(50),
+       gv_maktx       TYPE makt-maktx,
+       gv_antxt       TYPE t416t-antxt.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* SELECTION-SCREEN</font>
+<font color ="#0000FF">**********************************************************************</font>
+SELECTION-SCREEN BEGIN OF BLOCK pa1 WITH FRAME TITLE TEXT-t01.
+  PARAMETERS : pa_ktopl TYPE ska1-ktopl, " Chart of Account
+               pa_hkont TYPE bseg-hkont, " G/L Aaccount
+               pa_langu TYPE skat-spras. " Language key
+SELECTION-SCREEN END OF BLOCK pa1.
+
+SELECTION-SCREEN BEGIN OF BLOCK pa2 WITH FRAME TITLE TEXT-t02.
+  PARAMETERS : pa_matnr TYPE makt-matnr,
+               pa_stlan TYPE stlan.
+SELECTION-SCREEN END OF BLOCK pa2.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+
+<font color ="#0000FF">*-- Function call</font>
+CLEAR : gv_txt50, gv_subrc, gv_message.
+CALL FUNCTION 'ZFM_CL1_05_02'
+  EXPORTING
+    iv_hkont   = pa_hkont
+    iv_ktopl   = pa_ktopl
+    iv_langu   = pa_langu
+  IMPORTING
+    ev_txt50   = gv_txt50
+    ev_subrc   = gv_subrc
+    ev_message = gv_message
+  EXCEPTIONS
+    not_found  = 1
+    OTHERS     = 2.
+
+<font color ="#0000FF">*-- 1. Function이 SUBRC를 주면 Function SUBRC를 이용</font>
+IF gv_subrc NE 0.
+  MESSAGE s001 WITH gv_message DISPLAY LIKE 'E'.
+ENDIF.
+
+<font color ="#0000FF">*-- 2. Function이 SUBRC를 주지 않으면 결과 데이터로 확인</font>
+<font color ="#0000FF">*IF gv_txt50 IS INITIAL.</font>
+<font color ="#0000FF">*    MESSAGE s001 DISPLAY LIKE 'E'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*ENDIF.</font>
+
+CLEAR : gv_maktx, gv_message, gv_antxt.
+
+CALL FUNCTION 'ZFM_CL1_05_03'
+  EXPORTING
+    iv_matnr   = pa_matnr
+    iv_langu   = sy-langu
+  IMPORTING
+    ev_maktx   = gv_maktx
+    ev_message = gv_message.
+<font color ="#0000FF">*-- 2. Function이 SUBRC를 주지 않으면 결과 데이터로 확인</font>
+IF gv_maktx IS INITIAL.
+  MESSAGE s001 WITH gv_message DISPLAY LIKE 'E'.
+ELSE.
+  MESSAGE s001 WITH gv_message gv_maktx.
+
+ENDIF.
+
+CALL FUNCTION 'ZFM_CL1_05_04'
+  EXPORTING
+    iv_stlan   = pa_stlan
+    iv_langu   = sy-langu
+  IMPORTING
+    ev_antxt   = gv_antxt
+    ev_message = gv_message.
+
+<font color ="#0000FF">*-- 2. Function이 SUBRC를 주지 않으면 결과 데이터로 확인</font>
+IF gv_antxt IS INITIAL.
+  MESSAGE s001 WITH gv_message DISPLAY LIKE 'E'.
+ELSE.
+  MESSAGE s001 WITH gv_message gv_antxt.
+
+ENDIF.
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* T01 Condition</font>
+<font color ="#0000FF">* T02 Sub condition</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_HKONT D       .</font>
+<font color ="#0000FF">* PA_KTOPL D       .</font>
+<font color ="#0000FF">* PA_LANGU D       .</font>
+<font color ="#0000FF">* PA_MATNR D       .</font>
+<font color ="#0000FF">* PA_STLAN D       .</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCL1MSG05</font>
+<font color ="#0000FF">*001   & &</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

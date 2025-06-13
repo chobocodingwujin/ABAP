@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050048TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050048TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050048TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZCL1R050048TOP                           - Report ZCL1R050048</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050048 MESSAGE-ID zcl1msg05.
+
+TABLES : zcl1bkpf05.
+
+<font color ="#0000FF">**********************************************************************</font>
+
+DATA : go_container TYPE REF TO cl_gui_docking_container,
+       go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_body,
+         bukrs      TYPE zcl1bkpf05-bukrs,
+         belnr      TYPE zcl1bkpf05-belnr,
+         gjahr      TYPE zcl1bkpf05-gjahr,
+         blart      TYPE zcl1bkpf05-blart,
+         budat      TYPE zcl1bkpf05-budat,
+         bktxt      TYPE zcl1bkpf05-bktxt,
+         waers      TYPE zcl1bkpf05-waers,
+         issue_no   TYPE zcl1bkpf05-issue_no,
+         issue_date TYPE zcl1bkpf05-issue_date.
+         include structure <a href ="zscl1_time_05/dictionary-zscl1_time_05.html">zscl1_time_05</a>.
+DATA :  modi_yn,
+         cell_tab   TYPE lvc_t_styl, " ALV Edit style
+       END OF gs_body,
+       gt_body LIKE TABLE OF gs_body.
+
+DATA : gt_delt TYPE TABLE OF zcl1bkpf05,
+       gs_delt TYPE zcl1bkpf05. " 삭제용 Internal table
+
+DATA : gt_fcat    TYPE lvc_t_fcat,
+       gs_fcat    TYPE lvc_s_fcat,
+       gs_variant TYPE disvariant,
+       gs_layout  TYPE lvc_s_layo.
+
+DATA : gt_ui_functions TYPE ui_functions, " Exclude ALV Toolbar
+       gs_button       TYPE stb_button.   " ALV Toolbar button
+
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_mode   VALUE 'E'. " Mode value
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

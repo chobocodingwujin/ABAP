@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050019TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050019TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050019TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZCL1R050019TOP</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES 셀렉트 옵션을 위한 사용할 테이블 선언</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES ztcl1pp_05.
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_plan,
+         bukrs      TYPE ztcl1pp_05-bukrs,
+         gstrp      TYPE ztcl1pp_05-gstrp,
+         matnr      TYPE ztcl1pp_05-matnr,
+         werks      TYPE ztcl1pp_05-werks,
+         name1      TYPE t001w-name1,
+         gamng      TYPE ztcl1pp_05-gamng,
+         gmein      TYPE ztcl1pp_05-gmein,
+         plnum      TYPE ztcl1pp_05-plnum,
+         aufnr      TYPE ztcl1pp_05-aufnr,
+         rueck      TYPE ztcl1pp_05-rueck,
+         remark(50),
+       END OF gs_plan,
+       gt_plan LIKE TABLE OF gs_plan.
+
+DATA : gt_t001w TYPE TABLE OF t001w,
+       gs_t001w TYPE t001w.
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 데이터 손실을 방지하기 위해 백업 인터널 테이블 워크 에리어 생성</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gt_backup LIKE TABLE OF t001w,
+       gs_backup TYPE t001w.
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Common variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_tabix TYPE sy-tabix,
+       gv_bukrs TYPE t001-bukrs,
+       gv_year  TYPE i,
+       gv_month TYPE i,
+       gv_day   TYPE i.
+<font color ="#0000FF">* LOOP AT 문에서 시작 인덱스 값과 READ TABLE에서 읽은 인덱스 값이 다르면 수정을 이상하게</font>
+<font color ="#0000FF">* 할 수 있어서 gv_tabix에 현재 인덱스 값을 저장해놓기 위해 데이터 선언</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

@@ -1,0 +1,263 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050008</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050008</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Open SQL - Join</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R05008</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050008.
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_schedule,
+         carrid   TYPE scarr-carrid,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+         carrname TYPE scarr-carrname,
+       END OF gs_schedule,
+       gt_schedule LIKE TABLE OF gs_schedule.
+
+DATA : BEGIN OF gs_flight,
+         carrid   TYPE spfli-carrid,
+         connid   TYPE spfli-connid,
+         fldate   TYPE sflight-fldate,
+         airpfrom TYPE spfli-airpfrom,
+         airpto   TYPE spfli-airpto,
+         seatsmax TYPE sflight-seatsmax,
+         seatsocc TYPE sflight-seatsocc,
+       END OF gs_flight,
+       gt_flight LIKE TABLE OF gs_flight.
+
+DATA : BEGIN OF gs_airline,
+         carrid   TYPE scarr-carrid,
+         connid   TYPE spfli-connid,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+         seatsmax TYPE sflight-seatsmax,
+         seatsocc TYPE sflight-seatsocc,
+         carrname TYPE scarr-carrname,
+       END OF gs_airline,
+       gt_airline LIKE TABLE OF gs_airline.
+
+
+DATA : BEGIN OF gs_booking,
+         carrid   TYPE spfli-carrid,
+         connid   TYPE spfli-connid,
+         fldate   TYPE sflight-fldate,
+         bookid   TYPE sbook-bookid,
+         cityfrom TYPE spfli-cityfrom,
+         cityto   TYPE spfli-cityto,
+         seatsmax TYPE sflight-seatsmax,
+         seatsocc TYPE sflight-seatsocc,
+         custtype TYPE sbook-custtype,
+         smoker   TYPE sbook-smoker,
+       END OF gs_booking,
+       gt_booking LIKE TABLE OF gs_booking. " A -&gt; B -&gt; C 구도로 결합 관계를 맺어주는게 좋다
+
+DATA : BEGIN OF gs_mara_marc,
+         matnr TYPE mara-matnr,
+         werks TYPE marc-werks,
+         ersda TYPE mara-ersda,
+         mtart TYPE mara-mtart,
+         pstat TYPE marc-pstat,
+       END OF gs_mara_marc,
+       gt_mara_marc LIKE TABLE OF gs_mara_marc.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Get data - JOIN SQL</font>
+<font color ="#0000FF">**********************************************************************</font>
+CLEAR : gt_schedule, gs_schedule.
+SELECT a~carrid b~connid b~cityfrom b~cityto a~carrname
+  INTO CORRESPONDING FIELDS OF TABLE gt_schedule
+  FROM scarr AS a INNER JOIN spfli AS b
+  ON a~carrid EQ b~carrid
+  WHERE b~connid BETWEEN '0400' AND '0800'.
+
+<font color ="#0000FF">*cl_demo_output=&gt;display( gt_schedule ).</font>
+
+<font color ="#0000FF">*-- SPFLI 와 SFLIGHT를 INNER JOIN 하여 위의 Internal table에 DATA를 적재한다</font>
+
+CLEAR : gt_flight, gs_flight.
+
+SELECT a~carrid a~connid fldate airpfrom airpto seatsmax seatsocc
+  INTO CORRESPONDING FIELDS OF TABLE gt_flight
+  FROM spfli AS a INNER JOIN sflight AS b
+  ON a~carrid EQ b~carrid
+  AND a~connid EQ b~connid
+  WHERE b~connid BETWEEN '0400' AND '0800'
+  ORDER BY b~connid.
+
+<font color ="#0000FF">*-- SCARR와 SPFLI를 LEFT OUTER JOIN하여 Internal table에 적재한다</font>
+SELECT a~carrid connid cityfrom cityto carrname
+  INTO CORRESPONDING FIELDS OF TABLE gt_schedule
+  FROM scarr AS a LEFT OUTER JOIN spfli AS b
+  ON a~carrid EQ b~carrid
+  WHERE a~carrid BETWEEN 'AA' AND 'ZZ'.
+
+
+<font color ="#0000FF">*-- SCARR AS a INNER JOIN SPFLI AS b INNER JOIN SFLIGHT AS c</font>
+
+CLEAR : gt_airline, gs_airline.
+SELECT a~carrid b~connid cityfrom cityto seatsmax seatsocc carrname
+  INTO CORRESPONDING FIELDS OF TABLE gt_airline
+  FROM scarr AS a INNER JOIN spfli AS b
+  ON a~carrid EQ b~carrid
+              INNER JOIN sflight AS c
+  ON b~carrid EQ c~carrid
+  AND b~connid EQ c~connid " 두 테이블간에 결합 관계를 반드시 확인하기
+<font color ="#0000FF">*  ON a~carrid EQ c~carrid</font>
+  WHERE b~connid BETWEEN '0400' AND '0800'.
+
+CLEAR : gt_booking, gs_booking.
+SELECT a~carrid b~connid c~fldate bookid cityfrom cityto
+       seatsmax seatsocc custtype smoker
+  INTO CORRESPONDING FIELDS OF TABLE gt_booking
+  FROM spfli AS a INNER JOIN sflight AS b
+  ON a~carrid  EQ b~carrid
+  AND a~connid EQ b~connid
+                  INNER JOIN sbook AS c
+  ON b~carrid  EQ c~carrid
+  AND b~connid EQ c~connid
+  AND b~fldate EQ c~fldate
+  WHERE b~connid BETWEEN '0400' AND '0800'.
+
+
+CLEAR : gs_mara_marc, gt_mara_marc.
+
+SELECT a~matnr werks ersda mtart b~pstat " 제시한 테이블로 간다
+  INTO CORRESPONDING FIELDS OF TABLE gt_mara_marc
+  FROM mara AS a INNER JOIN marc AS b
+  ON a~matnr EQ b~matnr.
+
+<font color ="#0000FF">*cl_demo_output=&gt;display( gt_mara_marc ).</font>
+
+<font color ="#0000FF">*DATA: BEGIN OF gs_test_13,</font>
+<font color ="#0000FF">*        index TYPE sy-tabix, " 추가된 인덱스 필드</font>
+<font color ="#0000FF">*        matnr TYPE mara-matnr,</font>
+<font color ="#0000FF">*        werks TYPE marc-werks,</font>
+<font color ="#0000FF">*        ersda TYPE mara-ersda,</font>
+<font color ="#0000FF">*        mtart TYPE mara-mtart,</font>
+<font color ="#0000FF">*        pstat TYPE marc-pstat,</font>
+<font color ="#0000FF">*      END OF gs_test_13.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DATA: gt_test_13 LIKE TABLE OF gs_test_13.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*" 데이터 SELECT</font>
+<font color ="#0000FF">*SELECT a~matnr b~werks a~ersda a~mtart b~pstat</font>
+<font color ="#0000FF">*  INTO CORRESPONDING FIELDS OF TABLE gt_test_13</font>
+<font color ="#0000FF">*  FROM mara AS a</font>
+<font color ="#0000FF">*  INNER JOIN marc AS b</font>
+<font color ="#0000FF">*  ON a~matnr = b~matnr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*" sy-tabix를 활용해 인덱스 번호 추가</font>
+<font color ="#0000FF">*LOOP AT gt_test_13 INTO gs_test_13.</font>
+<font color ="#0000FF">*  gs_test_13-index = sy-tabix.</font>
+<font color ="#0000FF">*  MODIFY gt_test_13 FROM gs_test_13 INDEX sy-tabix.</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*" 결과 출력</font>
+<font color ="#0000FF">**cl_demo_output=&gt;display( gt_test_13 ).</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DATA: BEGIN OF gs_test_14,</font>
+<font color ="#0000FF">*        index TYPE sy-tabix, " 추가된 인덱스 필드</font>
+<font color ="#0000FF">*        matnr TYPE mara-matnr,</font>
+<font color ="#0000FF">*        werks TYPE marc-werks,</font>
+<font color ="#0000FF">*        ersda TYPE mara-ersda,</font>
+<font color ="#0000FF">*        mtart TYPE mara-mtart,</font>
+<font color ="#0000FF">*        pstat TYPE marc-pstat,</font>
+<font color ="#0000FF">*      END OF gs_test_14.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DATA: gt_test_14 LIKE TABLE OF gs_test_14,</font>
+<font color ="#0000FF">*      lv_count   TYPE i. " 테이블 행 수를 저장할 변수</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*" 데이터 SELECT</font>
+<font color ="#0000FF">*SELECT a~matnr, b~werks, a~ersda, a~mtart, b~pstat</font>
+<font color ="#0000FF">*  INTO CORRESPONDING FIELDS OF TABLE @gt_test_14</font>
+<font color ="#0000FF">*  FROM mara AS a</font>
+<font color ="#0000FF">*  INNER JOIN marc AS b</font>
+<font color ="#0000FF">*  ON a~matnr = b~matnr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*" sy-tabix를 활용해 인덱스 번호 추가</font>
+<font color ="#0000FF">*LOOP AT gt_test_14 INTO gs_test_14.</font>
+<font color ="#0000FF">*  gs_test_14-index = sy-tabix.</font>
+<font color ="#0000FF">*  MODIFY gt_test_14 FROM gs_test_14 INDEX sy-tabix.</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*" 테이블의 행 수 계산</font>
+<font color ="#0000FF">*DESCRIBE TABLE gt_test_14 LINES lv_count.</font>
+
+" 결과 출력
+<font color ="#0000FF">*cl_demo_output=&gt;write( |출력된 행 수: { lv_count }| ). " 행 수를 표시</font>
+<font color ="#0000FF">*cl_demo_output=&gt;display( gt_test_14 ).</font>
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* BKPF와 BSIS 테이블을 INNER JOIN 하여 아래의 데이터를 SELECT 한다.</font>
+<font color ="#0000FF">* 현재 데이터는 없으니 SQL 연습용 실습이라 생각하면 됨</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_docu,
+         bukrs TYPE bkpf-bukrs,
+         belnr TYPE bkpf-belnr,
+         gjahr TYPE bkpf-gjahr,
+         buzei TYPE bsis-buzei,
+         bktxt TYPE bkpf-bktxt,
+         mwskz TYPE bsis-mwskz,
+         kostl TYPE bsis-kostl,
+         sgtxt TYPE bsis-sgtxt,
+         shkzg TYPE bsis-shkzg,
+         wrbtr TYPE bsis-wrbtr,
+         waers TYPE bkpf-waers,
+       END OF gs_docu,
+       gt_docu LIKE TABLE OF gs_docu.
+
+CLEAR : gt_docu, gs_docu.
+
+SELECT a~bukrs a~belnr a~gjahr buzei bktxt mwskz kostl sgtxt
+  shkzg wrbtr a~waers
+  INTO CORRESPONDING FIELDS OF TABLE gt_docu
+  FROM bkpf AS a INNER JOIN bsis AS b
+  ON a~bukrs = b~bukrs
+  AND a~belnr = b~belnr
+  AND a~gjahr = b~gjahr
+  WHERE a~bukrs EQ '0001'
+  AND a~gjahr EQ '2025'
+  AND a~budat BETWEEN '20250101' AND '20250131'.
+
+
+DATA : BEGIN OF gs_material,
+         matnr TYPE mara-matnr,
+         ersda TYPE mara-ersda,
+         vpsta TYPE mara-vpsta,
+         pstat TYPE mara-pstat,
+         mtart TYPE mara-mtart,
+         mtbez TYPE t134t-mtbez,
+         ntgew TYPE mara-ntgew,
+         gewei TYPE mara-gewei,
+       END OF gs_material,
+       gt_material LIKE TABLE OF gs_material.
+
+
+CLEAR : gt_material, gs_material.
+
+SELECT matnr ersda vpsta pstat a~mtart mtbez ntgew gewei
+  INTO CORRESPONDING FIELDS OF TABLE gt_material
+  FROM mara AS a INNER JOIN t134t AS b
+  ON a~mtart = b~mtart
+  WHERE b~spras EQ sy-langu.
+
+cl_demo_output=&gt;display( gt_material ).
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

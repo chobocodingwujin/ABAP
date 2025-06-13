@@ -1,0 +1,60 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050033</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050033</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Call method</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R050033</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zcl1r050033top.html">ZCL1R050033TOP</a>.    " Global Data
+
+include <a href ="zcl1r050033s01.html">ZCL1R050033S01</a>.  " SELECTION-SCREEN
+include <a href ="zcl1r050033f01.html">ZCL1R050033F01</a>.  " FORM-Routines
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+
+<font color ="#0000FF">*-- 객체를 생성해줘야 Method를 사용할 수 있다</font>
+<font color ="#0000FF">*-- 메모리 할당</font>
+  IF go_com05 IS INITIAL.
+    CREATE OBJECT go_com05.
+  ENDIF.
+
+  PERFORM get_airline.
+  PERFORM get_schedule.
+
+  FREE go_com05.
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* T01 Condition</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_CARR D       .</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCL1MSG05</font>
+<font color ="#0000FF">*001   & &</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

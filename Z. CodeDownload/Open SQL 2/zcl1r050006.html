@@ -1,0 +1,105 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050006</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050006</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Open SQL - 2025.01.10</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R05006</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050006.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Wokr area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_spfli,
+         air_cd    TYPE spfli-carrid, " internal table의 필드를 바꿈 carrid -&gt; air-cd
+         countryfr TYPE spfli-countryfr,
+         countryto TYPE spfli-countryto,
+       END OF gs_spfli,
+       gt_spfli LIKE TABLE OF gs_spfli.
+
+DATA : BEGIN OF gs_info,
+         air_cd   TYPE sflight-carrid,
+         con_no   TYPE sflight-connid,
+         minseats TYPE sflight-seatsocc,
+         maxseats TYPE sflight-seatsocc,
+         sumseats TYPE sflight-seatsocc,
+       END OF gs_info,
+       gt_info LIKE TABLE OF gs_info.
+
+DATA : gv_scarr    TYPE scarr,          " 워크 에리어
+       gv_cityfrom TYPE spfli-cityfrom, " 변수
+       gv_cityto   TYPE spfli-cityto.   " 변수
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Get data</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- 단일 테이블내에서 출발국가와 도착국가 정보가 동일한 데이터를 발췌</font>
+CLEAR : gt_spfli, gs_spfli.
+SELECT carrid AS air_cd                       " select 컬럼에도 alias 가능 데이터베이스 테이블 뿐만 아니라
+       countryfr
+       countryto
+  INTO CORRESPONDING FIELDS OF TABLE gt_spfli " corresponding 자동완성하고 TABLE 까먹지 마셈
+  FROM spfli AS a
+  WHERE countryfr EQ a~countryto.             " ~ 이 표시는 테이블 조인할 때 많이 쓸꺼임 alias는 옵션이지 필수가 아니다
+
+<font color ="#0000FF">*-- GROUP BY SQL</font>
+CLEAR : gt_info, gs_info.
+SELECT carrid AS air_cd
+       connid AS con_no
+       MIN( seatsocc ) AS minseats " 함수한테는 방이 없으니까 자기 자리 찾아가야 하니까 ALIAS 부여해서 자기방 찾아가게 끔
+       MAX( seatsocc ) AS maxseats " Alias는 SELECT절 FROM절만 가능
+       SUM( seatsocc ) AS sumseats
+  INTO CORRESPONDING FIELDS OF TABLE gt_info
+  FROM sflight
+  WHERE seatsocc GE 200
+  GROUP BY carrid connid
+  HAVING SUM( seatsocc ) &lt; 2000
+  AND carrid EQ 'DL'.
+
+<font color ="#0000FF">*cl_demo_output=&gt;display( gt_info ).</font>
+
+<font color ="#0000FF">*-- Get single record 자동완성 써서 오타줄이기</font>
+CLEAR : gs_spfli, gv_scarr, gv_cityfrom, gv_cityto.
+
+SELECT SINGLE carrid carrname currcode url
+  INTO CORRESPONDING FIELDS OF gv_scarr
+  FROM scarr
+  WHERE carrid EQ 'LH'.
+
+cl_demo_output=&gt;display( gv_scarr ).
+
+
+<font color ="#0000FF">*-- Assign value to variable</font>
+SELECT SINGLE countryfr cityfrom cityto
+  INTO (gs_spfli-countryfr, gv_cityfrom, gv_cityto) " 단독값을 가질수 있는 형태는 다 가능
+  FROM spfli
+  WHERE carrid EQ 'LH'.
+
+
+
+
+
+<font color ="#0000FF">*DATA gt_sbook TYPE TABLE OF sbook.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*CLEAR gt_sbook.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*SELECT bookid customid smoker</font>
+<font color ="#0000FF">*  INTO CORRESPONDING FIELDS OF TABLE gt_sbook</font>
+<font color ="#0000FF">*  FROM sbook</font>
+<font color ="#0000FF">*  WHERE custtype EQ 'P'</font>
+<font color ="#0000FF">*  AND bookid BETWEEN '0200' AND '0250' .</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

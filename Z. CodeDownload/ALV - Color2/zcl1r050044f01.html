@@ -1,0 +1,216 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050044F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050044F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050044F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZCL1R050044F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_value .
+  so_carr-sign   = 'I'.
+  so_carr-option = 'EQ'.
+  so_carr-low    = 'LH'.
+
+  APPEND so_carr.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_main_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_main_data .
+
+  CLEAR : gt_scarr.
+  SELECT carrid carrname currcode url
+    FROM scarr
+    INTO CORRESPONDING FIELDS OF TABLE gt_scarr.
+<font color ="#0000FF">*   WHERE carrid IN so_carr.</font>
+
+  IF gt_scarr IS INITIAL.
+    MESSAGE s005 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_fcat, gs_fcat.
+    PERFORM set_field_catalog USING : 'X' 'STATUS'   '     ' 'C' ' ',
+                                      'X' 'CARRID'   'SCARR' 'C' ' ',
+                                      ' ' 'CARRNAME' 'SCARR' ' ' ' ',
+                                      ' ' 'CURRCODE' 'SCARR' 'C' ' ',
+                                      ' ' 'URL'      'SCARR' ' ' 'X'.
+
+    PERFORM set_layout.
+    PERFORM create_object.
+    CALL METHOD go_alv_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_scarr
+        it_fieldcatalog = gt_fcat.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_field_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat-key        = pv_key.
+  gs_fcat-fieldname  = pv_field.
+  gs_fcat-ref_table  = pv_table.
+  gs_fcat-just       = pv_just.
+  gs_fcat-emphasize  = pv_emph.
+
+  IF pv_field = 'STATUS'.
+    gs_fcat-coltext = 'Status'.
+  ENDIF.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+  gs_layout-zebra      = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = 'D'.
+  gs_layout-ctab_fname = 'COLOR'. " Assignment color manager
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+  CREATE OBJECT go_container
+    EXPORTING
+      side      = go_container-&gt;dock_at_left
+      extension = 5000.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_main</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_main .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         lv_cnt   TYPE i,
+         ls_scol  TYPE lvc_s_scol.
+<font color ="#0000FF">*        ls_scol  TYPE LINE OF lvc_t_scol.</font>
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* CURRNAME EQ 'USE' -&gt; Set ICON_HOTEL</font>
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+<font color ="#0000FF">* CURRCODE EQ 'USD' -&gt; Cell color ( CARRNAME, URL )</font>
+<font color ="#0000FF">* CURRCODE EQ 'EUR' -&gt; Line color ( All field )</font>
+<font color ="#0000FF">**********************************************************************</font>
+  LOOP AT gt_scarr INTO gs_scarr.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR : ls_scol, gs_scarr-color. " 비우고 새로 적재 clear color manager
+    CASE gs_scarr-currcode.
+      WHEN 'USD'.
+<font color ="#0000FF">*-- Set icon</font>
+        gs_scarr-status = icon_hotel.
+
+<font color ="#0000FF">*-- Set color</font>
+        ls_scol-fname     = 'CARRNAME'. " Color field
+        ls_scol-color-col = 3.          " Color value
+        ls_scol-color-int = 1.          " Intensified
+        INSERT ls_scol INTO TABLE gs_scarr-color.
+
+        CLEAR ls_scol.
+        ls_scol-fname     = 'URL'. " Color field
+        ls_scol-color-col = 6.     " Color value
+        ls_scol-color-inv = 1.     " Inverse
+        INSERT ls_scol INTO TABLE gs_scarr-color.
+
+      WHEN 'EUR'.
+<font color ="#0000FF">*-- Set color</font>
+        ls_scol-nokeycol  = 'X'.
+        ls_scol-color-col = 7. " Color value
+        INSERT ls_scol INTO TABLE gs_scarr-color.
+    ENDCASE.
+
+    MODIFY gt_scarr FROM gs_scarr INDEX lv_tabix TRANSPORTING status color.
+
+  ENDLOOP.
+
+  lv_cnt = lines( gt_scarr ).
+  MESSAGE s003 WITH lv_cnt.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

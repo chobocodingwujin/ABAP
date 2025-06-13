@@ -1,0 +1,298 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050053F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050053F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050053F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZCL1R050053F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_value .
+
+  _ranges : so_carr 'I' 'EQ' 'AA' ' ',
+            so_carr 'I' 'EQ' 'LH' ' '.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_airline_master</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_airline_master .
+
+<font color ="#0000FF">*-- Airline master</font>
+  CLEAR gt_scarr.
+  SELECT carrid carrname currcode url
+    INTO CORRESPONDING FIELDS OF TABLE gt_scarr
+    FROM scarr
+   WHERE carrid IN so_carr.
+
+  IF gt_scarr IS INITIAL.
+    MESSAGE s005 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+  CLEAR gt_spfli.
+  SELECT carrid connid cityfrom cityto
+    INTO CORRESPONDING FIELDS OF TABLE gt_spfli
+    FROM spfli.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_tfcat, gs_tfcat.
+    PERFORM set_top_field_catalog USING : 'X' 'CARRID'   'SCARR' 'C' ' ',
+                                          ' ' 'CARRNAME' 'SCARR' ' ' ' ',
+                                          ' ' 'CURRCODE' 'SCARR' ' ' ' ',
+                                          ' ' 'URL'      'SCARR' ' ' 'X'.
+
+    CLEAR : gt_bfcat, gs_bfcat.
+    PERFORM set_bot_field_catalog USING : 'X' 'CARRID'   'SPFLI' 'C' ' ',
+                                          'X' 'CONNID'   'SPFLI' ' ' ' ',
+                                          ' ' 'CITYFROM' 'SPFLI' ' ' ' ',
+                                          ' ' 'CITYTO'   'SPFLI' ' ' 'X'.
+
+    PERFORM set_layout.
+    PERFORM create_object.
+
+    SET HANDLER lcl_event_handler=&gt;double_click FOR go_top_grid.
+
+<font color ="#0000FF">*-- Display TOP ALV</font>
+    gs_variant-handle = 'ALV1'.
+    CALL METHOD go_top_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_scarr
+        it_fieldcatalog = gt_tfcat.
+
+<font color ="#0000FF">*-- Display BOTTOM ALV</font>
+    gs_variant-handle = 'ALV2'.
+    CALL METHOD go_bottom_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_sub
+        it_fieldcatalog = gt_bfcat.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_top_field_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_top_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_tfcat-key       = pv_key.
+  gs_tfcat-fieldname = pv_field.
+  gs_tfcat-ref_table = pv_table.
+  gs_tfcat-just      = pv_just.
+  gs_tfcat-emphasize = pv_emph.
+
+  APPEND gs_tfcat TO gt_tfcat.
+  CLEAR gs_tfcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_bot_field_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_bot_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_bfcat-key       = pv_key.
+  gs_bfcat-fieldname = pv_field.
+  gs_bfcat-ref_table = pv_table.
+  gs_bfcat-just      = pv_just.
+  gs_bfcat-emphasize = pv_emph.
+
+  APPEND gs_bfcat TO gt_bfcat.
+  CLEAR gs_bfcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+  gs_layout-zebra      = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = 'D'.
+
+  gs_variant-report = sy-repid.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+<font color ="#0000FF">*-- Main Docking container</font>
+  CREATE OBJECT go_container
+    EXPORTING
+      side      = cl_gui_docking_container=&gt;dock_at_left
+      extension = 5000.
+
+<font color ="#0000FF">*-- 화면분할 : Split screen</font>
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_container
+      rows    = 2
+      columns = 1.
+
+<font color ="#0000FF">*-- Patch container</font>
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_top_cont.
+
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_bottom_cont.
+
+<font color ="#0000FF">*-- Patch ALV</font>
+  CREATE OBJECT go_top_grid
+    EXPORTING
+      i_parent = go_top_cont.
+
+  CREATE OBJECT go_bottom_grid
+    EXPORTING
+      i_parent = go_bottom_cont.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_double_click</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_ROW</font>
+<font color ="#0000FF">*&      --&gt; E_COLUMN</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_double_click  USING pv_row pv_column.
+
+<font color ="#0000FF">*-- 사용자가 선택한 행의 정보를 읽어온다.</font>
+  CLEAR gs_scarr.
+  READ TABLE gt_scarr INTO gs_scarr INDEX pv_row.
+
+<font color ="#0000FF">*-- 선택한 항공사의 운항일정을 상세 데이터 ITAB으로 부터 적재한다</font>
+  CLEAR : gt_sub, gs_sub.
+  LOOP AT gt_spfli INTO gs_spfli WHERE carrid EQ gs_scarr-carrid.
+
+    MOVE-CORRESPONDING gs_spfli TO gs_sub.
+    APPEND gs_sub TO gt_sub.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*  CALL METHOD go_bottom_grid-&gt;refresh_table_display.</font>
+  PERFORM refresh_table.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_table .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+<font color ="#0000FF">*-- 현재 커서</font>
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+<font color ="#0000FF">*-- alv refresh</font>
+  CALL METHOD go_bottom_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_schedule_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_schedule_data .
+
+<font color ="#0000FF">*-- 하단 ALV에 출력될 상세 데이터를 조회한다.</font>
+<font color ="#0000FF">*  CLEAR gt_sub.</font>
+<font color ="#0000FF">*  SELECT a~carrid, connid, cityfrom, cityto</font>
+<font color ="#0000FF">*    FROM spfli AS a INNER JOIN @gt_scarr AS b</font>
+<font color ="#0000FF">*      ON a~carrid EQ b~carrid</font>
+<font color ="#0000FF">*   WHERE a~carrid IN @so_carr</font>
+<font color ="#0000FF">*     AND connid   IN @so_conn</font>
+<font color ="#0000FF">*    INTO CORRESPONDING FIELDS OF TABLE @gt_spfli.</font>
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

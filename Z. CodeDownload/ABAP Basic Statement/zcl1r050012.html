@@ -1,0 +1,128 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050012</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050012</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Basic ABAP Statement</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R050012</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050012.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gt_spfli TYPE TABLE OF spfli,
+       gs_spfli TYPE spfli.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Command variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Main Logic</font>
+<font color ="#0000FF">**********************************************************************</font>
+CLEAR : gt_spfli, gs_spfli.
+
+SELECT carrid connid cityfrom cityto countryfr countryto
+       airpfrom airpto
+  INTO CORRESPONDING FIELDS OF TABLE gt_spfli
+  FROM spfli.
+
+<font color ="#0000FF">*-- IF Statement</font>
+IF sy-subrc EQ 0.
+  WRITE 'SUBRC EQ 0 : Success'.
+ENDIF.
+
+IF gt_spfli IS NOT INITIAL.
+  WRITE /'ITAB is not empty'.
+ENDIF.
+
+<font color ="#0000FF">*LOOP AT &lt;itab&gt; INTO &lt;work area&gt;.</font>
+<font color ="#0000FF">* itab 전용 반복 구문 internal table record를 한줄씩 추출함 / work area에 한 줄 읽어서 넣는다</font>
+<font color ="#0000FF">* work area 를 가지고 데이터를 꺼내고 넣고 /  WHERE 조건절 사용 가능</font>
+LOOP AT gt_spfli INTO gs_spfli WHERE carrid EQ 'AA'.
+
+<font color ="#0000FF">*-- Version 1</font>
+  IF gs_spfli-countryfr EQ 'US'.
+    WRITE :/ gs_spfli-countryfr.
+  ELSE.
+    WRITE :/ 'Not US'.
+  ENDIF.
+
+<font color ="#0000FF">*-- Version 2</font>
+  IF ( gs_spfli-carrid EQ 'AA' ) OR
+     ( gs_spfli-carrid EQ 'DL' ).
+    WRITE :/ gs_spfli-carrid, sy-tabix. " CASE문으로 대체 가능
+  ENDIF.
+
+  IF gs_spfli-connid BETWEEN '0017' AND '0400'.
+    WRITE :/ gs_spfli-carrid, gs_spfli-connid.
+
+  ENDIF.
+
+  IF strlen( gs_spfli-cityfrom ) GE 9.
+    WRITE :/ gs_spfli-cityfrom.
+
+  ENDIF.
+
+<font color ="#0000FF">*  IF gs_spfli-carrid IN ( 'AA', 'AZ' ). " IN 연산자는 불가</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ENDIF.</font>
+
+ENDLOOP. " ENDLOOP 빠지면 위쪽 이상한 곳에서 에러났다고 함
+
+
+<font color ="#0000FF">*-- CASE Statement</font>
+LOOP AT gt_spfli INTO gs_spfli WHERE countryfr EQ 'US'.
+
+<font color ="#0000FF">*-- Version 1</font>
+  CASE gs_spfli-countryfr.
+    WHEN 'US'.
+      WRITE :/ gs_spfli-countryfr.
+    WHEN OTHERS.
+      WRITE :/ 'Not US'.
+  ENDCASE.
+
+  CASE gs_spfli-carrid.
+    WHEN 'AA' OR 'DL'. " OR 연산 가능
+      WRITE :/ gs_spfli-carrid, sy-tabix, sy-uline.
+    WHEN 'AZ'.
+      WRITE :/ gs_spfli-connid, sy-tabix.
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDLOOP.
+
+<font color ="#0000FF">*DATA: gt_spfli TYPE TABLE OF spfli,</font>
+<font color ="#0000FF">*      gs_spfli TYPE spfli.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*APPEND VALUE #( carrid = 'AA' connid = '001' cityfrom = 'NEW YORK' cityto = 'LONDON' ) TO gt_spfli.</font>
+<font color ="#0000FF">*APPEND VALUE #( carrid = 'DL' connid = '002' cityfrom = 'PARIS' cityto = 'BERLIN' ) TO gt_spfli.</font>
+<font color ="#0000FF">*APPEND VALUE #( carrid = 'LH' connid = '003' cityfrom = 'TOKYO' cityto = 'SEOUL' ) TO gt_spfli.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DO.</font>
+<font color ="#0000FF">*  READ TABLE gt_spfli INTO gs_spfli INDEX sy-index.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  IF sy-subrc &lt;&gt; 0.</font>
+<font color ="#0000FF">*    EXIT.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  WRITE: / 'Index:', sy-index,</font>
+<font color ="#0000FF">*           'Carrid:', gs_spfli-carrid,</font>
+<font color ="#0000FF">*           'City From:', gs_spfli-cityfrom,</font>
+<font color ="#0000FF">*           'City To:', gs_spfli-cityto.</font>
+<font color ="#0000FF">*ENDDO.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

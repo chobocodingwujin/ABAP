@@ -1,0 +1,53 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050041C01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050041C01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050041C01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZCL1R050041C01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Class LCL_EVENT_HANDLER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+CLASS lcl_event_handler DEFINITION FINAL.
+
+  PUBLIC SECTION.
+<font color ="#0000FF">*-- Instance method</font>
+    METHODS : get_schedule IMPORTING iv_carrid TYPE s_carr_id
+                           EXPORTING ev_subrc  TYPE char1. " 아밥 스탠다드 데이터 타입
+<font color ="#0000FF">*-- Static method</font>
+    CLASS-METHODS : get_single_line IMPORTING iv_carrid TYPE s_carr_id
+                                    EXPORTING ev_subrc  TYPE char1.
+
+ENDCLASS.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Class (Implementation) LCL_EVENT_HANDLER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+CLASS lcl_event_handler IMPLEMENTATION.
+
+  METHOD get_schedule.
+    PERFORM get_flight_schedule USING iv_carrid
+                                CHANGING ev_subrc.
+  ENDMETHOD.
+
+  METHOD get_single_line.
+    PERFORM get_single_record USING iv_carrid CHANGING ev_subrc.
+  ENDMETHOD.
+
+ENDCLASS.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

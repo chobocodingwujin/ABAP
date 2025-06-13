@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050016</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050016</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Selection screen - Select-Options</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R050016</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050016 MESSAGE-ID zcl1msg05. " 메시지 클래스 회사 전용 메시지 클래스있음
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES 테이블즈로 선언되어있는 이 테이블은 프로그램 내에서 wa처럼 사용 가능 select single 가능</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : scarr, spfli, sflight.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gt_sflight TYPE TABLE OF sflight,
+       gs_sflight TYPE sflight.
+.
+SELECTION-SCREEN BEGIN OF BLOCK pa1 WITH FRAME TITLE TEXT-t01.
+
+  SELECT-OPTIONS : so_carr FOR scarr-carrid DEFAULT 'LH'
+                               SIGN I OPTION EQ,
+                   so_conn FOR spfli-connid DEFAULT '0400' TO '0800'
+                               SIGN I OPTION BT,
+                   so_fldt FOR sflight-fldate OBLIGATORY. "sap가 알아서 연산자를 세팅함
+
+  SELECTION-SCREEN ULINE.
+
+  SELECT-OPTIONS : so_name  FOR scarr-carrname NO-EXTENSION,
+                   so_name2 FOR scarr-carrname NO INTERVALS,
+                   so_name3 FOR scarr-carrname NO-EXTENSION
+                                               NO INTERVALS.
+
+SELECTION-SCREEN END OF BLOCK pa1.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Start of main screen</font>
+<font color ="#0000FF">**********************************************************************</font>
+CLEAR : gs_sflight, gt_sflight.
+
+SELECT carrid connid fldate seatsmax seatsocc
+INTO CORRESPONDING FIELDS OF TABLE gt_sflight
+FROM sflight
+WHERE carrid IN so_carr " 셀렉트 옵션즈는 연산자를 가지고 있음 셀렉트 옵션즈는 인터널 테이블임
+  AND connid IN so_conn " 셀렉트 옵션즈는 SQL과 연결할 때 IN 이라는 연산자 사용
+  AND fldate IN so_fldt. " 4개의 필드를 가진 인터널 테이블 구조
+
+cl_demo_output=&gt;display( gt_sflight ).
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* SO_CARR D       .</font>
+<font color ="#0000FF">* SO_CONN D       .</font>
+<font color ="#0000FF">* SO_FLDT D       .</font>
+<font color ="#0000FF">* SO_NAME         Airline name</font>
+<font color ="#0000FF">* SO_NAME2         Airline name</font>
+<font color ="#0000FF">* SO_NAME3         Airline name</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

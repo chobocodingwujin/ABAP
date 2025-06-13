@@ -1,0 +1,83 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050047TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050047TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050047TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZCL1R050047TOP                           - Report ZCL1R050047</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050047 MESSAGE-ID zcl1msg05.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : mara.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Class instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_container TYPE REF TO cl_gui_docking_container,
+       go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_marc_cont TYPE REF TO cl_gui_custom_container,
+       go_marc_grid TYPE REF TO cl_gui_alv_grid.
+
+DATA : gt_fcat    TYPE lvc_t_fcat,
+       gs_fcat    TYPE lvc_s_fcat,
+       gs_layout  TYPE lvc_s_layo,
+       gs_variant TYPE disvariant.
+
+DATA : gt_marc_fcat   TYPE lvc_t_fcat,
+       gs_marc_fcat   TYPE lvc_s_fcat,
+       gs_marc_layout TYPE lvc_s_layo.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_mara,
+         matnr TYPE mara-matnr,
+         ersda TYPE mara-ersda,
+         vpsta TYPE mara-vpsta,
+         mtart TYPE mara-mtart,
+         matkl TYPE mara-matkl,
+         wgbez TYPE t023t-wgbez,
+         brgew TYPE mara-brgew,
+         ntgew TYPE mara-ntgew,
+         gewei TYPE mara-gewei,
+         spart TYPE mara-spart,
+         vtext TYPE tspat-vtext,
+         color TYPE lvc_t_scol,
+       END OF gs_mara,
+       gt_mara LIKE TABLE OF gs_mara.
+
+DATA : BEGIN OF gs_marc,
+         matnr TYPE marc-matnr,
+         werks TYPE marc-werks,
+         pstat TYPE marc-pstat,
+         ekgrp TYPE marc-ekgrp,
+         dismm TYPE marc-dismm,
+       END OF gs_marc,
+       gt_marc LIKE TABLE OF gs_marc.
+
+DATA : gt_t023t TYPE TABLE OF t023t,
+       gs_t023t TYPE t023t.
+
+DATA : gt_tspat TYPE TABLE OF tspat,
+       gs_tspat TYPE tspat.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Common variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA gv_okcode TYPE sy-ucomm.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

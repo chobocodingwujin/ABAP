@@ -1,0 +1,177 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050002</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050002</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Internal table and Work area</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R05002</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050002.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TYPES : Local type 스트럭쳐</font>
+<font color ="#0000FF">**********************************************************************</font>
+TYPES : BEGIN OF ts_airline,
+          carrid    TYPE scarr-carrid,    " 항공사 ID
+          carrname  TYPE scarr-carrname,  " 항공사명
+          countryfr TYPE spfli-countryfr, " 출발국가
+          countryto TYPE spfli-countryto, " 도착국가 변수 선언과 다를 바가 없다
+        END OF ts_airline.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- Using local type structure</font>
+DATA : gt_airline TYPE TABLE OF ts_airline,
+       gs_airline TYPE ts_airline.
+
+" Internal table 데이터로 선언된 놈을 참조한 것이여서 LIKE
+DATA : gt_air1 LIKE gt_airline,
+       gt_air2 LIKE TABLE OF gs_airline.
+" 워크 에리어와 똑같이 생긴 인터널 테이블을 만들어 주는 예시 코드
+
+<font color ="#0000FF">*-- Using global type</font>
+DATA : gt_scarr TYPE TABLE OF scarr,
+       gt_bkpf  TYPE TABLE OF bkpf,
+       gs_scarr TYPE scarr,
+       gs_bkpf  TYPE bkpf.
+
+<font color ="#0000FF">*-- Declartion of Internal table and Work area</font>
+" 내가 직접설계하겠다 BEGIN OF END OF / 한줄짜리 워크 에리어 1차원 구조 메모리
+DATA : BEGIN OF gs_flight,
+         carrid    TYPE scarr-carrid,
+         connid    TYPE spfli-connid,
+         countryfr TYPE spfli-countryfr,
+         cityfrom  TYPE spfli-cityfrom,
+         countryto TYPE spfli-countryto,
+         cityto    TYPE spfli-cityto,
+         carrname  TYPE scarr-carrname,
+       END OF gs_flight,
+       gt_flight LIKE TABLE OF gs_flight.
+
+<font color ="#0000FF">* 위의 워크 에리어와 똑같이 생긴 인터널 테이블을 선언</font>
+<font color ="#0000FF">* 데이터로 선언된 놈은 LIKE쓰고 TYPES 로 선언되거나 글로벌 타입 -&gt; TYPE</font>
+
+DATA : BEGIN OF gs_board_tax,
+         seqno  TYPE ztcl1board05-seqno,
+         author TYPE ztcl1board05-author,
+         comp   TYPE ztcl1board05-comp,
+         bukrs  TYPE ztc1_tax_05-bukrs,
+         gjahr  TYPE ztc1_tax_05-gjahr,
+         mwskz  TYPE ztc1_tax_05-mwskz,
+       END OF gs_board_tax,
+       gt_board_tax LIKE TABLE OF gs_board_tax.
+
+<font color ="#0000FF">* 추가적으로 gsber text table 필드도 마지막에 포함</font>
+DATA : BEGIN OF gs_bkpf_bseg,
+         bukrs TYPE bkpf-bukrs,
+         belnr TYPE bkpf-belnr,
+         gjahr TYPE bkpf-gjahr,
+         gsber TYPE bseg-gsber,
+         gtext TYPE tgsbt-gtext, " 코드와 그 코드에 대한 내용은 붙어있어야 한다
+         mwskz TYPE bseg-mwskz,
+         dmbtr TYPE bseg-dmbtr,
+         pswsl TYPE bseg-pswsl,
+       END OF gs_bkpf_bseg,
+       gt_bkpf_bseg LIKE TABLE OF gs_bkpf_bseg.
+
+<font color ="#0000FF">* scarr 전체필드 포함하고 필드하나 더 추가 P타입 len5 dec3 필드 이름 val1</font>
+DATA : BEGIN OF gs_scarr1,
+         carrid   TYPE scarr-carrid,
+         carrname TYPE scarr-carrname,
+         currcode TYPE scarr-currcode,
+         url      TYPE scarr-url,
+         val1(5)  TYPE p DECIMALS 3,
+       END OF gs_scarr1,
+       gt_scarr1 LIKE TABLE OF gs_scarr1.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 특정 테이블의 모든 field를 포함하고 추가로 다른 field를</font>
+<font color ="#0000FF">* 가지는 Internal table</font>
+<font color ="#0000FF">**********************************************************************</font>
+" INCLUDE TYPE scarr 써도 됨 똑같은 놈임
+" client field는 모든 곳에 중복되어 있기 때문에 / 중복된 필드가 있으면 오류남
+" structure는 클라이언트 필드가 없음 중복 필드만 없으면 인클루드 스트럭쳐 계속할수있음
+DATA : BEGIN OF gs_air3.
+         INCLUDE STRUCTURE scarr.
+         include structure <a href ="zscl1_comp_05/dictionary-zscl1_comp_05.html">zscl1_comp_05</a>.
+DATA :   val1(5) TYPE p DECIMALS 3,
+         va12(3),
+       END OF gs_air3,
+       gt_air3 LIKE TABLE OF gs_air3.
+
+TYPES : BEGIN OF ts_makt.
+          INCLUDE STRUCTURE makt.
+TYPES :   matkl TYPE mara-matkl,
+          mtart TYPE mara-mtart,
+          mblnr TYPE mseg-mblnr,
+          bwart TYPE mseg-bwart,
+        END OF ts_makt.
+
+DATA : gt_mara TYPE TABLE OF ts_makt,
+       gs_mara TYPE ts_makt.
+
+DATA : gt_bsis TYPE TABLE OF bsis,
+       gs_bsis TYPE bsis,
+       gt_bsid TYPE TABLE OF bsid,
+       gs_bsid TYPE bsid,
+       gt_bsik TYPE TABLE OF bsik,
+       gs_bsik TYPE bsik.
+
+DATA : BEGIN OF gs_cskt.
+         INCLUDE STRUCTURE cskt.
+DATA :   pkzkp TYPE csks-pkzkp,
+         kosar TYPE csks-kosar,
+         txjcd TYPE csks-txjcd,
+       END OF gs_cskt.
+
+DATA : gt_cskt LIKE TABLE OF gs_cskt.
+
+
+DATA : BEGIN OF gs_test1,
+         stlan     TYPE mast-stlan,
+         stlal     TYPE mast-stlal,
+         matnr     TYPE mast-matnr,
+         maktx     TYPE makt-maktx,
+         mnglg     TYPE stpol-mnglg,
+         meins     TYPE stpol-meins,
+         level(10),
+       END OF gs_test1,
+       gt_test1 LIKE TABLE OF gs_test1.
+
+DATA : BEGIN OF gs_test2,
+         mtart TYPE t134-mtart,
+         mtref TYPE t134-mtref,
+         mbref TYPE t134-mbref,
+         pstat TYPE t134-pstat,
+         vmtpo TYPE t134-vmtpo,
+         kzgrp TYPE t134-kzgrp,
+         kkref TYPE t134-kkref,
+         krftx TYPE t025l-krftx,
+       END OF gs_test2,
+       gt_test2 LIKE TABLE OF gs_test2.
+
+DATA : BEGIN OF gs_scarr_sflight05.
+         INCLUDE STRUCTURE scarr.
+DATA :   connid    TYPE sflight-connid,
+         fldate    TYPE sflight-fldate,
+         price     TYPE sflight-price,
+         currency  TYPE sflight-currency,
+         planetype TYPE sflight-planetype.
+         include structure <a href ="zscl1_comp_05/dictionary-zscl1_comp_05.html">zscl1_comp_05</a>.
+DATA : END OF gs_scarr_sflight05,
+gt_scarr_sflight05 LIKE TABLE OF gs_scarr_sflight05.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

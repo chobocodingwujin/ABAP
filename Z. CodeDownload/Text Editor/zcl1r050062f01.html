@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050062F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050062F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050062F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZCL1R050062F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_comment</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_comment .
+
+  CLEAR gs_ment.
+  SELECT SINGLE seq_no zcomment
+    INTO CORRESPONDING FIELDS OF gs_ment
+    FROM ztment05
+    WHERE seq_no = pa_seq.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+
+  IF go_container IS NOT BOUND.
+
+    PERFORM create_object.
+    PERFORM set_text.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_text_edit
+    EXPORTING
+      wordwrap_mode = cl_gui_textedit=&gt;wordwrap_at_windowborder
+      parent        = go_container.    " Constant
+
+<font color ="#0000FF">*-- Text edit toolbar mode</font>
+  CALL METHOD go_text_edit-&gt;set_toolbar_mode
+    EXPORTING
+      toolbar_mode = go_text_edit-&gt;false. " True False 1 0 가능
+<font color ="#0000FF">*      toolbar_mode = 1. " 버튼 사용 가능</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_text .
+
+  DATA : lv_mode TYPE i.
+
+  IF gs_ment IS NOT INITIAL.
+
+    lv_mode = 1. " 1이 readonly
+
+<font color ="#0000FF">*-- 줄바꿈 기호를 기준으로 단어 분리</font>
+    SPLIT gs_ment-zcomment AT cl_abap_char_utilities=&gt;newline
+                           INTO TABLE gt_text.
+<font color ="#0000FF">* Newline constant attribute</font>
+<font color ="#0000FF">* #은 줄바꿈 기호가 아님 '/' 가능</font>
+<font color ="#0000FF">* 타 시스템과 데이터를 인터페이스할 때</font>
+
+<font color ="#0000FF">*-- 자동 들여쓰기</font>
+    CALL METHOD go_text_edit-&gt;set_autoindent_mode
+      EXPORTING
+        auto_indent            = 1
+      EXCEPTIONS
+        error_cntl_call_method = 1
+        OTHERS                 = 2.
+
+<font color ="#0000FF">*-- 기존 작성된 내역 삭제 텍스트 에디터에 있는 내용을 삭제</font>
+    CALL METHOD go_text_edit-&gt;delete_text
+      EXCEPTIONS " Exception이 없으면 덤프가 발생하는 경우가 있다
+        error_cntl_call_method = 1
+        OTHERS                 = 2.
+
+<font color ="#0000FF">*-- 읽어들인 내용 Setting</font>
+    CALL METHOD go_text_edit-&gt;set_selected_text_as_r3table
+      EXPORTING
+        table                         = gt_text
+        enable_editing_protected_text = go_text_edit-&gt;false
+      EXCEPTIONS " Exception이 없으면 덤프가 발생하는 경우가 있다
+        error_dp                      = 1
+        error_dp_create               = 2
+        OTHERS                        = 3.
+
+<font color ="#0000FF">*-- Display mode change</font>
+    CALL METHOD go_text_edit-&gt;set_readonly_mode
+      EXPORTING
+        readonly_mode = lv_mode.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form save_comment</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM save_comment .
+
+<font color ="#0000FF">*-- Text editor에 작성된 내용을 읽어온다</font>
+  CALL METHOD go_text_edit-&gt;get_text_as_r3table
+    IMPORTING
+      table                  = gt_text
+    EXCEPTIONS " Exception이 없으면 덤프가 발생하는 경우가 있다
+      error_dp               = 1
+      error_cntl_call_method = 2
+      error_dp_create        = 3
+      potential_data_loss    = 4
+      OTHERS                 = 5.
+
+  CLEAR gs_ment.
+  gs_ment-seq_no = pa_seq. " 게시물 번호 세팅
+
+<font color ="#0000FF">*-- 작성된 내용에 줄바꿈 기호 삽입</font>
+  LOOP AT gt_text INTO gs_text.
+    " 저장될 놈
+    CONCATENATE gs_ment-zcomment gs_text-tdline
+                cl_abap_char_utilities=&gt;newline INTO gs_ment-zcomment.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*-- DB에 저장</font>
+  MODIFY ztment05 FROM gs_ment.
+  COMMIT WORK.
+
+  MESSAGE s004. " s102(k5)
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

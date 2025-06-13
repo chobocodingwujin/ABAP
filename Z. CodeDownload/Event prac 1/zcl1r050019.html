@@ -1,0 +1,70 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050019</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050019</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [C1] Include Program Event Prac 1</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZCL1R050019</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& 보내야 할 메시지 코드</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050019 MESSAGE-ID zcl1msg05.
+
+include <a href ="zcl1r050019top.html">zcl1r050019top</a>. " Global data 실무에서도 top 전역변수 선언부 top include
+include <a href ="zcl1r050019s01.html">zcl1r050019s01</a>. " Selection screen
+include <a href ="zcl1r050019f01.html">zcl1r050019f01</a>. " FORM Routines
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* INITIALIZATION 값에 초기 값을 세팅한다 로직</font>
+<font color ="#0000FF">**********************************************************************</font>
+INITIALIZATION.
+  PERFORM set_init_value.
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* AT SELECTION-SCREEN 검문소 본 게임을 실행해도 되는지 판단하는 이벤트 로직</font>
+<font color ="#0000FF">**********************************************************************</font>
+AT SELECTION-SCREEN.
+  PERFORM check_param.
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 본문의 시작을 알리는 이벤트 START-OF-SELECTION 선언 본문 시작 로직</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION. " 무적권 존재
+  PERFORM get_base_data.
+  PERFORM get_text_data.
+  PERFORM make_diplay_plan.
+
+<font color ="#0000FF">*  END-OF-SELECTION.</font>
+<font color ="#0000FF">*  CALL SCREEN 100.</font>
+  cl_demo_output=&gt;display( gt_plan ).
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* E01 은 유효하지 않은 회사코드 입니다.</font>
+<font color ="#0000FF">* T01 Condition</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_BUKRS D       .</font>
+<font color ="#0000FF">* PA_GSTRP D       .</font>
+<font color ="#0000FF">* SO_MATNR D       .</font>
+<font color ="#0000FF">* SO_WERKS D       .</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZCL1MSG05</font>
+<font color ="#0000FF">*001   & &</font>
+<font color ="#0000FF">*009   조회된 데이터가 없습니다.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

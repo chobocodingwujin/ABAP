@@ -1,0 +1,130 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050064F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050064F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050064F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZCL1R050064F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form exec_bdc</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM exec_bdc .
+
+  DATA : lv_line     TYPE i,
+         lv_msg(100).
+
+  CLEAR : gt_bdcdata, gs_bdcdata.
+  " 실무에서 사용하는 이름 bdcdata
+  PERFORM dynpro USING : 'X' 'SAPBC402_PGCD_CREATE_CUSTOMER' '0100',
+                         ' ' 'BDC_OKCODE' '=SAVE',
+                         ' ' 'SCUSTOM-NAME' pa_name,
+                         ' ' 'SCUSTOM-FORM' pa_form,
+                         ' ' 'SCUSTOM-STREET' pa_strt,
+                         ' ' 'SCUSTOM-POSTCODE' pa_post,
+                         ' ' 'SCUSTOM-CITY' pa_city,
+                         ' ' 'SCUSTOM-COUNTRY' pa_ctry,
+                         ' ' 'SCUSTOM-TELEPHONE' pa_phone,
+                         ' ' 'SCUSTOM-EMAIL' pa_email.
+
+<font color ="#0000FF">*-- Set BDC Option</font>
+  gs_params-dismode  = pa_mode.
+  gs_params-updmode  = 'S'. " 동기화
+  gs_params-nobiend  = space.
+  gs_params-racommit = 'X'.
+
+<font color ="#0000FF">*-- Execute BDC by Call transaction</font>
+  CALL TRANSACTION 'BC402_CALD_CRE_CUST' USING gt_bdcdata
+                                         OPTIONS FROM gs_params
+                                         MESSAGES INTO gt_messtab.
+  " BDC 수행결과를 해당 테이블에 넣는다
+
+<font color ="#0000FF">*-- 성공여부 판별 오류 메시지를 정확하게 띄워주는 것이 중요</font>
+  CLEAR gt_messtab.
+  READ TABLE gt_messtab WITH KEY msgid = 'BC402_C62'
+                                 msgnr = '015'.
+
+  IF sy-subrc = 0.
+
+    CALL FUNCTION 'MESSAGE_TEXT_BUILD'
+      EXPORTING
+        msgid               = gt_messtab-msgid
+        msgnr               = gt_messtab-msgnr
+        msgv1               = gt_messtab-msgv1
+        msgv2               = gt_messtab-msgv2
+        msgv3               = gt_messtab-msgv3
+        msgv4               = gt_messtab-msgv4
+      IMPORTING
+        message_text_output = lv_msg.
+
+    MESSAGE s001 WITH lv_msg.
+<font color ="#0000FF">* 메시지를 변수에 담는 이유</font>
+<font color ="#0000FF">* 건수 별로 에러 메시지 성공과 실패를 라인별로 세팅해서 사용자가 볼 수 있게</font>
+  ELSE.
+
+    READ TABLE gt_messtab INDEX lines( gt_messtab ).
+
+     CALL FUNCTION 'MESSAGE_TEXT_BUILD'
+      EXPORTING
+        msgid               = gt_messtab-msgid
+        msgnr               = gt_messtab-msgnr
+        msgv1               = gt_messtab-msgv1
+        msgv2               = gt_messtab-msgv2
+        msgv3               = gt_messtab-msgv3
+        msgv4               = gt_messtab-msgv4
+      IMPORTING
+        message_text_output = lv_msg.
+
+     MESSAGE s001 WITH lv_msg DISPLAY LIKE 'E'.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form dynpro</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM dynpro  USING pv_dynpro pv_fnam pv_fval.
+
+<font color ="#0000FF">*  gs_bdcdata-dynbegin = pv_dynpro.</font>
+<font color ="#0000FF">*  gs_bdcdata-program  = pv_program.</font>
+<font color ="#0000FF">*  gs_bdcdata-dynpro   = pv_screen.</font>
+<font color ="#0000FF">*  gs_bdcdata-fnam     = pv_fnam.</font>
+<font color ="#0000FF">*  gs_bdcdata-fval     = pv_fval.</font>
+
+  CASE pv_dynpro.
+    WHEN abap_true. " Dynpro begin
+      gs_bdcdata-dynbegin = pv_dynpro. " Start screen indicator
+      gs_bdcdata-program  = pv_fnam.   " Program ID
+      gs_bdcdata-dynpro   = pv_fval.   " Screen number
+    WHEN OTHERS.    " Set Field name & value
+      gs_bdcdata-fnam = pv_fnam. " BDC Field name
+      gs_bdcdata-fval = pv_fval. " BDC Field value
+  ENDCASE.
+
+  APPEND gs_bdcdata TO gt_bdcdata.
+  CLEAR gs_bdcdata.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

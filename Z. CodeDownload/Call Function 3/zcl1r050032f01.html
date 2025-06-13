@@ -1,0 +1,96 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050032F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050032F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050032F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZCL1R050032F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_value .
+  pa_bukrs = '0001'.
+  pa_gjahr = sy-datum.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_main_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_main_data .
+  CLEAR : gt_item, gs_header, gv_message.
+  call function <a href ="zfm_cl1_05_08/zfm_cl1_05_08.html">'ZFM_CL1_05_08'</a>
+    EXPORTING
+      iv_bukrs   = pa_bukrs
+      iv_gjahr   = pa_gjahr
+    IMPORTING
+      es_header  = gs_header
+      ev_message = gv_message
+    TABLES
+      et_item    = gt_item.
+
+  IF gt_item IS INITIAL.
+    MESSAGE s005 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_main_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_main_data .
+  SELECT kostl ktext
+    FROM cskt
+    INTO CORRESPONDING FIELDS OF TABLE gt_cskt
+   WHERE spras EQ sy-langu.
+
+  SORT gt_cskt BY kostl ASCENDING.
+
+  LOOP AT gt_item INTO gs_item.
+
+    gv_tabix = sy-tabix.
+
+    READ TABLE gt_cskt INTO gs_cskt WITH KEY kostl = gs_item-kostl
+                                    BINARY SEARCH.
+    IF gs_cskt IS NOT INITIAL.
+      gs_item-ktext = gs_cskt-ktext.
+
+      MODIFY gt_item FROM gs_item INDEX gv_tabix TRANSPORTING ktext.
+
+    ENDIF.
+
+
+  ENDLOOP.
+
+  cl_demo_output=&gt;display( gt_item ).
+
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>

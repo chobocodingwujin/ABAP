@@ -1,0 +1,176 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>SAPMZC102FI0001TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: SAPMZC102FI0001TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include SAPMZC102FI0001TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include SAPMZC102FI0001TOP                       - Module Pool      SAPMZC102FI0001</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+PROGRAM sapmzc102fi0001 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zc102fit0009, zc102fit0010, zc102fit0016.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Macro</font>
+<font color ="#0000FF">**********************************************************************</font>
+DEFINE  _init.
+
+  REFRESH &1.
+  CLEAR &1.
+
+END-OF-DEFINITION.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Screen field</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_budat_to TYPE bkpf-budat,
+       gv_budat_fr TYPE bkpf-budat,
+       gv_bukrs    TYPE bkpf-bukrs,
+       gv_gjahr    TYPE bkpf-gjahr,
+       gv_belnr    TYPE bkpf-belnr,
+       gv_augdt    TYPE zc102fit0016-augdt,
+       gv_bldat    TYPE bkpf-bldat.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Class instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_base_container TYPE REF TO cl_gui_custom_container.
+
+DATA : go_split_cont      TYPE REF TO cl_gui_splitter_container,
+
+       go_top_cont        TYPE REF TO cl_gui_container,
+       go_bottom_cont     TYPE REF TO cl_gui_container,
+
+       go_top_alv_grid    TYPE REF TO cl_gui_alv_grid,
+       go_bottom_alv_grid TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- top alv</font>
+DATA : BEGIN OF gs_suspense,
+         status  TYPE icon-id,
+         bukrs   TYPE zc102fit0010-bukrs, " 회사코드
+         belnr   TYPE zc102fit0010-belnr, " 전표번호
+         gjahr   TYPE zc102fit0010-gjahr, " 회계연도
+         buzei   TYPE zc102fit0010-buzei, " 개별항목전표번호
+         saknr   TYPE zc102fit0010-saknr, " 계정과목
+         blart   TYPE zc102fit0009-blart, " 계정유형
+         budat   TYPE zc102fit0009-budat, " 전기일
+         augdt   TYPE zc102fit0010-augdt, " 반제일
+         augbl   TYPE zc102fit0010-augbl, " 반제전표번호
+         bschl   TYPE zc102fit0010-bschl, " 전기키
+         shkzg   TYPE zc102fit0010-shkzg, " 차/대지시자
+         koart   TYPE zc102fit0010-koart, " 계정유형
+         partner TYPE zc102fit0010-partner, " BP파트너
+         sgtxt   TYPE zc102fit0010-sgtxt, " 아이템텍스트
+         wrbtr   TYPE zc102fit0010-wrbtr, " 금액
+         waers   TYPE zc102fit0010-waers, " 통화키
+         bldat   TYPE zc102fit0009-bldat, " 증빙일
+         ebeln   TYPE zc102fit0010-ebeln, " 구매오더번호
+         vbeln   TYPE zc102fit0010-vbeln. " 판매오더번호
+         include structure <a href ="zc102cms0001/dictionary-zc102cms0001.html">zc102cms0001</a>.
+DATA : END OF gs_suspense.
+DATA :gt_suspense LIKE TABLE OF gs_suspense.
+
+DATA : gt_suspense_s TYPE TABLE OF zc102fit0010.
+
+DATA : BEGIN OF gs_clear,
+         bukrs   TYPE zc102fit0016-bukrs, " 회사코드
+         augbl   TYPE zc102fit0016-augbl, " 증빙일
+<font color ="#0000FF">*        미결전표번호-&gt;원전표 번호/전표번호-&gt; 반제전표번호</font>
+         belnr   TYPE zc102fit0016-belnr,
+         gjahr   TYPE zc102fit0016-gjahr, " 회계연도
+         buzei   TYPE zc102fit0016-buzei, " 개별항목전표번호
+         saknr   TYPE zc102fit0016-saknr, " 계정과목
+         budat   TYPE zc102fit0009-budat, " 전기일
+         augdt   TYPE zc102fit0016-augdt, " 반제일
+         bschl   TYPE zc102fit0016-bschl, " 전기키
+         rebzg   TYPE zc102fit0016-rebzg, " 원전표번호
+         shkzg   TYPE zc102fit0016-shkzg, " 차대지시자
+         koart   TYPE zc102fit0016-koart, " 계정유형
+         partner TYPE zc102fit0016-partner, " BP파트너
+         sgtxt   TYPE zc102fit0016-sgtxt, " 아이템텍스트
+         pdono   TYPE zc102fit0016-pdono, " 생산계획번호
+<font color ="#0000FF">*        anln1   TYPE zc102fit0016-anln1, " 주요자산번호</font>
+         wrbtr   TYPE zc102fit0016-wrbtr, " 금액
+         waers   TYPE zc102fit0016-waers, " 통화키
+<font color ="#0000FF">*        kostl   TYPE zc102fit0016-kostl, " 코스트센터</font>
+<font color ="#0000FF">*        prctr   TYPE zc102fit0016-prctr, " 프로핏센터</font>
+<font color ="#0000FF">*        mwskz   TYPE zc102fit0016-mwskz, " 세금코드</font>
+<font color ="#0000FF">*        kokrs   TYPE zc102fit0016-kokrs, " 관리회계영역</font>
+         mblnr   TYPE zc102fit0016-mblnr, " 자재문서번호
+         ebeln   TYPE zc102fit0016-ebeln, " 구매오더번호
+         vbeln   TYPE zc102fit0016-vbeln, " 판매오더번호
+         duedt   TYPE zc102fit0016-duedt. " 지급기한
+         include structure <a href ="zc102cms0001/dictionary-zc102cms0001.html">zc102cms0001</a>.
+DATA : END OF gs_clear.
+DATA : gt_clear LIKE TABLE OF gs_clear.
+
+DATA : gt_clear_s TYPE TABLE OF zc102fit0016.
+
+DATA : BEGIN OF gs_header,
+         bukrs TYPE zc102fit0009-bukrs,
+         belnr TYPE zc102fit0009-belnr,
+         gjahr TYPE zc102fit0009-gjahr,
+         blart TYPE zc102fit0009-blart,
+         bldat TYPE zc102fit0009-bldat,
+         budat TYPE zc102fit0009-budat,
+         bktxt TYPE zc102fit0009-bktxt,
+         waers TYPE zc102fit0009-waers.
+         include structure <a href ="zc102cms0001/dictionary-zc102cms0001.html">zc102cms0001</a>.
+DATA : END OF gs_header.
+DATA : gt_header LIKE TABLE OF gs_header.
+
+DATA : gt_header_s TYPE TABLE OF zc102fit0009.
+
+<font color ="#0000FF">*-- top alv catalog</font>
+DATA : gt_top_fcat    TYPE lvc_t_fcat,
+       gs_top_fcat    TYPE lvc_s_fcat,
+       gt_top_sort    TYPE lvc_t_sort,
+       gs_top_sort    TYPE lvc_s_sort,
+       gs_top_layout  TYPE lvc_s_layo,
+       gs_top_variant TYPE disvariant.
+
+<font color ="#0000FF">*-- bottom alv catalog</font>
+DATA : gt_bottom_fcat    TYPE lvc_t_fcat,
+       gs_bottom_fcat    TYPE lvc_s_fcat,
+       gt_bottom_sort    TYPE lvc_t_sort,
+       gs_bottom_sort    TYPE lvc_s_sort,
+       gs_bottom_layout  TYPE lvc_s_layo,
+       gs_bottom_variant TYPE disvariant.
+
+DATA : gs_button       TYPE stb_button.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Comman variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+RANGES : gr_budat FOR bkpf-budat,
+         gr_belnr FOR bkpf-belnr.
+
+DATA : gv_okcode TYPE sy-ucomm,
+       rb1       VALUE 'X',
+       rb2,
+       rb3.
+
+DATA: gv_number      TYPE n LENGTH 10, " 도메인의 길이에 맞게
+      gv_prefix(3),                  " PPO, PDO 등
+      gv_full_code   TYPE string,
+      gv_range_nr    TYPE inri-nrrangenr,
+      gv_quantity    TYPE inri-quantity,
+      gv_clear_belnr TYPE string.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

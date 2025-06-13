@@ -1,0 +1,121 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZCL1R050052TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZCL1R050052TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZCL1R050052TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZCL1R050052TOP                           - Report ZCL1R050052</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zcl1r050052 MESSAGE-ID zcl1msg05.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : bkpf, bseg, ekko, t001.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TAB Strip controls</font>
+<font color ="#0000FF">**********************************************************************</font>
+CONTROLS gc_tab TYPE TABSTRIP.
+
+DATA gv_subscreen TYPE sy-dynnr.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* MACRO</font>
+<font color ="#0000FF">**********************************************************************</font>
+DEFINE _init.
+
+  REFRESH &1.
+  CLEAR &1.
+
+END-OF-DEFINITION.
+
+DEFINE _ranges.
+
+  &1-sign   = &2.
+  &1-option = &3.
+  &1-low    = &4.
+  &1-high   = &5.
+
+  APPEND &1.
+
+END-OF-DEFINITION.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Class instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_container TYPE REF TO cl_gui_custom_container,
+       go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_con2 TYPE REF TO cl_gui_custom_container,
+       go_alv2 TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_con3 TYPE REF TO cl_gui_custom_container,
+       go_alv3 TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Wokr area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_bkpf,
+         bukrs TYPE bkpf-bukrs,
+         belnr TYPE bkpf-belnr,
+         gjahr TYPE bkpf-gjahr,
+         blart TYPE bkpf-blart,
+         budat TYPE bkpf-budat,
+         bktxt TYPE bkpf-bktxt,
+         waers TYPE bkpf-waers,
+       END OF gs_bkpf,
+       gt_bkpf LIKE TABLE OF gs_bkpf.
+
+DATA : BEGIN OF gs_bseg,
+         bukrs TYPE bseg-bukrs,
+         belnr TYPE bseg-belnr,
+         gjahr TYPE bseg-gjahr,
+         buzei TYPE bseg-buzei,
+         gsber TYPE bseg-gsber,
+         sgtxt TYPE bseg-sgtxt,
+         wrbtr TYPE bseg-wrbtr,
+         pswsl TYPE bseg-pswsl,
+       END OF gs_bseg,
+       gt_bseg LIKE TABLE OF gs_bseg.
+
+DATA : BEGIN OF gs_ekko,
+         ebeln TYPE ekko-ebeln,
+         bukrs TYPE ekko-bukrs,
+         bstyp TYPE ekko-bstyp,
+         bsart TYPE ekko-bsart,
+         lponr TYPE ekko-lponr,
+         lifnr TYPE ekko-lifnr,
+         ekorg TYPE ekko-ekorg,
+         ekgrp TYPE ekko-ekgrp,
+         waers TYPE ekko-waers,
+       END OF gs_ekko,
+       gt_ekko LIKE TABLE OF gs_ekko.
+
+DATA : gt_fcat    TYPE lvc_t_fcat,
+       gs_fcat    TYPE lvc_s_fcat,
+       gs_layout  TYPE lvc_s_layo,
+       gs_variant TYPE disvariant.
+
+DATA : gt_fcat2 TYPE lvc_t_fcat,
+       gs_fcat2 TYPE lvc_s_fcat.
+
+DATA : gt_fcat3 TYPE lvc_t_fcat,
+       gs_fcat3 TYPE lvc_s_fcat.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Common variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode TYPE sy-ucomm.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 754
+</font>
+</body>
+</html>
