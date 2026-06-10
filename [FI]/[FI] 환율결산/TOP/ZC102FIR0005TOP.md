@@ -1,0 +1,134 @@
+``` abap
+*&---------------------------------------------------------------------*
+*& Include ZC102FIR0005TOP                          - Report ZC102FIR0005
+*&---------------------------------------------------------------------*
+REPORT zc102fir0005 MESSAGE-ID zc102msg.
+
+**********************************************************************
+* TABLES
+**********************************************************************
+TABLES : zc102fit0009, zc102fit0010, zc102fit0015, zc102fit0016.
+
+**********************************************************************
+* CLASS INSTANCE
+**********************************************************************
+*-- 전표 조회
+DATA : go_base_cont   TYPE REF TO cl_gui_custom_container,
+       go_split_cont  TYPE REF TO cl_gui_splitter_container,
+*--------------------------------------------------------------------*
+       go_top_cont    TYPE REF TO cl_gui_container,
+       go_tsplit_cont TYPE REF TO cl_gui_splitter_container,
+       go_tleft_cont  TYPE REF TO cl_gui_container,
+       go_tright_cont TYPE REF TO cl_gui_container,
+*--------------------------------------------------------------------*
+       go_bottom_cont TYPE REF TO cl_gui_container,
+       go_bsplit_cont TYPE REF TO cl_gui_splitter_container,
+       go_btop_cont   TYPE REF TO cl_gui_container,
+       go_bbot_cont   TYPE REF TO cl_gui_container,
+*--------------------------------------------------------------------*
+       go_left_grid   TYPE REF TO cl_gui_alv_grid,
+       go_right_grid  TYPE REF TO cl_gui_alv_grid,
+       go_top_grid    TYPE REF TO cl_gui_alv_grid,
+       go_bottom_grid TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_pop_cont TYPE REF TO cl_gui_custom_container,
+       go_pop_grid TYPE REF TO cl_gui_alv_grid.
+
+**********************************************************************
+* ITAB & WA
+**********************************************************************
+*-- Open Docu Header
+DATA : BEGIN OF gs_open.
+         INCLUDE STRUCTURE zc102fit0009.
+DATA :   icon TYPE icon_d,
+       END OF gs_open,
+       gt_open LIKE TABLE OF gs_open.
+
+*-- Clear Docu Header
+DATA : BEGIN OF gs_clear.
+         INCLUDE STRUCTURE zc102fit0009.
+DATA :   ltext(10),
+         cell_tab  TYPE lvc_t_styl,
+       END OF gs_clear,
+       gt_clear LIKE TABLE OF gs_clear.
+
+*-- Docu Line
+DATA : BEGIN OF gs_line.
+         INCLUDE STRUCTURE zc102fit0010.
+DATA :   txt20 TYPE zc102fit0002-txt20,
+       END OF gs_line,
+       gt_line LIKE TABLE OF gs_line.
+
+DATA : BEGIN OF gs_clear_line.
+         INCLUDE STRUCTURE zc102fit0016.
+DATA :   txt20 TYPE zc102fit0002-txt20,
+       END OF gs_clear_line,
+       gt_clear_line LIKE TABLE OF gs_clear_line.
+
+DATA : BEGIN OF gs_pop_line.
+         INCLUDE STRUCTURE zc102fit0010.
+DATA :   txt20 TYPE zc102fit0002-txt20,
+       END OF gs_pop_line,
+       gt_pop_line LIKE TABLE OF gs_pop_line.
+
+*-- Text Data
+DATA : gt_txt20 TYPE TABLE OF zc102fit0002,
+       gs_txt20 TYPE zc102fit0002.
+
+*-- Exchange Rate
+DATA : gt_rate TYPE TABLE OF zc102fit0015,
+       gs_rate TYPE zc102fit0015.
+
+*-- For ALV
+DATA : gt_open_fcat  TYPE lvc_t_fcat,
+       gs_open_fcat  TYPE lvc_s_fcat,
+       gt_clear_fcat TYPE lvc_t_fcat,
+       gs_clear_fcat TYPE lvc_s_fcat,
+       gt_line_fcat  TYPE lvc_t_fcat,
+       gs_line_fcat  TYPE lvc_s_fcat,
+       gt_cline_fcat TYPE lvc_t_fcat,
+       gs_cline_fcat TYPE lvc_s_fcat,
+       gs_layout     TYPE lvc_s_layo,
+       gs_variant    TYPE disvariant,
+       gt_sort       TYPE lvc_t_sort,
+       gs_sort       TYPE lvc_s_sort.
+
+DATA : gt_pop_fcat TYPE lvc_t_fcat,
+       gs_pop_fcat TYPE lvc_s_fcat.
+
+**********************************************************************
+* SCREEN ELEMENT
+**********************************************************************
+DATA : gv_belnr     TYPE zc102fit0009-belnr,
+       gv_waers     TYPE zc102fit0009-waers,
+       gv_open      TYPE wrbtr,
+       gv_clear     TYPE wrbtr,
+       gv_exchange  TYPE wrbtr,
+       gv_open_cnt  TYPE i,
+       gv_clear_cnt TYPE i,
+       gv_icon      TYPE icon_d,
+       gv_krw       TYPE waers.
+
+*-- Popup
+DATA : gv_pop_open     TYPE wrbtr,
+       gv_pop_clear    TYPE wrbtr,
+       gv_pop_exchange TYPE wrbtr,
+       gv_pop_icon     TYPE icon_d,
+       gv_open_amount  TYPE wrbtr,
+       gv_clear_amount TYPE wrbtr,
+       gv_ex_amount    TYPE zc102fit0010-wrbtr,
+       gv_text(50)     TYPE c.
+
+**********************************************************************
+* COMMON VARIABLE
+**********************************************************************
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_tabix  TYPE sy-tabix,
+       gv_check  TYPE bool,
+       gv_num    TYPE zc102fit0009-belnr.
+
+*-- 환율 소수점
+DATA: gv_amount  TYPE wrbtr,
+      gv_currdec TYPE tcurx-currdec,
+      gv_divider TYPE f,
+      gv_answer.

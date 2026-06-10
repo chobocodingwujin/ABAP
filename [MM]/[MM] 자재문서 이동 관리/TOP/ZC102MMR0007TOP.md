@@ -1,0 +1,115 @@
+``` abap
+*&---------------------------------------------------------------------*
+*& Include ZC102MMR0007TOP                          - Report ZC102MMR0007
+*&---------------------------------------------------------------------*
+REPORT zc102mmr0007 MESSAGE-ID zc102msg.
+
+**********************************************************************
+* TABLES
+**********************************************************************
+TABLES : zc102mmt0012, zc102mmt0013.
+
+**********************************************************************
+* Declaration area for NODE
+**********************************************************************
+TYPES: node_table_type LIKE STANDARD TABLE OF mtreesnode
+                       WITH DEFAULT KEY.
+DATA: node_table TYPE node_table_type.
+
+**********************************************************************
+* CLASS INSTANCE
+**********************************************************************
+DATA : go_header_cont     TYPE REF TO cl_gui_docking_container,
+       go_header_grid     TYPE REF TO cl_gui_alv_grid,
+       go_line_cont       TYPE REF TO cl_gui_CUSTOM_container,
+       go_line_grid       TYPE REF TO cl_gui_alv_grid,
+
+       go_split_cont      TYPE REF TO cl_gui_splitter_container,
+       go_left_cont       TYPE REF TO cl_gui_container,
+       go_right_cont      TYPE REF TO cl_gui_container,
+
+       go_left_split_cont TYPE REF TO cl_gui_splitter_container,
+       go_left_left_cont  TYPE REF TO cl_gui_container,
+       go_left_right_cont TYPE REF TO cl_gui_container,
+
+       go_tree            TYPE REF TO cl_gui_simple_tree,
+       go_tree_grid       TYPE REF TO cl_gui_alv_grid.
+
+*-- For Chart
+DATA : go_chart    TYPE REF TO cl_gui_chart_engine.
+
+DATA : go_ixml          TYPE REF TO if_ixml,
+       go_ixml_sf       TYPE REF TO if_ixml_stream_factory,
+       go_ixml_docu     TYPE REF TO if_ixml_document,
+       go_ixml_ostream  TYPE REF TO if_ixml_ostream,
+       go_ixml_encoding TYPE REF TO if_ixml_encoding.
+
+DATA : go_chartdata  TYPE REF TO if_ixml_element,
+       go_categories TYPE REF TO if_ixml_element,
+       go_category   TYPE REF TO if_ixml_element,
+       go_series     TYPE REF TO if_ixml_element,
+       go_point      TYPE REF TO if_ixml_element,
+       go_value      TYPE REF TO if_ixml_element.
+
+**********************************************************************
+* Declaration area for Tree event
+**********************************************************************
+DATA: events TYPE cntl_simple_events,
+      event  TYPE cntl_simple_event.
+
+**********************************************************************
+* Internal table and Work area
+**********************************************************************
+*-- 자재문서 Header
+DATA : BEGIN OF gs_header.
+         INCLUDE STRUCTURE zc102mmt0012.
+DATA : bwart_name(10),
+       END OF gs_header,
+       gt_header LIKE TABLE OF gs_header.
+
+*-- 자재문서 Line
+DATA : BEGIN OF gs_line.
+         INCLUDE STRUCTURE zc102mmt0013.
+DATA : END OF gs_line,
+gt_line LIKE TABLE OF gs_line.
+
+*-- For Chart
+DATA : BEGIN OF gs_chart,
+         bwart TYPE zc102mmt0012-bwart,
+         ryear TYPE zc102mmt0012-ryear,
+         cnt   TYPE i,
+       END OF gs_chart,
+       gt_chart LIKE TABLE OF gs_chart.
+
+*-- For F4
+DATA : BEGIN OF gs_mblnr,
+         mblnr TYPE zc102mmt0012-mblnr,
+       END OF gs_mblnr,
+       gt_mblnr LIKE TABLE OF gs_mblnr.
+
+*-- For ALV
+DATA : gs_header_fcat   TYPE lvc_s_fcat,
+       gt_header_fcat   TYPE lvc_t_fcat,
+       gs_header_layout TYPE lvc_s_layo,
+       gs_line_fcat     TYPE lvc_s_fcat,
+       gt_line_fcat     TYPE lvc_t_fcat,
+       gs_line_layout   TYPE lvc_s_layo,
+       gs_variant       TYPE disvariant.
+
+*-- For TREE
+DATA : BEGIN OF gs_tree,
+         ryear      TYPE zc102mmt0012-ryear,
+         bwart      TYPE zc102mmt0012-bwart,
+         stlno      TYPE zc102mmt0012-stlno,
+         werks      TYPE zc102mmt0012-werks,
+         bwart_name TYPE dd07t-ddtext,
+       END OF gs_tree,
+       gt_tree LIKE TABLE OF gs_tree.
+
+**********************************************************************
+* Global variable
+**********************************************************************
+DATA : gv_okcode TYPE sy-ucomm.
+
+*-- For Chart
+DATA : gv_xstring TYPE xstring.
