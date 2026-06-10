@@ -1,0 +1,164 @@
+<mvc:View controllerName="anln1display.anln1display.controller.anln1_detail"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.m"
+    xmlns:grid="sap.ui.layout.cssgrid"
+    xmlns:f="sap.f"
+    xmlns:dnd="sap.ui.core.dnd"
+    xmlns:dnd-grid="sap.f.dnd"
+    xmlns:viz="sap.viz.ui5.controls"
+    xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds"
+    xmlns:viz.data="sap.viz.ui5.data"
+    xmlns:micro="sap.suite.ui.microchart">
+    <Page id="page2" title="설비 상세">
+        <Panel id="panelForGridList" backgroundDesign="Transparent">
+            <headerToolbar>
+                <Toolbar height="3rem">
+                    <Title text="{logModel>/Anln1}({logModel>/Txt50}) 상세"/>
+                </Toolbar>
+            </headerToolbar>
+
+            <f:GridList id="gridList" headerText="대시 보드" items="{logModel>/items}">
+
+                <f:dragDropConfig>
+                    <dnd:DragInfo sourceAggregation="items" />
+                    <dnd-grid:GridDropInfo targetAggregation="items" dropPosition="Between" dropLayout="Horizontal" drop="onDrop" />
+                </f:dragDropConfig>
+
+                <f:customLayout>
+                    <grid:GridBoxLayout boxMinWidth="17rem" />
+                </f:customLayout>
+
+                <f:GridListItem counter="{counter}" highlight="{logModel>highlight}" type="{logModel>type}" unread="{logModel>unread}">
+                    <VBox height="100%">
+                        <VBox class="sapUiSmallMargin">
+                            <layoutData>
+                                <FlexItemData growFactor="1" shrinkFactor="0" />
+                            </layoutData>
+
+                            <Title text="{logModel>Name1}" wrapping="true" />
+                            <Label text="{logModel>Wrbtr}" wrapping="true" />
+                        </VBox>
+                    </VBox>
+                </f:GridListItem>
+            </f:GridList>
+        </Panel>
+
+        <Panel backgroundDesign="Transparent">
+            <VBox >
+                <HBox justifyContent="SpaceBetween" alignItems="Center" width="100%">
+                    <!-- 왼쪽 요소 묶음 -->
+                    <HBox id="chooseList" alignItems="Center">
+                        <VBox class="sapUiSmallMarginEnd" visible="{logModel>/view}">
+                            <Label text="연도" labelFor="yearInput" />
+                            <Input id="yearInput" placeholder="예: 2024" showValueHelp="true" valueHelpRequest="onYearHelpPress" submit="onYearSubmit" width="10rem" />
+                        </VBox>
+                        <VBox>
+                            <Label text="차트 유형 선택" labelFor="chartTypeSelect" />
+                            <Select id="chartTypeSelect" change="onChartTypeChange">
+                                <items>
+                                    <core:Item key="column" text="막대 차트" />
+                                    <core:Item key="line" text="선형 차트" />
+                                </items>
+                            </Select>
+                        </VBox>
+                    </HBox>
+
+                    <!-- 오른쪽 실행 버튼 -->
+                    <HBox justifyContent="End" alignItems="Center" width="100%">
+                        <SegmentedButton id="viewModeSelector" selectionChange="onViewModeChange">
+                            <items>
+                                <SegmentedButtonItem key="year" text="년" />
+                                <SegmentedButtonItem key="month" text="월" />
+                            </items>
+                        </SegmentedButton>
+                    </HBox>
+                </HBox>
+                <viz:VizFrame id="idLineFrame" uiConfig="{applicationSet:'fiori'}" height="30rem" width="100%" vizType='column' vizProperties="{
+                                                                                                                                            title:{text:'연도별 감가상각비 누계'},
+                                                                                                                                            legend:{drawingEffect:'glossy'},
+                                                                                                                                            plotArea:{drawingEffect:'glossy'}
+                                                                                                                                            }">
+                    <viz:dataset>
+                        <viz.data:FlattenedDataset data="{logModel>/yearlyData}">
+                            <viz.data:dimensions>
+                                <viz.data:DimensionDefinition name="년" value="{Year}" />
+                            </viz.data:dimensions>
+                            <viz.data:measures>
+                                <viz.data:MeasureDefinition name="취득가액" value="{Remain}" />
+                            </viz.data:measures>
+                            <viz.data:measures>
+                                <viz.data:MeasureDefinition name="장부가액" value="{Wrbtr}" />
+                            </viz.data:measures>
+                        </viz.data:FlattenedDataset>
+                    </viz:dataset>
+
+                    <viz:feeds>
+                        <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="취득가액" />
+                        <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="장부가액" />
+                        <viz.feeds:FeedItem uid="categoryAxis" type="Dimension" values="년" />
+                    </viz:feeds>
+
+                    <viz:dependents>
+                        <viz:Popover id="idPopOver" />
+                    </viz:dependents>
+
+                </viz:VizFrame>
+
+            </VBox>
+            <HBox>
+
+                <viz:VizFrame id="idLineFrame2" uiConfig="{applicationSet:'fiori'}" height="30rem" width="38.5rem" vizType='donut' vizProperties="{
+                                                                                                                                    title:{text:'연도별 감가상각비 비교'},
+                                                                                                                                    legend:{drawingEffect:'glossy'},
+                                                                                                                                    plotArea:{drawingEffect:'glossy'}
+                                                                                                                                }">
+                    <viz:dataset>
+                        <viz.data:FlattenedDataset data="{logModel>/yearlyData}">
+                            <viz.data:dimensions>
+                                <viz.data:DimensionDefinition name="년" value="{Year}" />
+                            </viz.data:dimensions>
+                            <viz.data:measures>
+                                <viz.data:MeasureDefinition name="감가상각비" value="{Wrbtr}" />
+                            </viz.data:measures>
+                        </viz.data:FlattenedDataset>
+                    </viz:dataset>
+
+                    <viz:feeds>
+                        <viz.feeds:FeedItem uid="size" type="Measure" values="감가상각비" />
+                        <viz.feeds:FeedItem uid="color" type="Dimension" values="년" />
+                    </viz:feeds>
+
+                    <viz:dependents>
+                        <viz:Popover id="idPopOver2" />
+                    </viz:dependents>
+                </viz:VizFrame>
+                <viz:VizFrame id="idLineFrame3" uiConfig="{applicationSet:'fiori'}" height="30rem" width="38.5rem" vizType='donut' vizProperties="{
+                                                                                                                                    title:{text:'금액 비교'},
+                                                                                                                                    legend:{drawingEffect:'glossy'},
+                                                                                                                                    plotArea:{drawingEffect:'glossy'}
+                                                                                                                                }">
+                    <viz:dataset>
+                        <viz.data:FlattenedDataset data="{logModel>/donut}">
+                            <viz.data:dimensions>
+                                <viz.data:DimensionDefinition name="대상" value="{Name1}" />
+                            </viz.data:dimensions>
+                            <viz.data:measures>
+                                <viz.data:MeasureDefinition name="금액" value="{Wrbtr}" />
+                            </viz.data:measures>
+                        </viz.data:FlattenedDataset>
+                    </viz:dataset>
+
+                    <viz:feeds>
+                        <viz.feeds:FeedItem uid="size" type="Measure" values="금액" />
+                        <viz.feeds:FeedItem uid="color" type="Dimension" values="대상" />
+                    </viz:feeds>
+
+                    <viz:dependents>
+                        <viz:Popover id="idPopOver3" />
+                    </viz:dependents>
+                </viz:VizFrame>
+            </HBox>
+        </Panel>
+    </Page>
+</mvc:View>

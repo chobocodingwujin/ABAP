@@ -1,0 +1,192 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0003I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+
+
+  IF gv_save_flag IS NOT INITIAL.
+    PERFORM popup_to_confirm_back CHANGING gv_answer.
+    IF gv_answer <> '1'.
+      EXIT.
+    ENDIF.
+  ENDIF.
+
+  CALL METHOD : go_alv_grid->free,
+                go_tab_grid1->free,
+                go_tab_grid2->free,
+                go_tab_grid3->free,
+                go_container->free,
+                go_tab_cont1->free,
+                go_tab_cont2->free,
+                go_tab_cont3->free.
+
+
+  FREE : go_alv_grid, go_tab_grid1, go_tab_grid2, go_tab_grid3,
+         go_container, go_tab_cont1, go_tab_cont2, go_tab_cont3.
+
+  LEAVE TO SCREEN 0.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+  CASE gv_okcode.
+    WHEN 'SRCH'.
+      PERFORM set_data.
+      PERFORM get_plant_data.
+      PERFORM make_display_body.        " 창고 번호에 따라 plant 마스터에서 w.c 번호와 plant 번호  세팅해주기
+      PERFORM set_sort_b.
+      PERFORM count_data.
+      PERFORM show_message.           " 메세지 띄우기
+      PERFORM refresh_table.
+    WHEN  'SAVE'.
+      PERFORM save_data.
+*    WHEN 'RFSH'.
+*      PERFORM refresh_screen.
+*      MESSAGE s017.
+    WHEN OTHERS.
+      gc_tab-activetab = gv_okcode.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_POP  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_pop_2 INPUT.
+
+*-- 사원정보 초기화
+  CLEAR : zc102hrt0002-empnam ,zc102hrt0002-empno,
+          gv_empno_inserted, gv_lock.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0110  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0110 INPUT.
+
+  CASE gv_okcode.
+    WHEN 'REASO'.
+      PERFORM save_reason.
+    WHEN 'ENTER'.
+      IF zc102hrt0002-empno IS NOT INITIAL.
+        gv_lock = abap_true.
+      ENDIF.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CUST_F4_PLONO  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE cust_f4_plono INPUT.
+
+  IF zc102ppt0006-plono IS INITIAL.
+    PERFORM set_search_help_plono.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_POP_REJECT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_pop_reject INPUT.
+
+  CALL METHOD : go_text_edit->free,
+                  go_text_cont->free.
+
+  FREE : go_text_edit, go_text_cont.
+
+  CLEAR : gt_text, gs_text.
+
+  LEAVE TO SCREEN 0.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0130  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0130 INPUT.
+
+  CASE gv_okcode.
+    WHEN 'SAVE'.
+      PERFORM save_text.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CUST_F4_EMPNAM  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE cust_f4_empno INPUT.
+
+  IF zc102hrt0002-empno  IS INITIAL.
+    PERFORM set_search_help_empno.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_POP  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_pop INPUT.
+
+
+  CALL METHOD : go_pop_grid->free,
+                go_pop_cont->free.
+
+  FREE : go_pop_grid, go_pop_cont.
+
+  CLEAR : zc102hrt0002-empnam ,zc102hrt0002-empno , gt_pop,  gv_lock.
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0140  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0140 INPUT.
+  CASE gv_okcode.
+    WHEN 'CONT'.
+      PERFORM write_who. "승인 시 사원정보 입력
+    WHEN 'ENTER'.
+      IF zc102hrt0002-empno IS NOT INITIAL.
+        gv_lock = abap_true.
+      ENDIF.
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_TEXT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_text INPUT.
+
+  CALL METHOD : go_text_edit->free,
+                  go_text_cont->free.
+
+  FREE : go_text_edit, go_text_cont.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

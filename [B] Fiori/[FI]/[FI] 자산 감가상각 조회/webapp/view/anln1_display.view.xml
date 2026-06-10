@@ -1,0 +1,62 @@
+<mvc:View controllerName="anln1display.anln1display.controller.anln1_display"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:table="sap.ui.table"
+    xmlns:u="sap.ui.unified"
+    xmlns:c="sap.ui.core"
+    xmlns:sfb="sap.ui.comp.smartfilterbar"
+    xmlns:smartTable="sap.ui.comp.smarttable"
+    xmlns:sv="sap.ui.comp.smartvariants">
+    <Page id="page" title="설비 조회">
+        <f:DynamicPage id="dynamicPage" fitContent="true">
+            <f:header>
+                <f:DynamicPageHeader>
+                    <f:dependents>
+                        <c:CommandExecution command="Enter" enabled="true" />
+                    </f:dependents>
+                    <sfb:SmartFilterBar search="cmd:Enter" id="smartFilterBar" entitySet="Anln1Set" filterBarExpanded="true" enableBasicSearch="false" basicSearchFieldName="Anln1" persistencyKey="anln1_display">
+                        <sfb:customData>
+                            <c:CustomData key="defaultFilterBarExpanded" value='{"Bukrs": "true"}'/>
+                            <c:CustomData key="defaultShowAllFilters" value='{"Bukrs": "true"}'/>
+                            <c:CustomData key="defaultFilterBarExpanded" value='{"Anln1": "true"}'/>
+                            <c:CustomData key="defaultShowAllFilters" value='{"Anln1": "true"}'/>
+                        </sfb:customData>
+                    </sfb:SmartFilterBar>
+                </f:DynamicPageHeader>
+            </f:header>
+            <f:content>
+                <smartTable:SmartTable id="bpTable" header="설비 자산" entitySet="Anln1Set" smartFilterId="smartFilterBar" tableType="ResponsiveTable" enableExport="true" beforeExport="onBeforeExport" showFullScreenButton="true" useVariantManagement="false" enableAutoColumnWidth="false" useTablePersonalisation="true" showRowCount="true">
+
+                    <!-- 레이아웃 정보 -->
+                    <smartTable:layoutData>
+                        <FlexItemData growFactor="1" baseSize="0%"/>
+                    </smartTable:layoutData>
+
+                    <!-- 커스텀 필터 -->
+                    <smartTable:customData>
+                        <c:CustomData key="defaultShowAllFilters" value='{"Bukrs": "true", "Anln1": "true"}'/>
+                        <c:CustomData key="defaultFilterBarExpanded" value='{"Bukrs": "true", "Anln1": "true"}'/>
+                    </smartTable:customData>
+
+                    <!-- 툴바 영역 -->
+                    <smartTable:customToolbar>
+                        <OverflowToolbar design="Transparent">
+                            <ToolbarSpacer/>
+                            <!-- <OverflowToolbarButton icon="sap-icon://write-new" tooltip="Create" press="onCreate"/> -->
+                        </OverflowToolbar>
+                    </smartTable:customToolbar>
+
+                    <!-- ✅ 여기부터 커스텀 컬럼 및 셀 추가 -->
+                    <Table>
+                        <ColumnListItem type="Navigation" press="onRowPress">
+                            <cells>
+                            </cells>
+                        </ColumnListItem>
+
+                    </Table>
+                </smartTable:SmartTable>
+            </f:content>
+        </f:DynamicPage>
+    </Page>
+</mvc:View>

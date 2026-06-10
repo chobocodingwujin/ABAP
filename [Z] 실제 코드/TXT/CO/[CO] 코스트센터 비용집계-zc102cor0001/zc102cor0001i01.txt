@@ -1,0 +1,68 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102COR0001I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+  CALL METHOD : go_left_grid->free,
+                go_right_grid->free,
+*--------------------------------------------------------------------*
+                go_left_cont->free,
+                go_right_cont->free,
+                go_bot_cont->free,
+                go_top_split_cont->free,
+*--------------------------------------------------------------------*
+                go_top_base_cont->free,
+                go_split_cont->free,
+                go_base_cont->free.
+
+  FREE : go_left_grid, go_right_grid,
+         go_left_cont, go_right_cont,
+         go_bot_cont, go_top_split_cont,
+         go_split_cont, go_base_cont.
+  LEAVE TO SCREEN 0.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_TREE  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_tree INPUT.
+  CALL METHOD : go_tree->free, go_tree_cont->free.
+  FREE : go_tree, go_tree_cont.
+  LEAVE TO SCREEN 0.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+  CASE gv_okcode.
+    WHEN 'FRST'.
+      CALL TRANSACTION 'ZC102COR0003'.
+    WHEN 'SCND'.
+      CALL TRANSACTION 'ZC102COR0002'.
+    WHEN OTHERS.
+  ENDCASE.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+  CASE gv_okcode.
+    WHEN 'FRST'.
+      CALL TRANSACTION 'ZC102COR0003'.
+    WHEN 'SCND'.
+      CALL TRANSACTION 'ZC102COR0002'.
+    WHEN OTHERS.
+  ENDCASE.
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

@@ -1,0 +1,81 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0023I01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0023I01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0023I01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102FIR0023I01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  EXIT_0100  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE exit_0100 INPUT.
+
+  CALL METHOD : go_alv_grid-&gt;free,
+                go_bottom_cont-&gt;free,
+                go_top_cont-&gt;free,
+                go_split_cont2-&gt;free,
+                go_chart_cont-&gt;free,
+                go_alv_cont-&gt;free,
+                go_split_cont-&gt;free,
+                go_container-&gt;free,
+                go_html_cntrl-&gt;free,
+                go_page_cont-&gt;free.
+
+  FREE : go_alv_grid,
+         go_chart2, go_chart,
+         go_bottom_cont,
+         go_top_cont,
+         go_split_cont2,
+         go_chart_cont,
+         go_alv_cont,
+         go_split_cont,
+         go_container,
+         go_html_cntrl,
+         go_page_cont.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  EXIT_0200  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE exit_0200 INPUT.
+
+  CALL METHOD : go_tree-&gt;free,
+                go_container-&gt;free.
+
+  FREE : go_tree, go_container.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  USER_COMMAND_0200  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE user_command_0200 INPUT.
+
+  CASE gv_okcode.
+    WHEN 'PDF'.
+      PERFORM excel_job.
+  ENDCASE.
+
+ENDMODULE.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

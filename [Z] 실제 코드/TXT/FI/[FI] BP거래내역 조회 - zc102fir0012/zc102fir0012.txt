@@ -1,0 +1,92 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102FIR0012
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102fir0012top                         .    " Global Data
+
+INCLUDE zc102fir0012s01                         .  " Selection screen
+INCLUDE zc102fir0012c01                         .  " Event
+INCLUDE zc102fir0012o01                         .  " PBO-Modules
+INCLUDE zc102fir0012i01                         .  " PAI-Modules
+INCLUDE zc102fir0012f01                         .  " FORM-Routines
+
+**********************************************************************
+* INITIALIZATION
+**********************************************************************
+INITIALIZATION.
+  PERFORM set_init_value.
+
+**********************************************************************
+* AT SELECTION-SCREEN
+**********************************************************************
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR pa_btype.
+  PERFORM f4_btype.
+
+**********************************************************************
+* AT SELECTION-SCREEN OUTPUT
+**********************************************************************
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM set_init_screen.
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+  gv_text = '고객 코드'.
+  gv_datum = sy-datum.
+
+*-- 조건 별 데이터 조회
+  PERFORM get_base_data.
+*-- BP 데이터 조회
+  PERFORM get_partner_data.
+*-- 출력 데이터 설정(아이콘, 색 등)
+  PERFORM set_screen_data.
+
+  CASE pa_btype.
+    WHEN 'C'.
+      CALL SCREEN 100.
+    WHEN 'V'.
+      CALL SCREEN 200.
+  ENDCASE.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> 비즈니스 파트너 거래 내역 조회
+* TITLE200 --> 벤더 거래내역 조회
+
+*Text elements
+*----------------------------------------------------------
+* T01 BP 선택
+* T02 개별 항목 선택
+* T03 상태
+* T04 유형
+* T05 리스트 출력
+
+
+*Selection texts
+*----------------------------------------------------------
+* PA_ALL         모든 항목
+* PA_BPART         비즈니스 파트너
+* PA_BTYPE         BP 타입
+* PA_BUKRS         회사 코드
+* PA_CLEAR         반제항목
+* PA_GJAHR D       .
+* PA_LAYO         레이아웃
+* PA_MAXR         최대 항목 수
+* PA_OPEN         미결항목
+* SO_BUDAT         전기일
+* SO_CDATE D       .
+* SO_IDAT2         미결 주요 일자
+* SO_IDATE         미결 주요 일자
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*004   데이터가 존재하지 않습니다
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

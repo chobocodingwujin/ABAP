@@ -1,0 +1,470 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102SDR0001F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102SDR0001F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102SDR0001F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102SDR0001F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form search_clicked_node_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; NODE_KEY</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM search_clicked_node_info  USING    p_node_key.
+
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_tree_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_tree_info .
+
+  SELECT *
+    INTO CORRESPONDING FIELDS OF TABLE gt_forcast
+    FROM zc102sdt0008
+   ORDER BY year_sd quart_sd month_sd matnr.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_alv_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_alv_info .
+
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+
+  IF go_left_cont IS NOT BOUND.
+
+<font color ="#0000FF">*    CLEAR : gt_fcat, gs_fcat.</font>
+<font color ="#0000FF">*    PERFORM set_fcat USING : 'X' 'YEAR_SD' 'ZC102SDT0008' 'C' ' '.</font>
+
+
+    PERFORM create_object.
+    PERFORM register_tree_event.
+    PERFORM build_node.
+
+    CALL METHOD go_tree-&gt;add_nodes
+      EXPORTING
+        table_structure_name = 'MTREESNODE'
+        node_table           = node_table.
+
+    CALL METHOD go_tree-&gt;expand_node
+      EXPORTING
+        node_key = 'ROOT'.
+
+    PERFORM set_layout.
+
+<font color ="#0000FF">*    CALL METHOD go_alv_grid-&gt;set_table_for_first_display</font>
+<font color ="#0000FF">*      EXPORTING</font>
+<font color ="#0000FF">*        i_save          = 'A'</font>
+<font color ="#0000FF">*        i_default       = 'X'</font>
+<font color ="#0000FF">*        is_layout       = gs_layout</font>
+<font color ="#0000FF">*      CHANGING</font>
+<font color ="#0000FF">*        it_outtab       = gt_forcast</font>
+<font color ="#0000FF">*        it_fieldcatalog = gt_fcat.</font>
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_fcat  USING  pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat-key       = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+
+  CREATE OBJECT go_container
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = cl_gui_docking_container=&gt;dock_at_left
+      extension = 5000.
+
+  CREATE OBJECT go_base_cont
+    EXPORTING
+      parent        = go_container
+      orientation   = 1 " 0 : Vertical, 1 : Horizontal
+      sash_position = 20
+      with_border   = 1.
+
+<font color ="#0000FF">*-- Assign container</font>
+  go_left_cont   = go_base_cont-&gt;top_left_container.
+  go_right_cont  = go_base_cont-&gt;bottom_right_container.
+
+  CREATE OBJECT go_tree
+    EXPORTING
+      parent              = go_left_cont
+      node_selection_mode = cl_gui_simple_tree=&gt;node_sel_mode_single.
+
+<font color ="#0000FF">*-- Assign Chart</font>
+
+  CREATE OBJECT go_chart
+    EXPORTING
+      parent = go_right_cont.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form register_tree_event</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM register_tree_event .
+
+
+  event-eventid = cl_gui_simple_tree=&gt;eventid_node_double_click.
+  event-appl_event = 'X'.
+  APPEND event TO events.
+
+  CALL METHOD go_tree-&gt;set_registered_events
+    EXPORTING
+      events                    = events
+    EXCEPTIONS
+      cntl_error                = 1
+      cntl_system_error         = 2
+      illegal_event_combination = 3
+      OTHERS                    = 4.
+
+  IF sy-subrc &lt;&gt; 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  SET HANDLER lcl_tree_event_handler=&gt;handle_node_double_click FOR go_tree.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form build_node</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM build_node .
+
+
+  DATA: node    TYPE mtreesnode,
+        lv_year TYPE zc102sdt0008-year_sd,
+        lv_text(10).
+
+<font color ="#0000FF">*-- 루트 노드</font>
+  node-node_key   = 'ROOT'.
+  node-text       = '수요예측'.
+  node-isfolder   = 'X'.
+<font color ="#0000FF">*  node-n_image    = '@06@'.   " 접은 이미지</font>
+<font color ="#0000FF">*  node-exp_image  = '@07@'.   " 펼친 이미지</font>
+  node-n_image    = '@04@'.    " 접은 이미지
+  node-exp_image  = '@05@'.    " 펼친 이미지
+  APPEND node TO node_table.
+  CLEAR node.
+
+<font color ="#0000FF">*-- gt_forcast를 순회하면서 각 노드를 생성해서 붙여주는 듯!</font>
+  LOOP AT gt_forcast INTO gs_forcast.
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+    ON CHANGE OF gs_forcast-year_sd.
+      MOVE gs_forcast-year_sd TO lv_year.
+
+      lv_text = gs_forcast-year_sd.
+
+      node-node_key  = gs_forcast-year_sd.
+      node-relatkey  = 'ROOT'.
+      node-isfolder  = 'X'.
+<font color ="#0000FF">*      node-n_image   = '@06@'.</font>
+<font color ="#0000FF">*      node-exp_image = '@07@'.</font>
+      node-n_image   = '@04@'. " 접은 이미지
+      node-exp_image = '@05@'. " 펼친 이미지
+      node-text = lv_text.
+      APPEND node TO node_table.
+      CLEAR node.
+    ENDON.
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+    ON CHANGE OF gs_forcast-quart_sd.
+      IF gs_forcast-quart_sd IS NOT INITIAL.
+        node-node_key = gs_forcast-quart_sd.
+        node-text = gs_forcast-quart_sd.
+        node-relatkey = gs_forcast-year_sd.
+        node-isfolder = 'X'.
+        node-n_image   = '@04@'. " 접은 이미지
+        node-exp_image = '@05@'. " 펼친 이미지
+        APPEND node TO node_table.
+        CLEAR: node.
+      ENDIF.
+    ENDON.
+
+    IF gs_forcast-month_sd IS NOT INITIAL.
+      node-node_key = gs_forcast-month_sd.
+      node-text = gs_forcast-month_sd.
+      node-relatkey = gs_forcast-quart_sd.
+      node-isfolder = ' '.
+      APPEND node TO node_table.
+      CLEAR: node, gs_forcast.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+  gs_layout = VALUE #( zebra      = abap_true
+                     cwidth_opt = 'A'
+                     sel_mode   = 'D' ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_chart</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_chart .
+
+  PERFORM set_chart_data.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_chart_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_chart_data .
+
+  CLEAR : go_ixml,
+          go_ixml_sf,
+          go_ixml_docu,
+          go_ixml_ostream,
+          go_ixml_encoding,
+          go_chartdata,
+          go_categories,
+          go_category,
+          go_series,
+          go_point,
+          go_value.
+
+  CLEAR : gv_xstring.
+
+  go_ixml = cl_ixml=&gt;create(  ).
+  go_ixml_sf = go_ixml-&gt;create_stream_factory( ).
+
+  go_ixml_docu = go_ixml-&gt;create_document( ).
+
+  go_ixml_encoding = go_ixml-&gt;create_encoding(
+                       byte_order    = if_ixml_encoding=&gt;co_little_endian
+                       character_set = 'utf-8' ).
+
+  go_ixml_docu-&gt;set_encoding( encoding = go_ixml_encoding ).
+
+<font color ="#0000FF">*-- Now build a DOM, representing an XML document with chart data</font>
+  go_chartdata = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'ChartData'
+                                        parent = go_ixml_docu ).
+
+<font color ="#0000FF">*-- Categories (parent)</font>
+  go_categories = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'Categories'
+                                        parent = go_chartdata ).
+
+  PERFORM set_category_value.
+  PERFORM set_chart_value.
+  PERFORM design_mode.
+
+  go_chart-&gt;set_data( xdata = gv_xstring ).
+  go_chart-&gt;render( ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_category_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_category_value .
+
+  DATA : lv_value TYPE string.
+
+<font color ="#0000FF">*-- Categories (children)</font>
+  go_category = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'Category'
+                                        parent = go_categories ).
+  go_category-&gt;if_ixml_node~set_value( 'Capacity' ). " SeatsMax
+
+
+  go_category = go_ixml_docu-&gt;create_simple_element(
+                                      name   = 'Category'
+                                      parent = go_categories ).
+  go_category-&gt;if_ixml_node~set_value( 'Occupied' ). " SeatsOcc
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_chart_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_chart_value .
+
+  DATA : lv_value TYPE string.
+
+  LOOP AT gt_forcast INTO gs_forcast.
+
+    lv_value = gs_forcast-month_sd.
+
+<font color ="#0000FF">*-- Build series (we need only 1)</font>
+    go_series = go_ixml_docu-&gt;create_simple_element(
+                                                      name = 'Series'
+                                                      parent = go_chartdata ).
+    go_series-&gt;set_attribute( name  = 'label'
+                              value = lv_value ). "'Series1' ).
+
+<font color ="#0000FF">*-- Seatsmax category</font>
+    lv_value = gs_forcast-mppos.
+
+    go_point = go_ixml_docu-&gt;create_simple_element(
+                                                    name = 'Point'
+                                                    parent = go_series ).
+    go_point-&gt;set_attribute( name  = 'label'
+                             value = lv_value ).
+
+    go_value = go_ixml_docu-&gt;create_simple_element(
+                                                    name = 'Value'
+                                                    parent = go_point ).
+
+    go_value-&gt;if_ixml_node~set_value( lv_value ).
+
+<font color ="#0000FF">*-- Seatsocc category</font>
+    lv_value = gs_forcast-kwmeng.
+
+    go_point = go_ixml_docu-&gt;create_simple_element(
+                                                    name = 'Point'
+                                                    parent = go_series ).
+    go_point-&gt;set_attribute( name  = 'label'
+                             value = lv_value ).
+
+    go_value = go_ixml_docu-&gt;create_simple_element(
+                                                    name = 'Value'
+                                                    parent = go_point ).
+
+    go_value-&gt;if_ixml_node~set_value( lv_value ).
+
+  ENDLOOP.
+
+<font color ="#0000FF">*-- create ostream (into string variable) and render document into stream</font>
+  go_ixml_ostream = go_ixml_sf-&gt;create_ostream_xstring( gv_xstring ).
+  go_ixml_docu-&gt;render( go_ixml_ostream ). "here f_xstring is filled
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form design_mode</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM design_mode .
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Chart type : Only Columns and Lines</font>
+<font color ="#0000FF">**********************************************************************</font>
+  DATA: l_win_chart   TYPE REF TO cl_gui_chart_engine_win,
+        g_design_mode.
+
+  CATCH SYSTEM-EXCEPTIONS move_cast_error = 1.
+    l_win_chart ?= go_chart-&gt;get_control( ).
+  ENDCATCH.
+
+  IF sy-subrc IS INITIAL.
+
+    l_win_chart-&gt;set_design_mode( flag = g_design_mode event = 'X' ).
+    l_win_chart-&gt;restrict_property_events( events = 'ChartType' ).
+
+    l_win_chart-&gt;restrict_chart_types( charttypes = 'Lines' ).
+
+  ENDIF.
+
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

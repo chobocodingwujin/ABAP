@@ -1,0 +1,66 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102MMR0008
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102mmr0008top                         .  " Global Data
+INCLUDE zc102mmr0008s01                         .  " Selection screen
+INCLUDE zc102mmr0008c01                         .  " EVENT
+INCLUDE zc102mmr0008o01                         .  " PBO-Modules
+INCLUDE zc102mmr0008i01                         .  " PAI-Modules
+INCLUDE zc102mmr0008f01                         .  " FORM-Routines
+
+
+**********************************************************************
+*INITIALIZATION
+**********************************************************************
+INITIALIZATION.
+  PERFORM set_init_value.
+
+**********************************************************************
+* AT SELECTION-SCREEN
+**********************************************************************
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR so_ebeln-low.
+  PERFORM f4_ebeln.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR so_ebeln-high.
+  PERFORM f4_ebeln.
+
+**********************************************************************
+*START-OF-SELECTION.
+**********************************************************************
+START-OF-SELECTION.
+  PERFORM get_base_data.
+  PERFORM set_status_data.
+  PERFORM screen_display.          "TOP OF PAGE
+
+  CALL SCREEN 100.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> [MM] 구매오더 조회
+
+*Text elements
+*----------------------------------------------------------
+* E01
+* L00 전체
+* T01 구매오더 조회 조건
+
+
+*Selection texts
+*----------------------------------------------------------
+* SO_BP D       .
+* SO_EBELN D       .
+* SO_PODAT D       .
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*000   &
+*YPE
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

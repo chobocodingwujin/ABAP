@@ -1,0 +1,92 @@
+*&---------------------------------------------------------------------*
+*& Include          ZRMMT0014F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form get_base_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_base_data .
+
+  SELECT * INTO CORRESPONDING FIELDS OF TABLE gt_body
+    FROM zc102mmt0014
+    WHERE werks IN so_werks.
+
+  IF gt_body IS INITIAL.
+    MESSAGE s037 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat = VALUE #( key        = pv_key
+                     fieldname  = pv_field
+                     ref_table  = pv_table
+                     just       = pv_just
+                     emphasize  = pv_emph ).
+
+  CASE pv_field.
+    WHEN 'MENGE'.
+      gs_fcat = VALUE #( BASE gs_fcat qfieldname = 'MEINS' ).
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout .
+
+  gs_layout = VALUE #( zebra      = abap_true
+                       cwidth_opt = 'A'
+                       sel_mode   = 'D' ).
+
+  gs_variant = VALUE #( report  = sy-repid
+                        handle  = 'ALV1' ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      side      = cl_gui_docking_container=>dock_at_left
+      extension = 5000.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

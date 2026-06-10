@@ -1,0 +1,59 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102SDR0007</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102SDR0007</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [SD] 일반 배송관리</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102SDR0007</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zc102sdr0007top.html">zc102sdr0007top</a>.    " Global Data
+
+include <a href ="zc102sdr0007c01.html">zc102sdr0007c01</a>.  " ALV Events
+include <a href ="zc102sdr0007o01.html">zc102sdr0007o01</a>.  " PBO-Modules
+include <a href ="zc102sdr0007i01.html">zc102sdr0007i01</a>.  " PAI-Modules
+include <a href ="zc102sdr0007f01.html">zc102sdr0007f01</a>.  " FORM-Routines
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+  PERFORM get_f4_data.
+  CALL SCREEN 100.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* TITLE100 --&gt; 일반 배송관리</font>
+<font color ="#0000FF">* TITLE110 --&gt; 배송정보 입력</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* T01 배송정보 입력</font>
+<font color ="#0000FF">* T02 긴급배송 전환</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZC102MSG</font>
+<font color ="#0000FF">*000   &</font>
+<font color ="#0000FF">*004   데이터가 존재하지 않습니다</font>
+<font color ="#0000FF">*009   행을 선택해 주세요</font>
+<font color ="#0000FF">*029   저장되었습니다.</font>
+<font color ="#0000FF">*071   수정 상태에서 이용 바랍니다.</font>
+<font color ="#0000FF">*088   이미 수정모드입니다.</font>
+<font color ="#0000FF">*089   배송정보가 입력되었습니다.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

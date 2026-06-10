@@ -1,0 +1,175 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102COR0002TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102COR0002TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102COR0002TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102COR0002TOP                          - Report ZC102COR0002</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102cor0002 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Macro</font>
+<font color ="#0000FF">**********************************************************************</font>
+DEFINE _clear.
+
+  REFRESH &1.
+  CLEAR &1.
+
+END-OF-DEFINITION.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zvc102co0001, zc102cot0006.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TAP STRIP</font>
+<font color ="#0000FF">**********************************************************************</font>
+CONTROLS gc_tab TYPE TABSTRIP.
+
+DATA: gv_subscreen TYPE sy-dynnr.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* CLASS INSTANCE</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_base_cont   TYPE REF TO cl_gui_custom_container,
+       go_split_cont  TYPE REF TO cl_gui_splitter_container,
+       go_left_cont   TYPE REF TO cl_gui_container,
+       go_left_split  TYPE REF TO cl_gui_splitter_container,
+       go_tleft_cont  TYPE REF TO cl_gui_container,
+       go_bleft_cont  TYPE REF TO cl_gui_container,
+       go_right_cont  TYPE REF TO cl_gui_container,
+       go_right_split TYPE REF TO cl_gui_splitter_container,
+       go_rright_cont TYPE REF TO cl_gui_container,
+       go_lright_cont TYPE REF TO cl_gui_container,
+       go_tleft_grid  TYPE REF TO cl_gui_alv_grid,
+       go_bleft_grid  TYPE REF TO cl_gui_alv_grid,
+       go_right_grid  TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">*-- For Chart</font>
+DATA : go_chart    TYPE REF TO cl_gui_chart_engine.
+
+DATA : go_ixml          TYPE REF TO if_ixml,
+       go_ixml_sf       TYPE REF TO if_ixml_stream_factory,
+       go_ixml_docu     TYPE REF TO if_ixml_document,
+       go_ixml_ostream  TYPE REF TO if_ixml_ostream,
+       go_ixml_encoding TYPE REF TO if_ixml_encoding.
+
+DATA : go_chartdata  TYPE REF TO if_ixml_element,
+       go_categories TYPE REF TO if_ixml_element,
+       go_category   TYPE REF TO if_ixml_element,
+       go_series     TYPE REF TO if_ixml_element,
+       go_point      TYPE REF TO if_ixml_element,
+       go_value      TYPE REF TO if_ixml_element.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* ITAB & WA</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : BEGIN OF gs_value.
+         include structure <a href ="zvc102co0012/dictionary-zvc102co0012.html">zvc102co0012</a>.
+DATA :   kostl    TYPE zc102cot0003-kostl,
+         perct(6) TYPE c,
+         saknr    TYPE zc102fit0002-saknr,
+         txt20    TYPE zc102fit0002-txt20,
+         wrbtr    TYPE zc102fit0010-wrbtr,
+         waers    TYPE zc102fit0010-waers,
+         cell_tab TYPE lvc_t_styl,
+       END OF gs_value,
+       gt_value  LIKE TABLE OF gs_value,
+       gs_result LIKE gs_value,
+       gt_result LIKE TABLE OF gs_value.
+
+DATA : BEGIN OF gs_cost,
+         kokrs  TYPE zc102cot0003-kokrs,
+         belnr  TYPE zc102fit0009-belnr,
+         kostl  TYPE zc102cot0003-kostl,
+         saknr  TYPE zc102fit0002-saknr,
+         txt20  TYPE zc102fit0002-txt20,
+         awrbtr TYPE zc102fit0010-wrbtr,
+         waers  TYPE zc102fit0010-waers,
+       END OF gs_cost,
+       gt_cost LIKE TABLE OF gs_cost.
+
+DATA : BEGIN OF gs_profit.
+         include structure <a href ="zvc102co0007/dictionary-zvc102co0007.html">zvc102co0007</a>.
+DATA :   wrbtr TYPE zc102fit0010-wrbtr,
+       END OF gs_profit,
+       gt_profit LIKE TABLE OF gs_profit.
+
+<font color ="#0000FF">*-- For Search Help</font>
+DATA : BEGIN OF gs_txt20,
+         saknr TYPE zc102fit0002-saknr,
+         txt20 TYPE zc102fit0002-txt20,
+       END OF gs_txt20,
+       gt_txt20 LIKE TABLE OF gs_txt20.
+
+<font color ="#0000FF">*-- SKF 마스터</font>
+DATA : BEGIN OF gs_aunit,
+         aunit TYPE zc102cot0006-aunit,
+         value TYPE dd07t-domvalue_l,
+       END OF gs_aunit,
+       gt_aunit LIKE TABLE OF gs_aunit.
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gt_value_fcat TYPE lvc_t_fcat,
+       gs_value_fcat TYPE lvc_s_fcat,
+       gt_cost_fcat  TYPE lvc_t_fcat,
+       gs_cost_fcat  TYPE lvc_s_fcat,
+       gt_res_fcat   TYPE lvc_t_fcat,
+       gs_res_fcat   TYPE lvc_s_fcat,
+       gs_style      TYPE lvc_s_styl,
+       gs_layout     TYPE lvc_s_layo,
+       gs_variant    TYPE disvariant.
+
+DATA : gt_ui_functions TYPE ui_functions,
+       gs_button       TYPE stb_button.
+
+<font color ="#0000FF">*-- For Chart</font>
+DATA : gv_length  TYPE i,
+       gv_xstring TYPE xstring.
+
+<font color ="#0000FF">*-- For Search Help</font>
+DATA : BEGIN OF gs_acttp,
+         acttp TYPE zc102cot0012-acttp,
+         desct TYPE zc102cot0012-desct,
+       END OF gs_acttp,
+       gt_acttp LIKE TABLE OF gs_acttp.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* COMMON VARIABLE</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- Screen Element</font>
+DATA : gv_gjahr     TYPE zc102fit0009-gjahr,
+       gv_date_fr   TYPE zc102fit0009-budat,
+       gv_date_to   TYPE zc102fit0009-budat,
+       gv_kostl     TYPE zc102cot0003-kostl,
+       gv_acttp(10) TYPE c,
+       gv_check     TYPE bool,
+       gv_lock      TYPE bool,
+       gv_rb1       TYPE bool,
+       gv_rb2       TYPE bool,
+       gv_pct_fr    TYPE zc102cot0004-prctr,
+       gv_pct_to    TYPE zc102cot0004-prctr,
+       gv_cel_to    TYPE zc102fit0002-saknr,
+       gv_cel_fr    TYPE zc102fit0002-saknr.
+
+<font color ="#0000FF">*-- Variable</font>
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_tabix  TYPE sy-tabix,
+       gv_num    TYPE zc102cot0009-belnr,
+       gv_answer.
+
+RANGES gr_cel FOR zc102fit0002-saknr.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

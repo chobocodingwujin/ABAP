@@ -1,0 +1,10 @@
+*&---------------------------------------------------------------------*
+*& Include ZR_IMPORTTOP                             - Report ZR_IMPORT
+*&---------------------------------------------------------------------*
+REPORT zr_import.
+
+DATA : gt_scarr TYPE TABLE OF scarr,
+       gs_scarr TYPE scarr.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

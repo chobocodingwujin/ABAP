@@ -1,0 +1,124 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0003TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0003TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0003TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102FIR0003TOP                          - Report ZC102FIR0003</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102fir0003 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zc102fit0006, zc102fit0009, zc102fit0010.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* CLASS INSTANCE</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- 전표 조회</font>
+DATA : go_base_cont   TYPE REF TO cl_gui_docking_container,
+       go_split_cont  TYPE REF TO cl_gui_splitter_container,
+       go_header_cont TYPE REF TO cl_gui_container,
+       go_header_grid TYPE REF TO cl_gui_alv_grid,
+       go_line_cont   TYPE REF TO cl_gui_container,
+       go_line_grid   TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">*-- TOP-OF-PAGE</font>
+DATA : go_top_cont   TYPE REF TO cl_gui_docking_container,
+       go_dyndoc_id  TYPE REF TO cl_dd_document,
+       go_html_cntrl TYPE REF TO cl_gui_html_viewer.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* ITAB & WA</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- 전표 헤더</font>
+DATA : gt_header TYPE TABLE OF zc102fit0009,
+       gs_header TYPE zc102fit0009.
+
+DATA : BEGIN OF gs_line.
+         include structure <a href ="zc102fit0010/dictionary-zc102fit0010.html">zc102fit0010</a>.
+DATA :   txt20 TYPE zc102fit0002-txt20,
+       END OF gs_line,
+       gt_line LIKE TABLE OF gs_line.
+
+<font color ="#0000FF">*-- 조정 계정</font>
+DATA : gt_bpact TYPE TABLE OF zc102bpt0002,
+       gs_bpact TYPE zc102bpt0002.
+
+<font color ="#0000FF">*-- 역분개 헤더 정보</font>
+DATA : BEGIN OF gs_reverse,
+         bukrs TYPE zc102fit0009-bukrs, " 회사코드
+         belnr TYPE zc102fit0009-belnr, " 회계전표번호
+         rebzg TYPE zc102fit0016-rebzg, " 원전표번호
+         gjahr TYPE zc102fit0009-gjahr, " 회계연도
+         blart TYPE zc102fit0009-blart, " 전표유형
+         bldat TYPE zc102fit0009-bldat, " 증빙일전표문서일자
+         budat TYPE zc102fit0009-budat, " 전표의전기일
+         bktxt TYPE zc102fit0009-bktxt, " 문서헤더텍스트
+         stblg TYPE zc102fit0009-stblg, " 역분개전표번호
+         stodt TYPE zc102fit0009-stodt, " 역분개전기계획일
+         stgrd TYPE zc102fit0009-stgrd, " 역분개사유코드
+         waers TYPE zc102fit0009-waers. " 통화키
+         include structure <a href ="zc102cms0001/dictionary-zc102cms0001.html">zc102cms0001</a>.
+DATA : END OF gs_reverse,
+gt_reverse LIKE TABLE OF gs_reverse.
+
+DATA : gt_reverse_s TYPE TABLE OF zc102fit0009,
+       gs_reverse_s TYPE zc102fit0009.
+
+DATA : BEGIN OF gs_reverse_code,  " 우진
+         stgrd TYPE zc102fit0006-stgrd,
+         txt50 TYPE zc102fit0006-txt50,
+       END OF gs_reverse_code,
+       gt_reverse_code LIKE TABLE OF gs_reverse_code.
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DATA : gs_line TYPE zc102fit0010,</font>
+<font color ="#0000FF">*       gt_line TYPE TABLE OF zc102fit0010.</font>
+
+DATA : gs_re_line TYPE zc102fit0010,
+       gt_re_line TYPE TABLE OF zc102fit0010.
+
+<font color ="#0000FF">*-- BDC 우진</font>
+DATA : gt_bdcdata TYPE TABLE OF bdcdata,
+       gs_bdcdata TYPE bdcdata,
+       gs_params  TYPE ctu_params.
+DATA : gt_messtab TYPE TABLE OF bdcmsgcoll WITH HEADER LINE.
+
+<font color ="#0000FF">*-- For Search Help</font>
+DATA : BEGIN OF gs_belnr,
+         belnr TYPE zc102fit0009-belnr,
+       END OF gs_belnr,
+       gt_belnr LIKE TABLE OF gs_belnr.
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gt_header_fcat TYPE lvc_t_fcat,
+       gs_header_fcat TYPE lvc_s_fcat,
+       gt_line_fcat   TYPE lvc_t_fcat,
+       gs_line_fcat   TYPE lvc_s_fcat,
+       gs_layout      TYPE lvc_s_layo,
+       gs_variant     TYPE disvariant,
+       gt_sort        TYPE lvc_t_sort,
+       gs_sort        TYPE lvc_s_sort.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* COMMON VARIABLE</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode        TYPE sy-ucomm,
+       gv_text          TYPE sdydo_text_element,
+       gv_belnr         TYPE zc102fit0009-belnr,
+       gv_gjahr         TYPE gjahr,
+       gv_reverse_belnr TYPE string,
+       gv_code          TYPE zc102fit0006-stgrd.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

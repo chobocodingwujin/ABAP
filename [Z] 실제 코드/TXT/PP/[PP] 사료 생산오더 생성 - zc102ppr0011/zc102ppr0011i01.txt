@@ -1,0 +1,42 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0011I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE gv_okcode.
+    WHEN 'EXEC'.
+      PERFORM get_base_data.
+      PERFORM calculate_menge.
+      PERFORM refresh_table.
+      PERFORM refresh_tab.
+      PERFORM call_pbo.
+    WHEN 'CREA'.
+      PERFORM create_pdo.
+      PERFORM set_disme. " 폐기 OR 창고 출고
+      PERFORM get_base_data.
+      PERFORM refresh_table.
+      PERFORM refresh_tab.
+      PERFORM call_pbo.
+    WHEN OTHERS.
+      gc_tab-activetab = gv_okcode.
+  ENDCASE.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

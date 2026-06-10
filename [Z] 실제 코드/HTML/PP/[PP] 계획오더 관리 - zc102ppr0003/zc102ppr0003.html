@@ -1,0 +1,71 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0003</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0003</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [PP] 계획오더 관리</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102PPR0003</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zc102ppr0003top.html">zc102ppr0003top</a>.    " Global Data
+
+include <a href ="zc102ppr0003s01.html">zc102ppr0003s01</a>.  " Selection screen
+include <a href ="zc102ppr0003c01.html">zc102ppr0003c01</a>.  " class event
+include <a href ="zc102ppr0003o01.html">zc102ppr0003o01</a>.  " PBO-Modules
+include <a href ="zc102ppr0003i01.html">zc102ppr0003i01</a>.  " PAI-Modules
+include <a href ="zc102ppr0003f01.html">zc102ppr0003f01</a>.  " FORM-Routines
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+  PERFORM set_list.
+  PERFORM get_f4_data.
+
+  CALL SCREEN 100.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* POPTITLE120 --&gt; [POP] 반려사유 TEXT</font>
+<font color ="#0000FF">* TITLE100 --&gt; [PP] 계획오더 관리</font>
+<font color ="#0000FF">* TITLE110 --&gt; [PP] 반려 사유</font>
+<font color ="#0000FF">* TITLE120 --&gt; 반려사유 POPUP</font>
+<font color ="#0000FF">* TITLE130 --&gt; 반려 사유 READ MODE</font>
+<font color ="#0000FF">* TITLE140 --&gt; 승인 사원정보 입력</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* E01 삭제할 행을 선택해주세요.</font>
+<font color ="#0000FF">* I02 '변경된 항목이 없습니다.'</font>
+<font color ="#0000FF">* I03 저장되었습니다.</font>
+<font color ="#0000FF">* Q01 저장하지 않은 데이터는 손실됩니다. 그래도 나가시겠습니까?</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: Hard coded</font>
+<font color ="#0000FF">*   수정할 행을 선택해주세요.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZC102MSG</font>
+<font color ="#0000FF">*000   &</font>
+<font color ="#0000FF">*004   데이터가 존재하지 않습니다</font>
+<font color ="#0000FF">*029   저장되었습니다.</font>
+<font color ="#0000FF">*044   반려 사유를 선택해주세요.</font>
+<font color ="#0000FF">*068   계획생산일은 오늘 이전 날짜로 변경할 수 없습니다.</font>
+<font color ="#0000FF">*081   사원번호를 입력해주세요.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

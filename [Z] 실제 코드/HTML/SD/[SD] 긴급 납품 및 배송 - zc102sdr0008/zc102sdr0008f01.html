@@ -1,0 +1,2453 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102SDR0008F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102SDR0008F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102SDR0008F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102SDR0008F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_base_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_base_data .
+
+<font color ="#0000FF">*-- 긴급 판매오더 헤더 아이템</font>
+  SELECT a~vbeln_so a~partner a~cusno b~matnr a~audat b~pequan
+         b~meins b~netwr b~waers a~delid b~status
+    INTO CORRESPONDING FIELDS OF TABLE gt_so_not
+    FROM zc102sdt0006 AS a INNER JOIN zc102sdt0007 AS b
+    ON a~vbeln_so = b~vbeln_so
+    WHERE a~ortype = 'E'
+      AND state &lt;&gt; 'Y'
+      AND a~vbeln_so IN ( SELECT vbeln_del
+                                FROM zc102sdt0011 ).
+
+<font color ="#0000FF">*-- 납품오더 헤더(배송 리드타임 / 배송 시작예정일 찍히고, 배송 실시작일 안찍힌 것만)</font>
+  SELECT a~vbeln_del a~vbeln_so a~partner cusno vdatu b~leati a~wadat_ist
+         b~vsbed b~adrnr gbstk b~del_char b~telf1
+     INTO CORRESPONDING FIELDS OF TABLE gt_done
+     FROM zc102sdt0004 AS a INNER JOIN zc102sdt0011 AS b
+    ON a~vbeln_del EQ b~vbeln_del
+    AND a~partner EQ b~partner
+     WHERE iseme = 'E'
+       AND b~leati &lt;&gt; 0
+       AND b~del_char &lt;&gt; ' '
+       AND wadat_ist &lt;&gt; '00000000'
+       AND dreal EQ '00000000'.
+
+  PERFORM set_address.
+
+<font color ="#0000FF">*-- 배송기사 정보</font>
+  SELECT empno htype email depno empnam evalg telf1 avnow regno
+    INTO CORRESPONDING FIELDS OF TABLE gt_driver_info
+    FROM zc102hrt0002
+    WHERE htype = 'D'.
+
+<font color ="#0000FF">*-- 판매오더 상태 CDS</font>
+  SELECT vbeln_so, partner, matnr, maktx, pequan, meins, netwr, waers,
+         audat, delid, plono, pdono, mksta, prog, p_unit, stlno
+    INTO CORRESPONDING FIELDS OF TABLE @gt_soall
+    FROM zvsalesorder102.
+
+<font color ="#0000FF">*-- bp번호에 따른 창고번호 세팅</font>
+  SELECT werks stlno regno
+    INTO CORRESPONDING FIELDS OF TABLE gt_werks
+    FROM zc102mmt0008.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Module STATUS_0100 OUTPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'MENU100'.
+  SET TITLEBAR 'TITLE100'.
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+
+  IF go_tab_grid1 IS NOT BOUND.
+
+    CLEAR : gs_tab_fcat, gs_left_fcat, gs_right_fcat.
+
+<font color ="#0000FF">*-- 판매오더 리스트</font>
+    PERFORM set_tab_fcat USING : 'X' 'STATE'    '            ' 'C' 'X', " 생산 상태
+                                 'X' 'VBELN_SO' 'ZC102SDT0006' 'C' 'X', " 판매오더 번호
+                                 'X' 'PARTNER'  'ZC102SDT0006' 'C' ' ', " BP
+                                 'X' 'MATNR'    'ZC102SDT0007' 'C' ' ', " 자재번호
+                                 ' ' 'MAKTX'    'ZC102MMT0004' ' ' ' ', " 자재이름
+                                 ' ' 'PEQUAN'   'ZC102SDT0007' ' ' ' ', " 주문 수량
+                                 ' ' 'MEINS'    'ZC102SDT0007' 'C' 'X', " 수량단위
+                                 ' ' 'NETWR'    'ZC102SDT0006' ' ' ' ', " 총 판매가
+                                 ' ' 'WAERS'    'ZC102SDT0006' 'C' 'X', " 통화키
+                                 ' ' 'AUDAT'    'ZC102SDT0006' 'C' ' ', " 주문 일자
+                                 ' ' 'DELID'    'ZC102SDT0006' 'C' ' ', " 납품일
+                                 ' ' 'STATE_TEXT' '          ' 'C' ' ', " 진행 단계
+                                 ' ' 'CHECK'   '            ' ' ' ' '.
+<font color ="#0000FF">*-- 판매오더 리스트</font>
+    PERFORM set_left_fcat USING : 'X' 'VBELN_SO' 'ZC102SDT0006' 'C' 'X', " 판매오더 번호
+                                  'X' 'PARTNER'  'ZC102SDT0006' 'C' ' ', " BP
+                                  ' ' 'MATNR'    'ZC102SDT0007' 'C' ' ', " 자재번호
+                                  ' ' 'PEQUAN'   'ZC102SDT0007' ' ' ' ', " 주문 수량
+                                  ' ' 'MEINS'    'ZC102SDT0007' 'C' 'X', " 수량단위
+                                  ' ' 'NETWR'    'ZC102SDT0006' ' ' ' ', " 총 판매가
+                                  ' ' 'WAERS'    'ZC102SDT0006' 'C' 'X', " 통화키
+                                  ' ' 'AUDAT'    'ZC102SDT0006' 'C' ' ', " 주문 일자
+                                  ' ' 'DELID'    'ZC102SDT0006' 'C' ' '. " 납품일
+<font color ="#0000FF">*-- 배송 예정 리스트</font>
+    PERFORM set_right_fcat USING : 'X' 'VBELN_DEL' 'ZC102SDT0004' 'C' ' ',
+                                   'X' 'VBELN_SO'  'ZC102SDT0004' 'C' ' ',
+                                   'X' 'PARTNER'   'ZC102SDT0004' 'C' ' ',
+                                   ' ' 'ADRNR'     'ZC102SDT0011' ' ' ' ',
+                                   ' ' 'VDATU'     'ZC102SDT0004' 'C' ' ',
+                                   ' ' 'LEATI'     'ZC102SDT0011' 'C' ' ',
+                                   ' ' 'WADAT_IST' 'ZC102SDT0004' 'C' ' ',
+                                   ' ' 'DEL_CHAR'  'ZC102SDT0011' 'C' 'X'.
+
+    PERFORM create_object.
+    PERFORM set_layout.
+    PERFORM exclude_toolbar.
+
+    PERFORM show_tab_screen.
+    PERFORM show_left_screen.
+    PERFORM show_right_screen.
+
+    PERFORM register_event.
+    PERFORM register_f4_fields.
+
+  ENDIF.
+
+  PERFORM register_event.
+  PERFORM refresh_left_table.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+<font color ="#0000FF">*-- 긴급 납품 처리 TAB</font>
+  CREATE OBJECT go_tab_cont1
+    EXPORTING
+      container_name = 'TAB1'.
+
+  CREATE OBJECT go_tab_grid1
+    EXPORTING
+      i_parent = go_tab_cont1.
+
+<font color ="#0000FF">*-- 긴급 배송 처리 TAB</font>
+  CREATE OBJECT go_tab_cont2
+    EXPORTING
+      container_name = 'TAB2'.
+
+<font color ="#0000FF">*-- 스플릿 왼쪽, 납품 오더</font>
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_tab_cont2
+      rows    = 2
+      columns = 1.
+
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_left_cont.
+
+<font color ="#0000FF">*-- 스플릿 오른쪽, 배송 정보 입력</font>
+  CREATE OBJECT go_left_grid
+    EXPORTING
+      i_parent = go_left_cont.
+
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_right_cont.
+
+  CREATE OBJECT go_right_grid
+    EXPORTING
+      i_parent = go_right_cont.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+<font color ="#0000FF">*-- TAB1</font>
+  gs_layout_tab-zebra      = abap_true.
+  gs_layout_tab-cwidth_opt = 'A'.
+  gs_layout_tab-sel_mode   = 'D'.
+  gs_layout_tab-grid_title = '긴급 판매오더'.
+  gs_layout_tab-stylefname = 'CELL_TAB'.
+
+<font color ="#0000FF">*-- TAB2_LEFT</font>
+  gs_layout_left-zebra      = abap_true.
+  gs_layout_left-cwidth_opt = 'A'.
+  gs_layout_left-sel_mode   = 'D'.
+  gs_layout_left-grid_title = '긴급 판매오더'.
+  gs_layout_left-stylefname = 'CELL_TAB'.
+
+<font color ="#0000FF">*-- TAB2_RIGHT</font>
+  gs_layout_right-zebra      = abap_true.
+  gs_layout_right-cwidth_opt = 'A'.
+  gs_layout_right-sel_mode   = 'D'.
+  gs_layout_right-grid_title = '납품오더(배송 예정)'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form exclude_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM exclude_toolbar .
+
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form show_tab_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM show_tab_screen .
+
+  gs_variant_tab-report = sy-repid.
+  gs_variant_tab-handle = 'TAB1'.
+
+  SET HANDLER : lcl_event_handler=&gt;edit_toolbar_tab1 FOR go_tab_grid1,
+                lcl_event_handler=&gt;user_command      FOR go_tab_grid1.
+
+  CALL METHOD go_tab_grid1-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant_tab
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_layout_tab
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_so
+      it_fieldcatalog      = gt_tab_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form show_left_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM show_left_screen .
+
+  gs_variant_left-report = sy-repid.
+  gs_variant_left-handle = 'LEFT1'.
+
+  SET HANDLER : lcl_event_handler=&gt;edit_toolbar_tab2   FOR go_left_grid,
+                lcl_event_handler=&gt;user_command        FOR go_left_grid.
+
+  CALL METHOD go_left_grid-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant_left
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_layout_left
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_so_not
+      it_fieldcatalog      = gt_left_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form show_right_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM show_right_screen .
+
+  gs_variant_right-report = sy-repid.
+  gs_variant_right-handle = 'ALV4'.
+
+  CALL METHOD go_right_grid-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant_right
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_layout_right
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_done
+      it_fieldcatalog      = gt_right_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_tab_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_tab_fcat USING pv_key
+                       pv_field
+                       pv_table
+                       pv_just
+                       pv_emph.
+
+  gs_tab_fcat-key       = pv_key.
+  gs_tab_fcat-fieldname = pv_field.
+  gs_tab_fcat-ref_table = pv_table.
+  gs_tab_fcat-just      = pv_just.
+  gs_tab_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'STATE'.
+      gs_tab_fcat-coltext    = '처리 상태'.
+    WHEN 'STATE_TEXT'.
+      gs_tab_fcat-coltext    = '진행 단계'.
+    WHEN 'CHECK'.
+      gs_tab_fcat-coltext    = '납품 가능'.
+      gs_tab_fcat-checkbox = 'X'.
+      gs_tab_fcat-edit  = 'X'.
+    WHEN 'MAKTX'.
+      gs_tab_fcat-coltext    = '자재명'.
+    WHEN 'PEQUAN'.
+      gs_tab_fcat-qfieldname = 'MEINS'.
+    WHEN 'MEINS'.
+      gs_tab_fcat-coltext   = '단위'.
+    WHEN 'NETWR'.
+      gs_tab_fcat-cfieldname = 'WAERS'.
+    WHEN 'WAERS'.
+      gs_tab_fcat-coltext   = '통화키'.
+  ENDCASE.
+
+  APPEND gs_tab_fcat TO gt_tab_fcat.
+  CLEAR gs_tab_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_left_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_left_fcat USING pv_key
+                       pv_field
+                       pv_table
+                       pv_just
+                       pv_emph.
+
+  gs_left_fcat-key       = pv_key.
+  gs_left_fcat-fieldname = pv_field.
+  gs_left_fcat-ref_table = pv_table.
+  gs_left_fcat-just      = pv_just.
+  gs_left_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'MEINS'.
+      gs_left_fcat-coltext = '단위'.
+    WHEN 'WAERS'.
+      gs_left_fcat-coltext = '통화키'.
+  ENDCASE.
+
+  APPEND gs_left_fcat TO gt_left_fcat.
+  CLEAR gs_left_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_right_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_right_fcat USING pv_key
+                       pv_field
+                       pv_table
+                       pv_just
+                       pv_emph.
+
+  gs_right_fcat-key       = pv_key.
+  gs_right_fcat-fieldname = pv_field.
+  gs_right_fcat-ref_table = pv_table.
+  gs_right_fcat-just      = pv_just.
+  gs_right_fcat-emphasize = pv_emph.
+
+<font color ="#0000FF">*  CASE pv_field.</font>
+<font color ="#0000FF">*    WHEN 'VBELN_BIL'.</font>
+<font color ="#0000FF">*      gs_right_fcat-hotspot = abap_true.</font>
+<font color ="#0000FF">*    WHEN 'MAKTX'.</font>
+<font color ="#0000FF">*      gs_right_fcat-coltext    = '자재명'.</font>
+<font color ="#0000FF">*    WHEN 'ODRQU'.</font>
+<font color ="#0000FF">*      gs_right_fcat-qfieldname = 'MEINS'.</font>
+<font color ="#0000FF">*    WHEN 'MEINS'.</font>
+<font color ="#0000FF">*      gs_right_fcat-coltext   = '단위'.</font>
+<font color ="#0000FF">*  ENDCASE.</font>
+
+  APPEND gs_right_fcat TO gt_right_fcat.
+  CLEAR gs_right_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_subscreen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_subscreen .
+
+  CASE gc_tab-activetab.
+    WHEN 'TAB1'.
+      gv_subscreen = '0101'.
+    WHEN 'TAB2'.
+      gv_subscreen = '0102'.
+    WHEN OTHERS.
+      gc_tab-activetab = 'TAB1'.
+      gv_subscreen     = '0101'.
+  ENDCASE.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_maktx</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_maktx .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  LOOP AT gt_so INTO gs_so .
+
+    lv_tabix = sy-tabix.
+
+<font color ="#0000FF">*-- 자재명 세팅</font>
+    call function <a href ="zfm_cl102_mm_01/zfm_cl102_mm_01.html">'ZFM_CL102_MM_01'</a>
+      EXPORTING
+        lv_matnr = gs_so-matnr
+      IMPORTING
+        ev_maktx = gs_so-maktx.
+
+    MODIFY gt_so FROM gs_so INDEX lv_tabix TRANSPORTING maktx.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_order</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_order .
+
+<font color ="#0000FF">*-- 조회 조건 세팅</font>
+  PERFORM set_range.
+
+<font color ="#0000FF">*-- 긴급 판매오더 헤더 아이템</font>
+  SELECT a~vbeln_so a~partner a~cusno b~matnr a~audat b~pequan
+         b~meins b~netwr b~waers a~delid b~status
+    INTO CORRESPONDING FIELDS OF TABLE gt_so
+    FROM zc102sdt0006 AS a INNER JOIN zc102sdt0007 AS b
+    ON a~vbeln_so = b~vbeln_so
+    WHERE a~ortype = 'E'
+      AND a~vbeln_so IN gr_vbeln_so
+      AND a~partner  IN gr_partner
+      AND state &lt;&gt; 'Y'
+      AND a~vbeln_so NOT IN ( SELECT vbeln_del
+                                FROM zc102sdt0011 ).
+
+
+<font color ="#0000FF">*-- 자재명 세팅</font>
+  PERFORM set_maktx.
+
+<font color ="#0000FF">*-- 생산 상태 세팅</font>
+  PERFORM set_status.
+
+  PERFORM refresh_tab1_table.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_range</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_range .
+
+  _init gr_vbeln_so.
+  _init gr_partner.
+
+  IF gv_so IS NOT INITIAL.
+    gr_vbeln_so-sign = 'I'.
+    gr_vbeln_so-option = 'EQ'.
+    gr_vbeln_so-low = gv_so.
+    APPEND gr_vbeln_so.
+  ENDIF.
+
+  IF gv_bp IS NOT INITIAL.
+    gr_partner-sign = 'I'.
+    gr_partner-option = 'EQ'.
+    gr_partner-low = gv_bp.
+    APPEND gr_partner.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_tab1_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_tab1_table .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+  CALL METHOD go_tab_grid1-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_status</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_status .
+
+  DATA: lv_tabix    TYPE sy-tabix,
+        lv_text(20),
+        lv_prog(3).
+
+  DATA : ls_style    TYPE lvc_s_styl.
+
+  SORT gt_so    BY vbeln_so ASCENDING.
+  SORT gt_soall BY vbeln_so ASCENDING.
+
+  LOOP AT gt_so INTO gs_so.
+
+    lv_tabix = sy-tabix.
+
+<font color ="#0000FF">*-- 체크버튼 전체 비활성화</font>
+    gs_so-check = ' '.          " 보이긴 하지만 비활성화
+    CLEAR ls_style.
+    ls_style-fieldname = 'CHECK'.
+    ls_style-style     = cl_gui_alv_grid=&gt;mc_style_disabled.
+    INSERT ls_style INTO TABLE gs_so-cell_tab.
+
+    READ TABLE gt_soall INTO gs_soall
+                        WITH KEY vbeln_so = gs_so-vbeln_so BINARY SEARCH.
+
+    IF sy-subrc = 0.
+
+      gs_so-stlno = gs_soall-stlno.
+
+      READ TABLE gt_werks INTO gs_werks WITH KEY stlno = gs_soall-stlno.
+
+      IF sy-subrc EQ 0.
+        gs_so-werks = gs_werks-werks.
+        gs_so-werks = gs_werks-regno.
+
+      ENDIF.
+
+      IF gs_soall-pdono IS INITIAL.
+        " 계획오더 생성
+        gs_so-state = icon_led_yellow.
+        gs_so-state_text = '생산 준비'.
+      ELSE.
+        " 생산오더 생성
+        CASE gs_soall-mksta.
+          WHEN 'R' OR 'I'.
+            gs_so-state = icon_led_yellow.
+            lv_prog = CONV char3( gs_soall-prog ).
+            CONCATENATE lv_prog gs_soall-p_unit INTO DATA(lv_state).
+            CONCATENATE `생산 ` lv_state INTO gs_so-state_text.
+          WHEN 'F'.
+            gs_so-state = icon_led_green.
+            gs_so-state_text = '생산 완료'.
+            gs_so-check = ' '.
+            CLEAR : ls_style, gs_so-cell_tab.
+            ls_style-fieldname = 'CHECK'.
+            ls_style-style     = cl_gui_alv_grid=&gt;mc_style_enabled.
+            INSERT ls_style INTO TABLE gs_so-cell_tab.
+        ENDCASE.
+      ENDIF.
+    ELSE.
+      " 계획오더 생성 안됨(대기)
+      gs_so-state = icon_led_red.
+      gs_so-state_text = '계획 없음'.
+    ENDIF.
+
+    MODIFY gt_so FROM gs_so INDEX lv_tabix TRANSPORTING check
+                                                        state
+                                                        state_text
+                                                        cell_tab
+                                                        stlno
+                                                        werks
+                                                        regno.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_user_command</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_UCOMM</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_user_command USING pv_ucomm.
+
+  CASE pv_ucomm.
+    WHEN 'CRDO'. " 납품 오더 생성 버튼
+      PERFORM create_do.
+      PERFORM display_order.
+    WHEN 'ASSI'.
+      PERFORM assign_driver.
+    WHEN 'SAVE'.
+      PERFORM update_info.
+    WHEN 'DRIV'.
+      PERFORM call_driver_list.
+  ENDCASE.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_edit_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_OBJECT</font>
+<font color ="#0000FF">*&      --&gt; E_INTERACTIVE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_edit_toolbar1 USING po_object TYPE REF TO cl_alv_event_toolbar_set
+                               pv_interactive.
+
+  CLEAR gs_button_tab1.
+  gs_button_tab1-function = 'DRIV'.
+  gs_button_tab1-icon     = icon_check .
+  gs_button_tab1-quickinfo = '긴급배송 요청'.
+  gs_button_tab1-text = TEXT-b02.
+  APPEND gs_button_tab1 TO po_object-&gt;mt_toolbar.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_do</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_do .
+
+<font color ="#0000FF">*-- 체크된 항목이 있는지 체크</font>
+  DATA : lv_answer,
+         lv_check_exist TYPE abap_bool VALUE abap_false,
+         lv_tabix       TYPE sy-tabix,
+         lv_title       TYPE string,
+         lv_q           TYPE string.
+
+  DATA : ls_style    TYPE lvc_s_styl.
+
+<font color ="#0000FF">*-- 변경된 데이터 있는지 확인</font>
+  IF go_tab_grid1 IS BOUND.
+    CALL METHOD go_tab_grid1-&gt;check_changed_data.
+  ENDIF.
+
+<font color ="#0000FF">*-- 체크한 항목이 있는지 체크</font>
+  LOOP AT gt_so INTO gs_so.
+    IF gs_so-check = 'X'.
+      lv_check_exist = abap_true.
+    ENDIF.
+  ENDLOOP.
+
+  IF lv_check_exist EQ abap_false.
+    MESSAGE s000 WITH '항목을 먼저 체크해주세요.' DISPLAY LIKE 'E'.
+    EXIT.
+  ELSE.
+
+    lv_title = '처리 결과 저장'.
+    lv_q     = '저장하시겠습니까? 배송 정보가 자동으로 입력되고 납품오더가 자동 생성됩니다.'.
+    PERFORM do_question USING lv_title lv_q
+                        CHANGING lv_answer.
+
+    CHECK lv_answer EQ '1'.
+
+<font color ="#0000FF">*-- 창고 이동 처리</font>
+    LOOP AT gt_so INTO gs_so WHERE check = 'X'.
+
+      lv_tabix = sy-tabix.
+
+<font color ="#0000FF">*-- 납품오더번호 채번</font>
+      CLEAR : gv_delno.
+      PERFORM get_delno.
+
+<font color ="#0000FF">*-- 헤더</font>
+      gs_do-vbeln_del = gv_delno.
+      gs_do-vbeln_so  = gs_so-vbeln_so.
+      gs_do-partner   = gs_so-partner.
+      gs_do-cusno     = gs_so-cusno.
+      gs_do-vdatu     = gs_so-delid.      " 납품예정일 = 납품일
+      gs_do-finalsp   = gs_so-netwr.
+      gs_do-waers     = gs_so-waers.
+      gs_do-gbstk     = 'P'.                  " 포장완료
+      gs_do-iseme     = 'E'.
+      " Time stamp
+      gs_do-erdat = sy-datum.
+      gs_do-ernam = sy-uname.
+      gs_do-erzet = sy-uzeit.
+
+      INSERT zc102sdt0004 FROM gs_do.
+
+<font color ="#0000FF">*-- 라인</font>
+      gs_do_i-vbeln_del = gv_delno.
+      gs_do_i-vbeln_so  = gs_so-vbeln_so.
+      gs_do_i-partner   = gs_so-partner.
+      gs_do_i-matnr     = gs_so-matnr.
+      gs_do_i-stlno     = gs_so-stlno.
+      gs_do_i-stprs     = gs_so-netwr.
+      gs_do_i-waers     = gs_so-waers.
+      gs_do_i-menge     = gs_so-pequan.
+      gs_do_i-meins     = gs_so-meins.
+      " Time stamp
+      gs_do_i-erdat = sy-datum.
+      gs_do_i-ernam = sy-uname.
+      gs_do_i-erzet = sy-uzeit.
+
+      INSERT zc102sdt0005 FROM gs_do_i.
+
+<font color ="#0000FF">*-- 판매오더 테이블 업데이트</font>
+      UPDATE zc102sdt0006
+      SET state ='Y'
+          aedat = sy-datum
+          aenam = sy-uname
+          aezet = sy-uzeit
+      WHERE vbeln_so = gs_so-vbeln_so
+        AND partner  = gs_so-partner.
+
+      CLEAR : gs_do, gs_do_i.
+
+    ENDLOOP.
+
+  ENDIF.
+
+  IF sy-subrc EQ 0.
+    MESSAGE s000 WITH '납품오더 생성이 완료되었습니다'.
+    COMMIT WORK.
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form do_question</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      &lt;-- LV_ANSWER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM do_question USING    pv_title
+                           pv_q
+                 CHANGING pv_answer.
+
+  call function <a href ="zfm_cl102_cm_pop_up/zfm_cl102_cm_pop_up.html">'ZFM_CL102_CM_POP_UP'</a>
+    EXPORTING
+      iv_titlebar = pv_title
+      iv_question = pv_q
+    IMPORTING
+      ev_answer   = pv_answer.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_delno</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_delno .
+
+  DATA: lv_number    TYPE n LENGTH 10,     " 도메인의 길이에 맞게
+        lv_prefix(3),  " PPO, PD0 등
+        lv_full_code TYPE string,
+        lv_range_nr  TYPE inri-nrrangenr,
+        lv_quantity  TYPE inri-quantity.
+
+  DATA: ls_nriv TYPE nriv.
+
+  lv_prefix = 'DV'.  " 원하는 prefix 사용
+  lv_range_nr = '01'. " 원하는 번호 - 도메인 정의서에 있음!!!
+  lv_quantity = 1.    " 원하는 증가량 사용
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 순번 호출</font>
+<font color ="#0000FF">**********************************************************************</font>
+  CALL METHOD zclc102cm_auto_sequence=&gt;get_next_value
+    EXPORTING
+      pv_range_nr = lv_range_nr
+      pv_prefix   = lv_prefix
+      pv_quantity = lv_quantity
+    IMPORTING
+      pv_result   = lv_full_code.
+
+  gv_delno = CONV zc102sdt0005-vbeln_del( lv_full_code ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_address</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_address .
+
+  DATA :lv_tabix TYPE sy-tabix.
+
+  PERFORM get_info.
+
+  LOOP AT gt_do_not INTO gs_do_not.
+
+    lv_tabix = sy-tabix.
+
+    READ TABLE gt_bp INTO gs_bp WITH KEY partner = gs_do_not-partner.
+
+    IF sy-subrc EQ 0.
+      gs_do_not-adrnr = gs_bp-stras.
+
+      MODIFY gt_do_not FROM gs_do_not INDEX lv_tabix TRANSPORTING adrnr.
+    ENDIF.
+
+    READ TABLE gt_line INTO gs_line WITH KEY vbeln_del = gs_do_not-vbeln_del.
+
+    IF sy-subrc EQ 0.
+      gs_do_not-stlno = gs_line-stlno.
+
+      MODIFY gt_do_not FROM gs_do_not INDEX lv_tabix TRANSPORTING stlno.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_bp_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_info .
+
+  SELECT cusno partner name1 telf1 email stras
+    INTO CORRESPONDING FIELDS OF TABLE gt_bp
+    FROM zc102sdt0001.
+
+  SELECT vbeln_del matnr stlno
+  INTO CORRESPONDING FIELDS OF TABLE gt_line
+  FROM zc102sdt0005.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_edit_toolbar2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_OBJECT</font>
+<font color ="#0000FF">*&      --&gt; E_INTERACTIVE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_edit_toolbar2  USING po_object TYPE REF TO cl_alv_event_toolbar_set
+                                 pv_interactive.
+  CLEAR gs_button_tab2.
+  gs_button_tab2-butn_type = '3'.
+  APPEND gs_button_tab2 TO po_object-&gt;mt_toolbar.
+
+  CLEAR gs_button_tab2.
+  gs_button_tab2-function = 'ASSI'.
+  gs_button_tab2-icon = icon_checked.
+  gs_button_tab2-quickinfo = '가용 기사님 체크'.
+  gs_button_tab2-text = TEXT-b03.
+  APPEND gs_button_tab2 TO po_object-&gt;mt_toolbar.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form toggle_clicked</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM toggle_clicked .
+
+  IF  gv_mode = 'D'.  "토글 버튼에 따른 편집/조회 모드
+    gv_mode = 'E'.
+    CALL METHOD go_left_grid-&gt;set_ready_for_input
+      EXPORTING
+        i_ready_for_input = 1.
+  ELSEIF gv_mode = 'E'.
+    gv_mode = 'D'.
+    CALL METHOD go_left_grid-&gt;set_ready_for_input
+      EXPORTING
+        i_ready_for_input = 0.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_modify_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_MODIFIED</font>
+<font color ="#0000FF">*&      --&gt; ET_GOOD_CELLS</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_modify_value USING pv_modified
+                               pt_good_cells.
+
+  DATA : ls_good_cells TYPE lvc_s_modi.
+
+  CHECK pv_modified IS NOT INITIAL.
+
+  LOOP AT pt_good_cells INTO ls_good_cells.
+
+    CLEAR gs_do_not.
+    READ TABLE gt_do_not INTO gs_do_not INDEX ls_good_cells-row_id.
+
+    CASE ls_good_cells-fieldname.
+      WHEN 'VSBED'. " 배송 방법 변경
+        IF gs_do_not-vsbed EQ 'S'.     " 해상 리드타임 2일
+          gs_do_not-leati = 2.
+          PERFORM get_driver_data USING 'Y'. " 배송기사 정보
+        ELSEIF gs_do_not-vsbed EQ 'I'. " 육로 리드타임 1일
+          gs_do_not-leati = 1.
+          PERFORM get_driver_data USING 'N'. " 배송기사 정보
+        ENDIF.
+        " 리드타임에 대한 배송 시작 예정일 계산
+        gs_do_not-wadat_ist = gs_do_not-vdatu - gs_do_not-leati.
+        MODIFY gt_do_not FROM gs_do_not INDEX ls_good_cells-row_id
+                                    TRANSPORTING modi_yn leati wadat_ist.
+      WHEN 'DEL_CHAR'. " 배송담당
+        IF gs_do_not-vsbed IS INITIAL.
+          MESSAGE i000 WITH TEXT-e01 DISPLAY LIKE 'W'.
+          gs_do_not-del_char = ' '.
+          MODIFY gt_do_not FROM gs_do_not INDEX ls_good_cells-row_id
+                                          TRANSPORTING del_char.
+          PERFORM refresh_left_table.
+        ELSE.
+          READ TABLE gt_driver_info INTO gs_driver_info
+                                    WITH KEY empnam = gs_do_not-del_char.
+          " 연락처 OR 이메일 가져옴
+          gs_do_not-email = gs_driver_info-email.
+          gs_do_not-telf1 = gs_driver_info-telf1.
+          MODIFY gt_do_not FROM gs_do_not INDEX ls_good_cells-row_id
+                                          TRANSPORTING email telf1.
+          PERFORM refresh_left_table.
+        ENDIF.
+    ENDCASE.
+
+    gs_do_not-modi_yn = abap_true.
+    MODIFY gt_do_not FROM gs_do_not INDEX ls_good_cells-row_id
+                                    TRANSPORTING modi_yn.
+  ENDLOOP.
+
+  PERFORM refresh_left_table.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_left_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_left_table .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+  CALL METHOD go_left_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_left_alv</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_left_alv .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_style TYPE lvc_s_styl.
+
+  LOOP AT gt_do_not INTO gs_do_not.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR : ls_style, gs_do_not-cell_tab.
+
+<font color ="#0000FF">*-- 스타일</font>
+    ls_style-style     = cl_gui_alv_grid=&gt;mc_style_disabled.
+    INSERT ls_style INTO TABLE gs_do_not-cell_tab.
+
+    CLEAR ls_style.
+    ls_style-fieldname = 'VSBED'.
+    ls_style-style     = cl_gui_alv_grid=&gt;mc_style_enabled. " 편집모드
+    INSERT ls_style INTO TABLE gs_do_not-cell_tab.
+
+    CLEAR ls_style.
+    ls_style-fieldname = 'DEL_CHAR'.
+    ls_style-style     = cl_gui_alv_grid=&gt;mc_style_enabled. " 편집 모드
+    INSERT ls_style INTO TABLE gs_do_not-cell_tab.
+
+    MODIFY gt_do_not FROM gs_do_not INDEX lv_tabix
+                                    TRANSPORTING cell_tab.
+
+  ENDLOOP.
+
+  PERFORM refresh_left_table.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form register_event</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM register_event .
+
+  CALL METHOD go_left_grid-&gt;set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 0. " 1 : EDIT ON, 0 : EDIT OFF
+
+  CALL METHOD go_left_grid-&gt;register_edit_event
+    EXPORTING
+      i_event_id = cl_gui_alv_grid=&gt;mc_evt_modified. " Constant 타입은 객체, 클래스 호출 둘다 가능
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_driver_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_driver_data USING pv_yn .
+
+<font color ="#0000FF">*-- F4를 위한 데이터 GET</font>
+  CLEAR gt_driver.
+  SELECT empno empnam email
+    INTO CORRESPONDING FIELDS OF TABLE gt_driver
+    FROM zc102hrt0002
+    WHERE htype = 'D'
+      AND avnow = pv_yn
+    ORDER BY empno.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form register_f4_fields</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM register_f4_fields .
+
+  DATA: lt_f4 TYPE lvc_t_f4 WITH HEADER LINE.
+  DATA: lt_f4_data TYPE lvc_s_f4.
+
+  lt_f4_data-fieldname = 'DEL_CHAR'.
+  lt_f4_data-register = 'X' .
+  lt_f4_data-getbefore = 'X' .
+  lt_f4_data-chngeafter  ='X'.
+  INSERT lt_f4_data INTO TABLE lt_f4.
+
+  CALL METHOD go_left_grid-&gt;register_f4_for_fields
+    EXPORTING
+      it_f4 = lt_f4[].
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form onf4</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_FIELDNAME</font>
+<font color ="#0000FF">*&      --&gt; E_FIELDVALUE</font>
+<font color ="#0000FF">*&      --&gt; ES_ROW_NO</font>
+<font color ="#0000FF">*&      --&gt; ER_EVENT_DATA</font>
+<font color ="#0000FF">*&      --&gt; ET_BAD_CELLS</font>
+<font color ="#0000FF">*&      --&gt; E_DISPLAY</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM onf4 USING  p_fieldname   TYPE lvc_fname
+                    p_fieldvalue  TYPE lvc_value
+                    ps_row_no     TYPE lvc_s_roid
+                    pi_event_data TYPE REF TO cl_alv_event_data
+                    pt_bad_cells  TYPE lvc_t_modi
+                    p_display     TYPE char01.
+
+  DATA: dynprog          LIKE sy-repid,
+        dynnr            LIKE sy-dynnr,
+        window_title(30) TYPE c,
+        l_row            TYPE p.
+
+  DATA : ls_body  LIKE gs_do_not,
+         lv_field TYPE dfies-fieldname,
+         lv_text  TYPE help_info-dynprofld,  " 필드명
+         lv_flag.
+
+  READ TABLE gt_do_not INTO ls_body INDEX ps_row_no-row_id.
+
+  DATA : lt_return LIKE TABLE OF ddshretval WITH HEADER LINE.
+  CLEAR : dynprog, dynnr, window_title.", ls_itab.
+
+  dynprog  = sy-repid.
+  dynnr    = sy-dynnr.
+  lv_field = 'EMPNAM'.
+  lv_text  = 'EMAIL'.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = lv_field
+      dynpprog     = dynprog
+      dynpnr       = dynnr
+      dynprofield  = lv_text
+      window_title = window_title
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_driver
+      return_tab   = lt_return.
+
+  pi_event_data-&gt;m_event_handled = abap_true.
+
+  FIELD-SYMBOLS: &lt;fs&gt; TYPE lvc_t_modi.
+
+  ASSIGN pi_event_data-&gt;m_data-&gt;* TO &lt;fs&gt;.
+
+  READ TABLE lt_return INDEX 1.
+  &lt;fs&gt; = VALUE #( ( row_id = ps_row_no-row_id
+                    fieldname = p_fieldname
+                    value = lt_return-fieldval ) ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form update_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM update_info .
+
+  DATA : lv_answer,
+         lv_valid  TYPE abap_bool,
+         lv_title  TYPE string,
+         lv_q      TYPE string.
+
+<font color ="#0000FF">*-- 변경된 데이터 있는지 확인</font>
+  IF go_left_grid IS BOUND.
+    CALL METHOD go_tab_grid1-&gt;check_changed_data.
+  ENDIF.
+
+
+  PERFORM check_valid_data CHANGING lv_valid.
+
+  lv_title = '배송정보 저장'.
+  IF lv_valid EQ abap_false.
+    lv_q = '배송 방법과 배송 기사가 정해지지 않은 항목이 있습니다. 저장하시겠습니까?(입력되지 않은 항목은 저장되지 않습니다)'.
+    PERFORM do_question USING lv_title lv_q
+                        CHANGING lv_answer.
+  ELSE.
+    lv_q = '배송 정보를 저장하시겠습니까?'.
+    PERFORM do_question USING lv_title lv_q
+                        CHANGING lv_answer.
+  ENDIF.
+
+  CHECK lv_answer EQ 1.
+
+  LOOP AT gt_do_not INTO gs_do_not.
+<font color ="#0000FF">*-- 배송방법, 배송기사 둘다 입력된 항목만 저장</font>
+    IF gs_do_not-vsbed IS NOT INITIAL AND gs_do_not-del_char IS NOT INITIAL.
+
+      " 배송 테이블 업데이트
+      UPDATE zc102sdt0011
+      SET adrnr    = gs_do_not-adrnr
+          del_char = gs_do_not-del_char
+          vsbed    = gs_do_not-vsbed
+          leati    = gs_do_not-leati
+          telf1    = gs_do_not-telf1
+          aedat    = sy-datum
+          aenam    = sy-uname
+          aezet    = sy-uzeit
+     WHERE vbeln_del = gs_do_not-vbeln_del
+       AND partner   = gs_do_not-partner.
+
+      " 납품오더 테이블 업데이트
+      UPDATE zc102sdt0004
+      SET gbstk     = 'R'
+          wadat_ist = gs_do_not-wadat_ist
+          aedat    = sy-datum
+          aenam    = sy-uname
+          aezet    = sy-uzeit
+     WHERE vbeln_del = gs_do_not-vbeln_del
+       AND partner   = gs_do_not-partner.
+
+      " 이메일 전송
+      PERFORM send_email.
+
+    ENDIF.
+
+  ENDLOOP.
+
+  PERFORM get_base_data.
+  PERFORM refresh_left_table.
+  PERFORM refresh_right_table.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form check_valid_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM check_valid_data CHANGING pv_valid .
+
+  pv_valid = abap_true.
+  LOOP AT gt_do_not INTO gs_do_not.
+<font color ="#0000FF">*-- 배송방법, 배송기사 둘다 입력되었는지 확인.</font>
+    IF gs_do_not-vsbed IS NOT INITIAL AND gs_do_not-del_char IS NOT INITIAL.
+    ELSE.
+      pv_valid = abap_false.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_right_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_right_table .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+  CALL METHOD go_right_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form send_email</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM send_email .
+
+  DATA: lv_msg   TYPE string,
+        doc_chng TYPE sodocchgi1,
+        reclist  TYPE STANDARD TABLE OF somlreci1,
+        objtxt   TYPE STANDARD TABLE OF soli,
+        objpack  TYPE STANDARD TABLE OF sopcklsti1,
+        wa_rec   TYPE somlreci1,
+        wa_txt   TYPE soli,
+        wa_pack  TYPE sopcklsti1.
+
+<font color ="#0000FF">*-- 메일 제목</font>
+  doc_chng-obj_name  = 'DELIVERY_REQUEST'.
+  doc_chng-obj_descr = '(주)푸드온보람 긴급 배송 요청'.
+
+<font color ="#0000FF">*-- 메일 본문</font>
+  LOOP AT gt_editor_lines INTO DATA(ls_editor_line).
+    wa_txt = ls_editor_line-tdline.
+    APPEND wa_txt TO objtxt.
+  ENDLOOP.
+
+  CLEAR wa_pack.
+  wa_pack-transf_bin = space.
+  wa_pack-head_start = 1.
+  wa_pack-body_start = 1.
+  wa_pack-body_num   = lines( objtxt ).
+  wa_pack-doc_type   = 'RAW'.
+  wa_pack-obj_name   = 'MAILBODY'.
+  wa_pack-obj_descr  = '본문'.
+  APPEND wa_pack TO objpack.
+
+<font color ="#0000FF">*-- 수신자</font>
+  CLEAR wa_rec.
+  wa_rec-receiver = gs_driver-email.
+  wa_rec-rec_type = 'U'.
+  APPEND wa_rec TO reclist.
+
+<font color ="#0000FF">*-- 전송</font>
+  CALL FUNCTION 'SO_NEW_DOCUMENT_ATT_SEND_API1'
+    EXPORTING
+      document_data = doc_chng
+      put_in_outbox = 'X'
+      commit_work   = 'X'
+    TABLES
+      packing_list  = objpack
+      contents_txt  = objtxt
+      receivers     = reclist
+    EXCEPTIONS
+      OTHERS        = 1.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_template</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_template .
+
+  DATA : lv_line     TYPE tdline,
+         lt_text     TYPE TABLE OF tline,
+         lv_addr(20).
+
+<font color ="#0000FF">*-- 창고번호 GET</font>
+  SELECT SINGLE location
+    INTO lv_addr
+    FROM zc102mmt0008
+    WHERE stlno = gs_do_not-stlno.
+
+<font color ="#0000FF">*-- 배송 시작 예정일 날짜 변환</font>
+  DATA(lv_wadat_ist) = |{ gs_do_not-wadat_ist DATE = ISO }|.
+  DATA(lv_vdatu)     = |{ gs_do_not-vdatu     DATE = ISO }|.
+
+<font color ="#0000FF">*-- 텍스트 구성 시작</font>
+  APPEND VALUE #( tdline = |안녕하세요, { gs_do_not-del_char } 기사님.| ) TO lt_text.
+  APPEND VALUE #( tdline = '계약을 맺고 함께 일하고 있는 (주)푸드온보람 담당자 한소연입니다. ' ) TO lt_text.
+  APPEND VALUE #( tdline = '항상 빠르고 안전한 배송에 감사드리며, 이번에도 긴급하게 부탁드릴 사항이 있어 메일 드립니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+
+  APPEND VALUE #( tdline = '&gt; 배송 정보' ) TO lt_text.
+
+  CONCATENATE ' - 픽업 주소      :' lv_addr INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - 픽업 날짜      :' lv_wadat_ist INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - 목적지         :' gs_do_not-adrnr INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - 도착 요청 기간    :' lv_vdatu INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  APPEND VALUE #( tdline = '&gt; 안내사항' ) TO lt_text.
+
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+  APPEND VALUE #( tdline = '본 물품은 식품이오니, 배송 중 온도 관리와 위생에 각별히 유의해 주시기 바랍니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '배송 중 온도 관리와 위생에 각별히 유의해 주시기 바랍니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '기존 계약서(계약번호: LGC-2024-005)에 따라 운임 단가가 적용됩니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '감사합니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '푸드온보람 드림' ) TO lt_text.
+
+<font color ="#0000FF">*-- 결과 저장</font>
+  gt_editor_lines = lt_text.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form assign_driver</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM assign_driver .
+
+  CALL SCREEN 120 STARTING AT 5 5.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen_110</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen_110 .
+
+  IF go_pop_cont IS NOT BOUND.
+
+    CLEAR : gt_pop_fcat .
+    PERFORM set_popup_field_catalog USING : 'X' 'EMPNO'  'ZC102HRT0002' 'C' ' ',
+                                            'X' 'EMPNAM' 'ZC102HRT0002' 'C' ' ',
+                                            ' ' 'EMAIL'  'ZC102HRT0002' ' ' ' ',
+                                            ' ' 'REGNO'  'ZC102HRT0002' 'C' ' '.
+
+
+    PERFORM set_pop_layout.
+    PERFORM create_popup_object.
+
+    gs_variant_pop-report = sy-repid.
+    gs_variant_pop-handle = 'POP1'.
+
+    SET HANDLER : lcl_event_handler=&gt;edit_toolbar  FOR go_pop_grid.
+
+<font color ="#0000FF">*-- Display Main ALV</font>
+    CALL METHOD go_pop_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant_pop
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_pop_layout
+      CHANGING
+        it_outtab       = gt_driver
+        it_fieldcatalog = gt_pop_fcat.
+
+    IF go_text_cont IS NOT BOUND.
+
+      PERFORM create_text_object.
+
+    ENDIF.
+
+    PERFORM refresh_pop_table.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_popup_field_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_popup_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_pop_fcat-key       = pv_key.
+  gs_pop_fcat-fieldname = pv_field.
+  gs_pop_fcat-ref_table = pv_table.
+  gs_pop_fcat-just      = pv_just.
+  gs_pop_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'EMPNO'.
+      gs_pop_fcat-coltext    = '번호'.
+    WHEN 'EMPNAM'.
+      gs_pop_fcat-coltext    = '배송기사'.
+    WHEN 'REGNO'.
+      gs_pop_fcat-coltext    = '담당 지역'.
+  ENDCASE.
+
+  APPEND gs_pop_fcat TO gt_pop_fcat.
+  CLEAR gs_pop_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_pop_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_pop_layout .
+
+  gs_pop_layout-zebra      = abap_true.    " 행 줄무늬 지정
+  gs_pop_layout-cwidth_opt = 'A'.          " 컬럼 폭 자동 조정
+  gs_pop_layout-grid_title = '긴급 배송기사 내역'.     " 제목 지정
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_popup_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_popup_object .
+
+<font color ="#0000FF">*-- Main</font>
+  CREATE OBJECT go_pop_cont
+    EXPORTING
+      container_name = 'POP_CONT'.
+
+<font color ="#0000FF">*-- Patch ALV</font>
+  CREATE OBJECT go_pop_grid
+    EXPORTING
+      i_parent = go_pop_cont.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_text_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_text_object .
+
+  CREATE OBJECT go_text_cont
+    EXPORTING
+      container_name = 'TEXT_AREA'.
+
+  CREATE OBJECT go_text_edit
+    EXPORTING
+      wordwrap_mode = cl_gui_textedit=&gt;wordwrap_at_windowborder
+      parent        = go_text_cont.
+
+  CALL METHOD go_text_edit-&gt;set_toolbar_mode
+    EXPORTING
+      toolbar_mode = cl_gui_textedit=&gt;false.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_template_driver</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_template_driver .
+
+  DATA : lv_line TYPE tdline,
+         lt_text TYPE TABLE OF tline.
+
+<font color ="#0000FF">*-- 텍스트 구성 시작</font>
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+  APPEND VALUE #( tdline = '[긴급 배송 요청]' ) TO lt_text.
+  APPEND VALUE #( tdline = |안녕하세요. (주)푸드온보람 담당자입니다.| ) TO lt_text.
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+
+  APPEND VALUE #( tdline = '다름이 아니라 긴급 배송건이 있어' ) TO lt_text.
+  APPEND VALUE #( tdline = '긴급 배송 진행을 요청드리고자 메일드립니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '운임 단가 및 보험 적용 등의 세부사항은' ) TO lt_text.
+  APPEND VALUE #( tdline = '계약서(LGC-2025-005)에 따라 적용됩니다.' ) TO lt_text.
+
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+  APPEND VALUE #( tdline = '항상 빠르고 안전한 배송 감사드리며') TO lt_text.
+  APPEND VALUE #( tdline = '가능 여부와 함께 회신 부탁드립니다.') TO lt_text.
+  APPEND VALUE #( tdline = '감사합니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+  APPEND VALUE #( tdline = '(주)푸드온보람 드림' ) TO lt_text.
+
+<font color ="#0000FF">*-- 결과 저장</font>
+  gt_editor_lines = lt_text.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form filter_driver</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM filter_driver .
+
+<font color ="#0000FF">*-- 체크된 항목이 있는지 체크</font>
+  DATA : lv_count TYPE i,
+         lv_tabix TYPE sy-tabix.
+
+  CLEAR : gs_regno, gt_regno.
+
+<font color ="#0000FF">*-- 플랜트(지역)별 몇건이 있는지 체크</font>
+  PERFORM read_regno_domain.
+
+<font color ="#0000FF">*-- 지역별 배송기사 수 체크</font>
+  LOOP AT gt_driver_info INTO gs_driver_info .
+
+    READ TABLE gt_regno INTO gs_regno WITH KEY regno = gs_driver_info-regno.
+
+    lv_tabix = sy-tabix.
+
+    IF sy-subrc EQ 0.
+
+      gs_regno-dcnt += 1.
+
+      MODIFY gt_regno FROM gs_regno INDEX lv_tabix TRANSPORTING dcnt.
+
+    ENDIF.
+
+  ENDLOOP.
+
+  CLEAR : lv_tabix.
+
+<font color ="#0000FF">*-- 판매오더 수 확인</font>
+  LOOP AT gt_so INTO gs_so WHERE check = 'X'.
+
+    SELECT SINGLE regno INTO gs_so-regno
+      FROM zc102mmt0008
+      WHERE stlno = gs_so-stlno.
+
+    MODIFY gt_so FROM gs_so TRANSPORTING regno.
+
+    READ TABLE gt_regno INTO gs_regno WITH KEY regno = gs_so-regno.
+
+    lv_tabix = sy-tabix.
+
+    IF sy-subrc EQ 0.
+      gs_regno-scnt += 1.
+
+      MODIFY gt_regno FROM gs_regno INDEX lv_tabix TRANSPORTING scnt.
+
+    ENDIF.
+
+  ENDLOOP.
+
+  " 배송기사를 성과 등급에 따라 정렬
+  SORT gt_driver_info BY evalg ASCENDING.
+<font color ="#0000FF">*-- 플랜트</font>
+  LOOP AT gt_regno INTO gs_regno WHERE scnt &lt;&gt; 0. " 판매오더가 있는 지역
+
+    IF gs_regno-scnt &gt;= gs_regno-dcnt.
+      " 판매오더 &gt; 배송기사 - 모든 배송기사 리스트에
+      LOOP AT gt_driver_info INTO gs_driver_info WHERE regno = gs_regno-regno.
+        APPEND gs_driver_info TO gt_driver.
+      ENDLOOP.
+    ELSE.
+      " 판매오더 &lt; 배송기사 (등급순 배정)
+      lv_count = 0.
+      LOOP AT gt_driver_info INTO gs_driver_info WHERE regno = gs_regno-regno.
+        lv_count += 1.
+        IF lv_count &gt; gs_regno-scnt.
+          EXIT.
+        ELSE.
+          APPEND gs_driver_info TO gt_driver.
+        ENDIF.
+      ENDLOOP.
+    ENDIF.
+
+  ENDLOOP.
+
+  PERFORM change_regno_text.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form read_regno_domain</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM read_regno_domain .
+
+  CALL FUNCTION 'DD_DOMVALUES_GET'
+    EXPORTING
+      domname   = 'ZC102D_PP_REGNO'
+      text      = 'X'
+      langu     = sy-langu
+    TABLES
+      dd07v_tab = gt_regno_d.
+
+<font color ="#0000FF">*-- 세팅</font>
+  LOOP AT gt_regno_d INTO gs_regno_d.
+    gs_regno-regno = gs_regno_d-domvalue_l.
+
+    APPEND gs_regno TO gt_regno.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_pop_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_pop_table .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+  CALL METHOD go_pop_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form change_regno_text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM change_regno_text .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  LOOP AT gt_driver INTO gs_driver.
+
+    lv_tabix = sy-tabix.
+
+    READ TABLE gt_regno_d INTO gs_regno_d WITH KEY domvalue_l = gs_driver-regno.
+
+    IF sy-subrc EQ 0.
+
+      gs_driver-regno = gs_regno_d-ddtext.
+
+      MODIFY gt_driver FROM gs_driver INDEX lv_tabix TRANSPORTING regno.
+
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form call_driver_list</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM call_driver_list .
+
+  DATA : lv_check_exist TYPE abap_bool VALUE abap_false.
+
+<font color ="#0000FF">*-- 변경된 데이터 있는지 확인</font>
+  CALL METHOD go_tab_grid1-&gt;check_changed_data.
+
+<font color ="#0000FF">*-- 체크된 항목이 있는지 확인</font>
+  LOOP AT gt_so INTO gs_so WHERE check = 'X'.
+    lv_check_exist = abap_true.
+  ENDLOOP.
+
+  IF lv_check_exist EQ abap_false.
+    MESSAGE s000 WITH '배송기사를 배정할 항목을 먼저 선택해주세요.' DISPLAY LIKE 'E'.
+  ELSE.
+    CALL SCREEN 110 STARTING AT 5 5.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_text_editor</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_text_editor .
+
+  CALL METHOD go_text_edit-&gt;delete_text
+    EXCEPTIONS
+      error_cntl_call_method = 1
+      OTHERS                 = 2.
+
+<font color ="#0000FF">*-- 텍스트 에디터</font>
+  CALL METHOD go_text_edit-&gt;set_selected_text_as_r3table
+    EXPORTING
+      table                         = gt_editor_lines
+      enable_editing_protected_text = go_text_edit-&gt;false.
+
+<font color ="#0000FF">*-- read only 모드로 띄우기</font>
+  CALL METHOD go_text_edit-&gt;set_readonly_mode
+    EXPORTING
+      readonly_mode = 1.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form email_and_process</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM email_and_process .
+
+  DATA : lv_answer,
+         lv_title  TYPE string,
+         lv_q      TYPE string,
+         lv_tabix  TYPE sy-tabix.
+
+<font color ="#0000FF">*-- 확인창</font>
+  lv_title = '긴급배송 요청'.
+  lv_q     = '요청을 완료하시겠습니까? (해당 배송기사님께 메일이 전송됩니다).'.
+  PERFORM do_question USING lv_title lv_q
+                    CHANGING lv_answer.
+
+  CHECK lv_answer EQ '1'.
+
+<font color ="#0000FF">*-- 메일 전송</font>
+  LOOP AT gt_driver INTO gs_driver.
+
+    PERFORM send_email.
+
+    " 기사님 가용 여부 Y로 변경 DB
+    UPDATE zc102hrt0002
+    SET avnow = 'Y'
+    WHERE empno = gs_driver-empno.
+
+    " 인터널 테이블도 변경
+    READ TABLE gt_driver_info INTO gs_driver_info WITH KEY empno = gs_driver-empno.
+
+    lv_tabix = sy-tabix.
+
+    IF sy-subrc EQ 0.
+      gs_driver_info-avnow = 'Y'.
+
+      MODIFY gt_driver_info FROM gs_driver_info INDEX lv_tabix TRANSPORTING avnow.
+    ENDIF.
+
+  ENDLOOP.
+
+
+  LOOP AT gt_so INTO gs_so WHERE check = 'X'.
+<font color ="#0000FF">*-- 상태값 변경</font>
+    PERFORM change_data.
+  ENDLOOP.
+
+<font color ="#0000FF">*-- DB에서 값 다시 불러오고 REFRESH</font>
+  PERFORM get_base_data.
+  PERFORM display_order.
+
+  PERFORM refresh_tab1_table.
+  PERFORM refresh_left_table.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form change_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM change_data .
+
+<font color ="#0000FF">*-- 배송 정보 관리 테이블에 판매오더번호 입력 + 파트너</font>
+  gs_delivery-vbeln_del = gs_so-vbeln_so.
+  gs_delivery-partner   = gs_so-partner.
+
+  INSERT zc102sdt0011 FROM gs_delivery.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object_pop2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object_pop2 .
+
+  CREATE OBJECT go_pop_cont2
+    EXPORTING
+      container_name = 'SECOND_CONT'.
+
+  CREATE OBJECT go_pop_grid2
+    EXPORTING
+      i_parent = go_pop_cont2.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen_120</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen_120 .
+
+  IF go_pop_cont2 IS NOT BOUND.
+
+    CLEAR : gt_pop_fcat2, gs_pop_fcat2.
+    PERFORM set_pop_catalog USING : 'X' 'EMPNO'  'ZC102HRT0002' 'C' ' ',
+                                    'X' 'EMPNAM' 'ZC102HRT0002' 'C' ' ',
+                                    ' ' 'EMAIL'  'ZC102HRT0002' ' ' ' ',
+                                    ' ' 'REGNO'  'ZC102HRT0002' 'C' ' ',
+                                    ' ' 'CHECK'   '           ' ' ' ' '.
+
+<font color ="#0000FF">*-- 레이아웃</font>
+    gs_pop_layout2-zebra      = abap_true.
+    gs_pop_layout2-cwidth_opt = 'A'.
+    gs_pop_layout2-grid_title = '가용 기사 입력'.
+    gs_pop_layout2-stylefname = 'CELL_TAB'.
+
+<font color ="#0000FF">*-- 객체 생성</font>
+    PERFORM create_object_pop2.
+
+    gs_variant_pop2  = VALUE #( report = sy-repid
+                               handle = 'POP_120' ).
+
+    SET HANDLER : lcl_event_handler=&gt;edit_toolbar  FOR go_pop_grid2.
+
+    CALL METHOD go_pop_grid2-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant_pop2
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_pop_layout2
+      CHANGING
+        it_outtab       = gt_driver_check
+        it_fieldcatalog = gt_pop_fcat2.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_pop_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_pop_catalog USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_pop_fcat2 = VALUE #(
+                     key        = pv_key
+                     fieldname  = pv_field
+                     ref_table  = pv_table
+                     just       = pv_just
+                     emphasize  = pv_emph
+                    ).
+
+<font color ="#0000FF">*  CASE pv_field.</font>
+  CASE pv_field.
+    WHEN 'CHECK'.
+      gs_pop_fcat2-coltext    = '가용 여부'.
+      gs_pop_fcat2-checkbox = 'X'.
+      gs_pop_fcat2-edit  = 'X'.
+  ENDCASE.
+
+  APPEND gs_pop_fcat2 TO gt_pop_fcat2.
+  CLEAR gs_pop_fcat2.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_driver_available</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_driver_available .
+
+  DATA : ls_style TYPE lvc_s_styl,
+         lv_tabix TYPE sy-tabix.
+
+  CLEAR : gs_driver, gt_driver.
+
+<font color ="#0000FF">*-- 가용여부가 Y인 배송기사 목록</font>
+  LOOP AT gt_driver_info INTO gs_driver_info .
+
+    IF gs_driver_info-avnow EQ 'Y'.
+
+      MOVE-CORRESPONDING gs_driver_info TO gs_driver_check.
+      APPEND gs_driver_check TO gt_driver_check.
+
+    ENDIF.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*-- 체크 버튼 외 전체 비활성화</font>
+  LOOP AT gt_driver_check INTO gs_driver_check .
+
+    lv_tabix = sy-tabix.
+
+    " 모든 필드 비활성화
+    CLEAR ls_style.
+    ls_style-style     = cl_gui_alv_grid=&gt;mc_style_disabled.
+    INSERT ls_style INTO TABLE gs_driver_check-cell_tab.
+
+    " 체크박스 활성화
+    CLEAR : ls_style.
+    ls_style-fieldname = 'CHECK'.
+    ls_style-style     = cl_gui_alv_grid=&gt;mc_style_enabled.
+    INSERT ls_style INTO TABLE gs_driver_check-cell_tab.
+
+    MODIFY gt_driver_check FROM gs_driver_check INDEX lv_tabix
+                                                TRANSPORTING cell_tab. .
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_exclude_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_OBJECT</font>
+<font color ="#0000FF">*&      --&gt; E_INTERACTIVE</font>
+<font color ="#0000FF">*&      --&gt; SENDER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_exclude_toolbar USING po_object TYPE REF TO cl_alv_event_toolbar_set
+                               pv_interactive
+                               po_sender TYPE REF TO cl_gui_alv_grid.
+
+  " 빈 TOOLBAR
+  po_object-&gt;mt_toolbar = VALUE #( ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form save_and_create_do</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM save_and_create_do .
+
+<font color ="#0000FF">*-- 체크된 항목이 있는지 체크</font>
+  DATA : lv_answer,
+         lv_check_exist TYPE abap_bool VALUE abap_false,
+         lv_tabix       TYPE sy-tabix,
+         lv_index       TYPE sy-tabix,
+         lv_title       TYPE string,
+         lv_q           TYPE string,
+         lv_assign      TYPE i.
+
+
+  DATA : BEGIN OF ls_driver,
+           regno  TYPE zc102hrt0002-regno,
+           empnam TYPE zc102hrt0002-empnam,
+           cnt    TYPE i,
+         END OF ls_driver,
+         lt_driver LIKE TABLE OF ls_driver.
+
+  DATA : ls_style    TYPE lvc_s_styl.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 유효성 및 확인</font>
+<font color ="#0000FF">**********************************************************************</font>
+
+<font color ="#0000FF">*-- 변경된 데이터 있는지 확인</font>
+  IF go_pop_grid2 IS BOUND.
+    CALL METHOD go_pop_grid2-&gt;check_changed_data.
+  ENDIF.
+
+<font color ="#0000FF">*-- 체크한 항목이 있는지 체크</font>
+  LOOP AT gt_driver_check INTO gs_driver_check.
+    IF gs_driver_check-check = 'X'.
+      lv_check_exist = abap_true.
+    ENDIF.
+  ENDLOOP.
+
+  IF lv_check_exist EQ abap_false.
+    MESSAGE s000 WITH '체크된 항목이 없습니다..' DISPLAY LIKE 'E'.
+    EXIT.
+  ELSE.
+
+    lv_title = '배송기사 배정'.
+    lv_q     = '배정을 완료하시겠습니까? 배송 정보가 자동으로 입력되고 납품오더가 자동 생성됩니다.'.
+    PERFORM do_question USING lv_title lv_q
+                        CHANGING lv_answer.
+
+    CHECK lv_answer EQ '1'.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 가용 기사 수, 판매오더 수 파악</font>
+<font color ="#0000FF">**********************************************************************</font>
+    CLEAR : gt_regno, gs_regno.
+
+<font color ="#0000FF">*-- 플랜트(지역)별 몇건이 있는지 체크</font>
+    PERFORM read_regno_domain.
+
+<font color ="#0000FF">*-- 지역별, 가용 배송기사 수 체크</font>
+    LOOP AT gt_driver_check INTO gs_driver_check WHERE check = 'X'.
+
+      READ TABLE gt_regno INTO gs_regno WITH KEY regno = gs_driver_check-regno.
+
+      lv_tabix = sy-tabix.
+
+      IF sy-subrc  EQ 0 .
+
+        gs_regno-dcnt += 1.
+
+        MODIFY gt_regno FROM gs_regno INDEX lv_tabix TRANSPORTING dcnt.
+
+      ENDIF.
+
+      " 미리 가용여부 N으로 업데이트 치기
+      UPDATE zc102hrt0002
+      SET avnow = 'N'
+      WHERE empnam = gs_driver_check-empnam
+        AND empno  = gs_driver_check-empno.
+
+    ENDLOOP.
+
+    CLEAR : lv_tabix.
+
+    CLEAR gs_so.
+
+<font color ="#0000FF">*-- 판매오더 수 확인</font>
+    LOOP AT gt_so_not INTO gs_so_not.
+
+      lv_index = sy-tabix.
+
+      SELECT SINGLE stlno INTO gs_so_not-stlno
+        FROM zc102sdt0010
+        WHERE partner = gs_so_not-partner.
+
+      SELECT SINGLE regno INTO gs_so_not-regno
+        FROM zc102mmt0008
+        WHERE stlno = gs_so_not-stlno.
+
+      MODIFY gt_so_not FROM gs_so_not INDEX lv_index TRANSPORTING stlno regno.
+
+      READ TABLE gt_regno INTO gs_regno WITH KEY regno = gs_so_not-regno.
+
+      lv_tabix = sy-tabix.
+
+      IF sy-subrc EQ 0.
+        gs_regno-scnt += 1.
+
+        MODIFY gt_regno FROM gs_regno INDEX lv_tabix TRANSPORTING scnt.
+
+      ENDIF.
+
+    ENDLOOP.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 기사 배정</font>
+<font color ="#0000FF">**********************************************************************</font>
+
+    CLEAR : lv_tabix, gs_so_not, lv_index.
+
+    LOOP AT gt_regno INTO gs_regno WHERE dcnt &gt; 0.
+
+      CLEAR : lt_driver, ls_driver.
+      LOOP AT gt_driver_check INTO gs_driver_check WHERE check = 'X'.
+
+        IF gs_driver_check-regno EQ gs_regno-regno. " 해당하는 지역 기사만 가져옴
+
+          MOVE-CORRESPONDING gs_driver_check TO ls_driver.
+          APPEND ls_driver TO lt_driver.
+
+        ENDIF.
+      ENDLOOP.
+
+      CASE gs_regno-dcnt.
+        WHEN 1. " 가용기사가 1명일 때
+          LOOP AT gt_so_not INTO gs_so_not WHERE regno = gs_regno-regno.
+
+            lv_tabix = sy-tabix.
+
+            " 해당 가용기사 읽어와서 배정
+            READ TABLE lt_driver INTO ls_driver WITH KEY regno = gs_regno-regno.
+
+            IF sy-subrc EQ 0.
+              gs_so_not-empnam = ls_driver-empnam.
+
+              MODIFY gt_so_not FROM gs_so_not INDEX lv_tabix TRANSPORTING empnam.
+            ENDIF.
+
+          ENDLOOP.
+        WHEN 2. " 가용기사가 2명일 때
+          CLEAR lv_index.
+          " CASE 1 : 판매오더도 2건일 때
+          IF gs_regno-dcnt = gs_regno-scnt.
+            LOOP AT gt_so_not INTO gs_so_not WHERE regno = gs_regno-regno.
+
+              lv_tabix = sy-tabix.
+
+              " 해당 가용기사 읽어와서 배정
+              READ TABLE lt_driver INTO ls_driver INDEX 1.
+
+              lv_index = sy-tabix.
+
+              IF sy-subrc EQ 0.
+                gs_so_not-empnam = gs_driver_check-empnam.
+
+                MODIFY gt_so_not FROM gs_so_not INDEX lv_tabix TRANSPORTING empnam.
+                DELETE lt_driver INDEX lv_index.
+              ENDIF.
+
+            ENDLOOP.
+
+            " CASE 2 : 판매오더 2건 이상일 때
+          ELSE.
+            CLEAR lv_index.
+            lv_assign = gs_regno-scnt / 2.
+
+            " 반반 나눠서 담당 판매오더 수 입력
+            READ TABLE lt_driver INTO ls_driver INDEX 1.
+            IF sy-subrc EQ 0. ls_driver-cnt = lv_assign. ENDIF.
+            MODIFY lt_driver FROM ls_driver INDEX 1 TRANSPORTING cnt.
+            READ TABLE lt_driver INTO ls_driver INDEX 2.
+            IF sy-subrc EQ 0. ls_driver-cnt = gs_regno-scnt - lv_assign. ENDIF.
+            MODIFY lt_driver FROM ls_driver INDEX 2 TRANSPORTING cnt.
+
+            LOOP AT gt_so_not INTO gs_so_not WHERE regno = gs_regno-regno.
+
+              lv_tabix = sy-tabix.
+
+              " 해당 가용기사 읽어와서 배정
+              READ TABLE lt_driver INTO ls_driver WITH KEY regno = gs_regno-regno.
+
+              lv_index = sy-tabix.
+
+              IF sy-subrc EQ 0.
+                gs_so_not-empnam = ls_driver-empnam.
+
+                MODIFY gt_so_not FROM gs_so_not INDEX lv_tabix TRANSPORTING empnam.
+                ls_driver-cnt -= 1.
+
+                MODIFY lt_driver FROM ls_driver INDEX lv_index TRANSPORTING cnt.
+
+                IF ls_driver-cnt = 0.
+                  DELETE lt_driver INDEX lv_index.
+                ENDIF.
+              ENDIF.
+            ENDLOOP.
+          ENDIF.
+
+      ENDCASE.
+    ENDLOOP.
+  ENDIF.
+
+  CLEAR : gt_regno, gs_regno.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 납품오더 생성</font>
+<font color ="#0000FF">**********************************************************************</font>
+
+  CLEAR lv_tabix.
+
+<font color ="#0000FF">*-- 가용기사가 채워진 판매오더를 납품오더로 생성</font>
+  LOOP AT gt_so_not INTO gs_so_not WHERE empnam IS NOT INITIAL.
+
+    lv_tabix = sy-tabix.
+
+<font color ="#0000FF">*-- 납품 오더 생성</font>
+    CLEAR : gv_delno.
+    PERFORM get_delno.
+
+    " 헤더
+    gs_do-vbeln_del = gv_delno.
+    gs_do-vbeln_so  = gs_so_not-vbeln_so.
+    gs_do-partner   = gs_so_not-partner.
+    gs_do-cusno     = gs_so_not-cusno.
+    gs_do-vdatu     = gs_so_not-delid.      " 납품예정일 = 납품일
+    gs_do-finalsp   = gs_so_not-netwr.
+    gs_do-waers     = gs_so_not-waers.
+    gs_do-wadat_ist = gs_so_not-delid - 2 .
+    gs_do-gbstk     = 'R'.                  " 포장완료
+    gs_do-iseme     = 'E'.
+    " Time stamp
+    gs_do-erdat = sy-datum.
+    gs_do-ernam = sy-uname.
+    gs_do-erzet = sy-uzeit.
+
+    INSERT zc102sdt0004 FROM gs_do.
+
+    " 라인
+    gs_do_i-vbeln_del = gv_delno.
+    gs_do_i-vbeln_so  = gs_so_not-vbeln_so.
+    gs_do_i-partner   = gs_so_not-partner.
+    gs_do_i-matnr     = gs_so_not-matnr.
+    gs_do_i-stlno     = gs_so_not-stlno.
+    gs_do_i-stprs     = gs_so_not-netwr.
+    gs_do_i-waers     = gs_so_not-waers.
+    gs_do_i-menge     = gs_so_not-pequan.
+    gs_do_i-meins     = gs_so_not-meins.
+    " time stamp
+    gs_do_i-erdat = sy-datum.
+    gs_do_i-ernam = sy-uname.
+    gs_do_i-erzet = sy-uzeit.
+
+    INSERT zc102sdt0005 FROM gs_do_i.
+
+    READ TABLE gt_bp INTO gs_bp WITH KEY partner = gs_so_not-partner.
+
+    IF sy-subrc EQ 0.
+
+<font color ="#0000FF">*-- 배송정보 테이블 업데이트(판매오더번호 -&gt; 납품오더번호)</font>
+      READ TABLE gt_driver_info INTO gs_driver_info WITH KEY empnam = gs_so_not-empnam.
+
+      IF sy-subrc EQ 0.
+
+        UPDATE zc102sdt0011
+          SET vbeln_del = gv_delno
+              adrnr = gs_bp-stras
+              del_char = gs_so_not-empnam
+              vsbed = 'I'
+              leati = 1
+              telf1 = gs_driver_info-telf1
+              aedat = sy-datum
+              aenam = sy-uname
+              aezet = sy-uzeit
+          WHERE vbeln_del = gs_so_not-vbeln_so
+            AND partner = gs_so_not-partner.
+
+      ENDIF.
+
+
+    ENDIF.
+
+<font color ="#0000FF">*-- 판매오더 테이블 업데이트</font>
+    UPDATE zc102sdt0006
+    SET state ='Y'
+        aedat = sy-datum
+        aenam = sy-uname
+        aezet = sy-uzeit
+    WHERE vbeln_so = gs_so-vbeln_so
+      AND partner  = gs_so-partner.
+
+    CLEAR : gs_do, gs_do_i.
+
+  ENDLOOP.
+
+  IF sy-subrc EQ 0.
+    MESSAGE s000 WITH '배송 처리 및 납품오더 생성이 완료되었습니다'.
+    COMMIT WORK.
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
+
+<font color ="#0000FF">*-- db에서 값 다시 불러오고 REFRESH</font>
+  PERFORM get_base_data.
+  PERFORM display_order.
+
+  PERFORM refresh_tab1_table.
+  PERFORM refresh_left_table.
+  PERFORM refresh_right_table.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

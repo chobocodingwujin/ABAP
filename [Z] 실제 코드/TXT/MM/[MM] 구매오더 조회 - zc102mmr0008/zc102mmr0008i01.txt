@@ -1,0 +1,74 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102MMR0008I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Module STATUS_0100 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'MENU100'.
+  SET TITLEBAR 'TITLE100'.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+
+*  IF gv_save_flag IS NOT INITIAL.
+*    PERFORM popup_to_confirm_back CHANGING gv_answer.
+*    IF gv_answer <> '1'.
+*      EXIT.
+*    ENDIF.
+*  ENDIF.
+
+  CALL METHOD : go_alv_grid->free,
+                go_tab_grid1->free,
+                go_tab_grid2->free,
+                go_container->free,
+                go_tab_cont1->free,
+                go_tab_cont2->free.
+
+
+  FREE : go_alv_grid, go_tab_grid1, go_tab_grid2,
+         go_container, go_tab_cont1, go_tab_cont2.
+
+  LEAVE TO SCREEN 0.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Form set_tabscreen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tabscreen .
+
+  CASE gc_tab-activetab.
+    WHEN 'TAB1'.
+      gv_subscreen = '0101'.
+    WHEN 'TAB2'.
+      gv_subscreen = '0102'.
+    WHEN OTHERS.
+      gc_tab-activetab = 'TAB1'.
+      gv_subscreen     = '0101'.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  gc_tab-activetab = gv_okcode.
+
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

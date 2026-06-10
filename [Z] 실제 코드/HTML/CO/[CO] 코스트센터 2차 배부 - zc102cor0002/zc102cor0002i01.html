@@ -1,0 +1,149 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102COR0002I01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102COR0002I01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102COR0002I01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102COR0002I01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  EXIT  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE exit INPUT.
+  CALL METHOD : go_tleft_grid-&gt;free, go_bleft_grid-&gt;free, go_right_grid-&gt;free,
+                go_tleft_cont-&gt;free, go_bleft_cont-&gt;free, go_left_split-&gt;free,
+                go_lright_cont-&gt;free, go_rright_cont-&gt;free, go_right_split-&gt;free,
+                go_left_cont-&gt;free, go_right_cont-&gt;free,
+                go_split_cont-&gt;free, go_base_cont-&gt;free.
+
+  FREE : go_tleft_grid, go_bleft_grid, go_right_grid,
+         go_tleft_cont, go_bleft_cont, go_left_split,
+         go_lright_cont, go_rright_cont, go_right_split,
+         go_left_cont, go_right_cont,
+         go_split_cont, go_base_cont.
+
+  LEAVE TO SCREEN 0.
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  USER_COMMAND_0100  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE user_command_0100 INPUT.
+  CASE gv_okcode.
+    WHEN 'EXCT'.
+      PERFORM allocation_exct.
+    WHEN 'FIND'.
+      CALL TRANSACTION 'ZC102COR0001'.
+    WHEN 'SRCH'.
+      PERFORM get_cost_data.
+      PERFORM refresh_table.
+    WHEN 'SETT'.
+      PERFORM set_data.
+    WHEN OTHERS.
+      gc_tab-activetab = gv_okcode.
+  ENDCASE.
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  CUST_F4_ACTTP  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE cust_f4_acttp INPUT.
+  IF gv_acttp IS INITIAL.
+    PERFORM set_search_help_skf.
+  ENDIF.
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_search_help_skf</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_search_help_skf .
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'DESCT'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_ACTTP-ACTTP'
+      window_title = '활동 유형'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_acttp
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  USER_COMMAND_0101  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE user_command_0101 INPUT.
+  CASE gv_okcode.
+    WHEN 'CHCK'.
+      gv_lock = gv_check.
+  ENDCASE.
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  CUST_F4_SAKNR  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE cust_f4_saknr INPUT.
+  IF gv_cel_to IS INITIAL.
+    PERFORM set_search_help_kostl.
+  ENDIF.
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form make_profit_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM make_profit_data .
+  CLEAR : gv_tabix, gs_profit.
+
+  LOOP AT gt_profit INTO gs_profit.
+    CLEAR gs_result.
+
+    gv_tabix = sy-tabix.
+    READ TABLE gt_result INTO gs_result WITH KEY prctr = gs_profit-prctr.
+    IF sy-subrc = 0.
+      gs_profit-wrbtr = gs_result-wrbtr.
+      MODIFY gt_profit FROM gs_profit INDEX gv_tabix
+                                      TRANSPORTING wrbtr.
+    ENDIF.
+
+  ENDLOOP.
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

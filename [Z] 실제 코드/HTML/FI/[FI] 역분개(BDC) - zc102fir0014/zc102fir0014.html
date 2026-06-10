@@ -1,0 +1,61 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0014</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0014</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [FI] 역분개</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102FIR0014</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+include <a href ="zc102fir0014top.html">zc102fir0014top</a>.  " Global Data
+
+include <a href ="zc102fir0014o01.html">zc102fir0014o01</a>.  " PBO-Modules
+include <a href ="zc102fir0014i01.html">zc102fir0014i01</a>.  " PAI-Modules
+include <a href ="zc102fir0014f01.html">zc102fir0014f01</a>.  " FORM-Routines
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* INITIALIZATION</font>
+<font color ="#0000FF">**********************************************************************</font>
+INITIALIZATION.
+  PERFORM set_init_value.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+
+  PERFORM get_reverse_txt50. " 역분개텍스트
+
+  CALL SCREEN 100.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* TITLE100 --&gt; [FI] 역분개 프로그램</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: Hard coded</font>
+<font color ="#0000FF">*   Document</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZC102MSG</font>
+<font color ="#0000FF">*004   데이터가 존재하지 않습니다</font>
+<font color ="#0000FF">*058   회계전표번호를 입력하세요.</font>
+<font color ="#0000FF">*082   역분개 사유 코드를 입력해주세요.</font>
+<font color ="#0000FF">*084   역분개 처리된 전표입니다.</font>
+<font color ="#0000FF">*086   역분개 전표가 생성되었습니다.</font>
+<font color ="#0000FF">*094   존재하지 않은 사유코드입니다.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

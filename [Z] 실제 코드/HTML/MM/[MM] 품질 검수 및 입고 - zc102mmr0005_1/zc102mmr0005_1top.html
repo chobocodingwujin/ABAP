@@ -1,0 +1,273 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102MMR0005_1TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102MMR0005_1TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102MMR0005TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102MMR0005TOP                          - Report ZC102MMR0005</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102mmr0005 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zc102mmt0015, zc102hrt0002, zc102mmt0001.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Macro</font>
+<font color ="#0000FF">**********************************************************************</font>
+DEFINE _init.
+
+  REFRESH &1.
+  CLEAR &1.
+
+END-OF-DEFINITION.
+
+DEFINE _msg_build.
+
+  CALL FUNCTION 'MESSAGE_TEXT_BUILD'
+    EXPORTING
+      msgid               = &1
+      msgnr               = &2
+      msgv1               = &3
+      msgv2               = &4
+      msgv3               = &5
+      msgv4               = &6
+    IMPORTING
+      message_text_output = &7.
+
+END-OF-DEFINITION.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*Tap Strip controls</font>
+<font color ="#0000FF">**********************************************************************</font>
+CONTROLS gc_tab TYPE TABSTRIP.      " TAB Strip object
+
+DATA : gv_subscreen TYPE sy-dynnr.  " Subscreen number
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Class Instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_tab_cont1 TYPE REF TO cl_gui_custom_container,  " 미검수 리스트
+       go_tab_grid1 TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_tab_cont2     TYPE REF TO cl_gui_custom_container.
+
+<font color ="#0000FF">*-- 검수 완료 TAB에 붙을 컨테이너 왼쪽, 오른쪽</font>
+DATA : go_split_cont_lr TYPE REF TO cl_gui_splitter_container,
+       go_left_cont     TYPE REF TO cl_gui_container,
+       go_left_grid     TYPE REF TO cl_gui_alv_grid,
+       go_right_cont    TYPE REF TO cl_gui_container.
+
+<font color ="#0000FF">*-- 오른쪽 컨테이너에 붙을 컨테이너, ALV</font>
+DATA : go_split_cont  TYPE REF TO cl_gui_splitter_container, " 2행 1열
+       go_top_cont    TYPE REF TO cl_gui_container,          " 윗부분 컨테이너
+       go_bottom_cont TYPE REF TO cl_gui_container,          " 아래부분 컨테이너
+       go_top_grid    TYPE REF TO cl_gui_alv_grid,           " 윗부분 ALV
+       go_bottom_grid TYPE REF TO cl_gui_alv_grid.           " 아래부분 ALV
+
+DATA : go_pop_cont TYPE REF TO cl_gui_custom_container, " 검수 POP-UP
+       go_pop_grid TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">*-- Text editor용</font>
+DATA : go_text_edit TYPE REF TO cl_gui_textedit,
+       go_text_cont TYPE REF TO cl_gui_custom_container.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- 미검수 : 송장 테이블 INNER JOIN 구매오더 테이블 BY 구매오더번호</font>
+DATA : BEGIN OF gs_qmlist,
+         vbeln_bil TYPE zc102mmt0015-vbeln_bil, " 송장번호
+         partner   TYPE zc102mmt0015-partner,   " BP번호
+         ebeln     TYPE zc102mmt0015-ebeln,     " 구매오더번호
+         matnr     TYPE zc102mmt0015-matnr,     " 자재번호
+         maktx     TYPE zc102mmt0004-maktx,     " 자재명
+         odrqu     TYPE zc102mmt0015-odrqu,     " 주문수량
+<font color ="#0000FF">*         disme     TYPE zc102mmt0018-disme,     " &lt;검수&gt; 반품 수량</font>
+         meins     TYPE zc102mmt0015-meins,     " 수량 단위
+         qcheck    TYPE zc102mmt0015-qcheck,    " 품질 검사 여부
+         lfdat     TYPE zc102mmt0015-lfdat,     " 입고일
+         stlno     TYPE zc102mmt0011-stlno,     " 창고번호 - 구매오더테이블
+<font color ="#0000FF">*         perdi     TYPE zc102mmt0018-perdi,     " &lt;검수&gt; 반품률</font>
+<font color ="#0000FF">*         reaso     TYPE zc102mmt0018-reaso,     " &lt;검수&gt; 반품 사유 코드</font>
+       END OF gs_qmlist,
+       gt_qmlist LIKE TABLE OF gs_qmlist.
+
+DATA : BEGIN OF gs_qmdone.
+         INCLUDE STRUCTURE gs_qmlist.
+DATA :   refno TYPE zc102mmt0005-batno,
+       END OF gs_qmdone,
+       gt_qmdone LIKE TABLE OF gs_qmdone.
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gt_tab_fcat       TYPE lvc_t_fcat, " 미검수 리스트 FCAT
+       gs_tab_fcat       TYPE lvc_s_fcat,
+
+       gt_left_fcat      TYPE lvc_t_fcat, " 검수 완료 리스트 FCAT
+       gs_left_fcat      TYPE lvc_s_fcat,
+
+       gt_top_fcat       TYPE lvc_t_fcat, " 반품 리스트 FCAT
+       gs_top_fcat       TYPE lvc_s_fcat,
+
+       gt_bottom_fcat    TYPE lvc_t_fcat, " 입고 리스트 FCAT
+       gs_bottom_fcat    TYPE lvc_s_fcat,
+
+       gt_pop_fcat       TYPE lvc_t_fcat, " 검수 POP-UP FCAT
+       gs_pop_fcat       TYPE lvc_s_fcat,
+
+       gs_variant_tab    TYPE disvariant,
+       gs_variant_left   TYPE disvariant,
+       gs_variant_top    TYPE disvariant,
+       gs_variant_bottom TYPE disvariant,
+
+       gs_layout_tab     TYPE lvc_s_layo,
+       gs_layout_left    TYPE lvc_s_layo,
+       gs_layout_top     TYPE lvc_s_layo,
+       gs_layout_bottom  TYPE lvc_s_layo.
+
+<font color ="#0000FF">*-- 미검수 리스트에서 선택한 행 받아와서 품질검사 리스트로</font>
+DATA : gt_select TYPE lvc_t_roid,
+       gs_select TYPE lvc_s_roid.
+
+<font color ="#0000FF">*-- For Pop up</font>
+DATA : BEGIN OF gs_doqm,
+         vbeln_bil     TYPE zc102mmt0015-vbeln_bil, " 송장번호
+         partner       TYPE zc102mmt0015-partner,   " BP번호
+         email         TYPE zc102sdt0001-email,     " 이메일
+         ebeln         TYPE zc102mmt0015-ebeln,     " 구매오더번호
+         matnr         TYPE zc102mmt0015-matnr,     " 자재번호
+         maktx         TYPE zc102mmt0004-maktx,     " 자재명
+         odrqu         TYPE zc102mmt0015-odrqu,     " 주문수량
+         disme         TYPE zc102mmt0018-disme,     " &lt;검수 테이블 INSERT&gt; 반품 수량
+         final         TYPE zc102mmt0015-odrqu,     " &lt;원자재 테이블 INSERT&gt; 최종 재고량
+         meins         TYPE zc102mmt0015-meins,     " 수량 단위
+         qcheck        TYPE zc102mmt0015-qcheck,    " 품질 검사 여부
+         lfdat         TYPE zc102mmt0015-lfdat,     " 입고일
+         stlno         TYPE zc102mmt0011-stlno,     " 창고번호 - 구매오더테이블
+         werks         TYPE zc102mmt0008-werks,     " &lt;원자재 테이블 INSERT&gt; PLANT 번호
+         perdi         TYPE zc102mmt0018-perdi,     " &lt;검수 테이블 INSERT&gt; 반품률
+         perdi_txt(10),                             " 불량률 ALV용
+         reaso         TYPE zc102mmt0018-reaso,     " &lt;검수 테이블 INSERT&gt; 반품 사유
+         reasotext(10),                             " &lt;검수&gt; 반품 사유 text(ALV용)
+         texton        TYPE abap_bool,              " EDITOR 버튼 띄울지 판단
+         empnam        TYPE zc102hrt0002-empnam,
+         tdline        TYPE TABLE OF tline,         " 텍스트 에디터 내용 저장 + 메일
+         text_btn      TYPE icon-id,                " 텍스트 에디터 버튼용
+         image_data    TYPE solix_tab,              " 사진 업로드
+         modi_yn,                                   " 해당 레코드 변경 여부
+         cell_tab      TYPE lvc_t_styl,             " ALV Edit style
+       END OF gs_doqm,
+       gt_doqm LIKE TABLE OF gs_doqm.
+
+<font color ="#0000FF">*-- ALV Toolbar</font>
+DATA : gt_ui_functions TYPE ui_functions, " Exclude ALV Toolbar
+       gs_button_tab1  TYPE stb_button,   " TAB1
+       gs_button_top   TYPE stb_button.   " TAB2
+
+<font color ="#0000FF">*-- 창고정보 GET</font>
+DATA : BEGIN OF gs_stlmaster,
+         stlno   TYPE zc102mmt0008-stlno,
+         stltype TYPE zc102mmt0008-stltype,
+         werks   TYPE zc102mmt0008-werks,
+       END OF gs_stlmaster,
+       gt_stlmaster LIKE TABLE OF gs_stlmaster.
+
+<font color ="#0000FF">*-- Insert를 위한 데이터 Get</font>
+DATA : gs_invoice     TYPE zc102mmt0015,          " 송장 WA
+       gt_invoice     TYPE TABLE OF zc102mmt0015, " 송장 IT
+       gv_batno       TYPE zc102ppt0005-batno,    " 배치번호
+       gs_batch       TYPE zc102ppt0005,          " 배치 WA
+       gt_batch       TYPE TABLE OF zc102ppt0005, " 배치 IT
+       gs_storage     TYPE zc102mmt0005,          " 창고 WA
+       gt_storage     TYPE TABLE OF zc102mmt0005, " 창고 IT
+       gt_storage_all TYPE TABLE OF zc102mmt0005, " 창고 IT 전체
+       gs_return      TYPE zc102mmt0018,          " 반품 WA
+       gt_return      TYPE TABLE OF zc102mmt0018, " 반품 IT
+       gt_return_all  TYPE TABLE OF zc102mmt0018, " 반품 IT 전체
+       gs_mat_info    TYPE zc102mmt0001,          " 자재관리 WA
+       gt_mat_info    TYPE TABLE OF zc102mmt0001. " 자재관리 IT
+
+<font color ="#0000FF">*-- 원자재 창고번호 F4</font>
+DATA : BEGIN OF gs_stlno,
+         stlno   TYPE zc102mmt0008-stlno,
+         stlname TYPE zc102mmt0008-stlname,
+       END OF gs_stlno,
+       gt_stlno LIKE TABLE OF gs_stlno.
+
+<font color ="#0000FF">*-- 검수자명 리스트 F4</font>
+DATA : BEGIN OF gs_empnam,
+         empno  TYPE zc102hrt0002-empno,
+         empnam TYPE zc102hrt0002-empnam,
+       END OF gs_empnam,
+       gt_empnam LIKE TABLE OF gs_empnam.
+
+<font color ="#0000FF">*-- For ALV List box</font>
+DATA : gt_drop   TYPE lvc_t_drop,        " 반품사유 list box
+       gs_drop   TYPE lvc_s_drop,
+       gt_ddtext TYPE TABLE OF dd07t, " 반품사유 도메인 값
+       gs_ddtext TYPE dd07t.
+
+<font color ="#0000FF">*-- 이메일 전송</font>
+DATA : doc_chng  TYPE sodocchgi1,
+       tab_lines LIKE sy-tabix,
+       objtxt    TYPE TABLE OF solisti1 WITH HEADER LINE,
+       objbin    TYPE TABLE OF solisti1 WITH HEADER LINE,
+       objpack   TYPE TABLE OF sopcklsti1 WITH HEADER LINE,
+       reclist   TYPE TABLE OF somlreci1 WITH HEADER LINE.
+
+<font color ="#0000FF">*-- BP 이메일 GET</font>
+DATA : BEGIN OF gs_bp,
+         partner TYPE zc102sdt0001-partner,
+         email   TYPE zc102sdt0001-email,
+       END OF gs_bp,
+       gt_bp LIKE TABLE OF gs_bp.
+
+<font color ="#0000FF">*-- 자재문서 생성</font>
+DATA : gs_rtndoc_h TYPE zc102mmt0012,
+       gt_rtndoc_h TYPE TABLE OF zc102mmt0012,
+       gs_rtndoc_i TYPE zc102mmt0013,
+       gt_rtndoc_i TYPE TABLE OF zc102mmt0013.
+
+DATA : gs_matdoc_h TYPE zc102mmt0012,
+       gt_matdoc_h TYPE TABLE OF zc102mmt0012,
+       gs_matdoc_i TYPE zc102mmt0013,
+       gt_matdoc_i TYPE TABLE OF zc102mmt0013,
+       gv_docno    TYPE zc102mmt0013-mblnr.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Global variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode   TYPE sy-ucomm,
+       gv_stlno    TYPE zc102mmt0011-stlno,
+       gv_lfdat_fr TYPE zc102mmt0015-lfdat,
+       gv_lfdat_to TYPE zc102mmt0015-lfdat.
+
+<font color ="#0000FF">*-- For Pop-up</font>
+DATA : gv_id       TYPE sy-uname,
+       gv_date(10).
+
+DATA : gv_retno TYPE zc102mmt0018-disno.
+<font color ="#0000FF">*-- 탭 전환</font>
+DATA: gv_next_tab TYPE c LENGTH 10.
+
+<font color ="#0000FF">*-- 창고 이름 dynamic 표시</font>
+DATA : gv_werks(10).
+
+<font color ="#0000FF">*-- 텍스트 에디터 템플릿</font>
+DATA : gt_editor_lines TYPE TABLE OF tline.
+
+<font color ="#0000FF">*-- 팝업 호출 INDEX 저장</font>
+DATA : gv_tabix TYPE sy-tabix.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

@@ -1,0 +1,1070 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102COR0001F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form get_cost_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_cost_data .
+  DATA : lv_cnt TYPE i.
+
+  CLEAR : gt_cost, gs_cost, lv_cnt.
+
+  SELECT kokrs kostl wrbtr awrbtr waers
+    INTO CORRESPONDING FIELDS OF TABLE gt_cost
+    FROM zvc102co0001
+    WHERE kostl IN so_kostl
+    ORDER BY kostl ASCENDING.
+
+  lv_cnt = lines( gt_cost ).
+
+  IF gt_cost IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    STOP.
+  ELSE.
+    MESSAGE s010 WITH lv_cnt.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form event_top_of_page
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM event_top_of_page .
+  DATA : lr_dd_table TYPE REF TO cl_dd_table_element,
+         col_field   TYPE REF TO cl_dd_area,
+         col_value   TYPE REF TO cl_dd_area.
+
+  DATA : lv_text TYPE sdydo_text_element.
+
+  CALL METHOD go_dyndoc_id->add_table
+    EXPORTING
+      no_of_columns = 2
+      border        = '0'
+    IMPORTING
+      table         = lr_dd_table.
+
+*-- Set column
+  CALL METHOD lr_dd_table->add_column
+    IMPORTING
+      column = col_field.
+
+  CALL METHOD lr_dd_table->add_column
+    IMPORTING
+      column = col_value.
+
+  lv_text = TEXT-w01.
+  PERFORM add_row USING lr_dd_table col_field col_value TEXT-w05 lv_text.
+
+  lv_text = TEXT-w02.
+  PERFORM add_row USING lr_dd_table col_field col_value TEXT-w06 lv_text.
+
+  lv_text = TEXT-w03.
+  PERFORM add_row USING lr_dd_table col_field col_value TEXT-w07 lv_text.
+
+  lv_text = sy-datum(4) && TEXT-w04.
+  PERFORM add_row USING lr_dd_table col_field col_value TEXT-w08 lv_text.
+
+  PERFORM set_top_of_page.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form add_row
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> LR_DD_TABLE
+*&      --> COL_FIELD
+*&      --> COL_VALUE
+*&      --> TEXT_W03
+*&      --> LV_TEXT
+*&---------------------------------------------------------------------*
+FORM add_row USING pr_dd_table  TYPE REF TO cl_dd_table_element
+                   pv_col_field TYPE REF TO cl_dd_area
+                   pv_col_value TYPE REF TO cl_dd_area
+                   pv_field
+                   pv_text.
+
+  DATA : lv_text TYPE sdydo_text_element.
+
+*-- Field.
+  lv_text = pv_field.
+
+  CALL METHOD pv_col_field->add_text
+    EXPORTING
+      text         = lv_text
+      sap_emphasis = cl_dd_document=>strong
+      sap_color    = cl_dd_document=>list_heading_inv.
+
+  CALL METHOD pv_col_field->add_gap
+    EXPORTING
+      width = 3.
+
+*-- Value.
+  lv_text = pv_text.
+
+  CALL METHOD pv_col_value->add_text
+    EXPORTING
+      text         = lv_text
+      sap_emphasis = cl_dd_document=>heading
+      sap_color    = cl_dd_document=>list_negative_inv.
+
+  CALL METHOD pv_col_value->add_gap
+    EXPORTING
+      width = 3.
+
+  CALL METHOD pr_dd_table->new_row.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_top_of_page
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_top_of_page .
+*-- Creating html control
+  IF go_html_cntrl IS INITIAL.
+    CREATE OBJECT go_html_cntrl
+      EXPORTING
+        parent = go_top_cont.
+  ENDIF.
+
+  CALL METHOD go_dyndoc_id->merge_document.
+  go_dyndoc_id->html_control = go_html_cntrl.
+
+*-- Display document
+  CALL METHOD go_dyndoc_id->display_document
+    EXPORTING
+      reuse_control      = 'X'
+      parent             = go_top_cont
+    EXCEPTIONS
+      html_display_error = 1.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form main_screen_ctrl
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM main_screen_ctrl .
+  IF go_base_cont IS NOT BOUND.
+    CLEAR : gt_body_fcat, gs_body_fcat,
+            gt_line_fcat, gs_line_fcat.
+    PERFORM set_fcat USING : 'X' 'KOKRS'  'ZVC102CO0001' 'C' ' ',
+                             'X' 'KOSTL'  'ZVC102CO0001' 'C' ' ',
+                             ' ' 'WRBTR'  'ZVC102CO0001' ' ' ' ',
+                             ' ' 'AWRBTR' 'ZVC102CO0001' ' ' ' ',
+                             ' ' 'WAERS'  'ZVC102CO0001' 'C' ' '.
+    PERFORM set_line_fcat USING : 'X' 'BUKRS' 'ZC102FIT0010' 'C' ' ',
+                                  'X' 'BELNR' 'ZC102FIT0010' 'C' ' ',
+                                  'X' 'GJAHR' 'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'KOKRS' 'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'KOSTL' 'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'SAKNR' 'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'TXT20' 'ZC102FIT0002' ' ' 'X',
+                                  ' ' 'WRBTR' 'ZC102FIT0010' ' ' ' ',
+                                  ' ' 'WAERS' 'ZC102FIT0010' ' ' 'X'.
+
+    PERFORM create_obj.
+    PERFORM sort_data.
+    SET HANDLER : lcl_event_handler=>double_click FOR go_left_grid,
+                  lcl_event_handler=>top_of_page  FOR go_left_grid.
+    PERFORM display_screen.
+    PERFORM register_title.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat  USING pv_key pv_field pv_table pv_just pv_emphasize.
+  gs_body_fcat = VALUE #( key        = pv_key
+                          fieldname  = pv_field
+                          ref_table  = pv_table
+                          just       = pv_just
+                          emphasize  = pv_emphasize ).
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_body_fcat-cfieldname = 'WAERS'.
+      gs_body_fcat-coltext = '계획 금액'.
+    WHEN 'AWRBTR'.
+      gs_body_fcat-cfieldname = 'WAERS'.
+      gs_body_fcat-coltext = '실제 금액'.
+  ENDCASE.
+
+  APPEND gs_body_fcat TO gt_body_fcat.
+  CLEAR gs_body_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout USING pv_title.
+  gs_layout = VALUE #( zebra      = abap_true
+                       cwidth_opt = 'A'
+                       sel_mode   = 'D'
+                       grid_title = pv_title
+                       totals_bef = abap_true ).
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_variant
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_variant  USING pv_handle.
+  gs_variant = VALUE #( report  = sy-repid
+                        handle  = pv_handle ).
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_obj
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_obj .
+*-- Top-of-page
+  CREATE OBJECT go_top_cont
+    EXPORTING
+      side      = go_top_cont->dock_at_top
+      extension = 65.
+
+*-- Making Base Container
+  CREATE OBJECT go_base_cont
+    EXPORTING
+      side      = go_base_cont->dock_at_left
+      extension = 5000.
+
+*-- Split Continaer
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_base_cont
+      rows    = 2
+      columns = 1.
+
+*-- Patch Container
+  CALL METHOD go_split_cont->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_top_base_cont.
+
+  CALL METHOD go_split_cont->get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_bot_cont.
+
+*-- Top Split Container
+  CREATE OBJECT go_top_split_cont
+    EXPORTING
+      parent  = go_top_base_cont
+      rows    = 1
+      columns = 2.
+
+*-- Patch Container
+  CALL METHOD go_top_split_cont->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_left_cont.
+
+  CALL METHOD go_top_split_cont->get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_right_cont.
+
+*-- Patch ALV
+  CREATE OBJECT go_left_grid
+    EXPORTING
+      i_parent = go_left_cont.
+
+  CREATE OBJECT go_right_grid
+    EXPORTING
+      i_parent = go_right_cont.
+
+*-- Top-of-page
+  CREATE OBJECT go_dyndoc_id " cl_dd_document
+    EXPORTING
+      style = 'ALV_GRID'.
+
+*-- Chart
+  CREATE OBJECT go_chart
+    EXPORTING
+      parent = go_bot_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen .
+*-- Cost center Data
+  PERFORM set_layout USING TEXT-s01.
+  PERFORM set_variant USING 'ALV1'.
+  CALL METHOD go_left_grid->set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_layout
+    CHANGING
+      it_outtab       = gt_cost
+      it_fieldcatalog = gt_body_fcat.
+
+*-- Log Data
+  PERFORM set_layout USING TEXT-s02.
+  PERFORM set_variant USING 'ALV2'.
+  CALL METHOD go_right_grid->set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_layout
+    CHANGING
+      it_outtab       = gt_line
+      it_fieldcatalog = gt_line_fcat
+      it_sort         = gt_sort.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_chart
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_chart .
+  CLEAR : go_ixml,
+          go_ixml_sf,
+          go_ixml_docu,
+          go_ixml_ostream,
+          go_ixml_encoding,
+          go_chartdata,
+          go_categories,
+          go_category,
+          go_series,
+          go_point,
+          go_value.
+
+  CLEAR : gv_xstring.
+
+  go_ixml = cl_ixml=>create(  ).
+  go_ixml_sf = go_ixml->create_stream_factory( ).
+
+  go_ixml_docu = go_ixml->create_document( ).
+
+  go_ixml_encoding = go_ixml->create_encoding(
+                       byte_order    = if_ixml_encoding=>co_little_endian
+                       character_set = 'utf-8' ).
+
+  go_ixml_docu->set_encoding( encoding = go_ixml_encoding ).
+
+*-- Now build a DOM, representing an XML document with chart data
+  go_chartdata = go_ixml_docu->create_simple_element(
+                                        name   = 'ChartData'
+                                        parent = go_ixml_docu ).
+
+*-- Categories (parent)
+  go_categories = go_ixml_docu->create_simple_element(
+                                        name   = 'Categories'
+                                        parent = go_chartdata ).
+
+  PERFORM set_category_value.
+  PERFORM set_chart_value.
+
+  go_chart->set_data( xdata = gv_xstring ).
+  go_chart->render( ).
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_category_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_category_value .
+  DATA : lv_value TYPE string.
+
+  CLEAR : gs_cost, lv_value.
+
+*-- Categories (children)
+  LOOP AT gt_cost INTO gs_cost.
+    lv_value = gs_cost-kostl.
+    go_category = go_ixml_docu->create_simple_element(
+                                          name   = 'Category'
+                                          parent = go_categories ).
+    go_category->if_ixml_node~set_value( lv_value ).
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_chart_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_chart_value .
+  FIELD-SYMBOLS : <ls_value> TYPE any.
+
+  DATA : lv_value  TYPE string,
+         lv_value2 TYPE string.
+
+  CLEAR: gs_cost, lv_value, lv_value2.
+
+  DO 2 TIMES.
+    IF sy-index = 1.
+      lv_value = 'WRBTR'.
+      lv_value2 = '계획 값'.
+    ELSE.
+      lv_value = 'AWRBTR'.
+      lv_value2 = '실제 값'.
+    ENDIF.
+
+    ASSIGN COMPONENT lv_value OF STRUCTURE gs_cost TO <ls_value>.
+
+    IF <ls_value> IS ASSIGNED.
+
+      lv_value = lv_value2.
+
+*-- Build series (we need only 1)
+      go_series = go_ixml_docu->create_simple_element(
+                                                        name = 'Series'
+                                                        parent = go_chartdata ).
+      go_series->set_attribute( name  = 'label'
+                                value = lv_value ). "'Series1' ).
+
+      LOOP AT gt_cost INTO gs_cost.
+
+*-- Plan
+        lv_value = <ls_value>.
+
+        go_point = go_ixml_docu->create_simple_element(
+                                                        name = 'Point'
+                                                        parent = go_series ).
+        go_point->set_attribute( name  = 'label'
+                                 value = lv_value ).
+
+        go_value = go_ixml_docu->create_simple_element(
+                                                        name = 'Value'
+                                                        parent = go_point ).
+
+        go_value->if_ixml_node~set_value( lv_value ).
+
+      ENDLOOP.
+      UNASSIGN <ls_value>.
+    ENDIF.
+  ENDDO.
+
+*-- create ostream (into string variable) and render document into stream
+  go_ixml_ostream = go_ixml_sf->create_ostream_xstring( gv_xstring ).
+  go_ixml_docu->render( go_ixml_ostream ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_title
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_title .
+  CALL METHOD go_dyndoc_id->initialize_document
+    EXPORTING
+      background_color = cl_dd_area=>col_textarea.
+
+  CALL METHOD go_left_grid->list_processing_events
+    EXPORTING
+      i_event_name = 'TOP_OF_PAGE'
+      i_dyndoc_id  = go_dyndoc_id.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_double_click
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_ROW
+*&      --> E_COLUMN
+*&---------------------------------------------------------------------*
+FORM handle_double_click USING pv_row pv_column.
+  CLEAR : gs_cost, gt_line, gs_line.
+  READ TABLE gt_cost INTO gs_cost INDEX pv_row.
+
+  SELECT bukrs belnr gjahr saknr
+         wrbtr waers kostl kokrs
+    INTO CORRESPONDING FIELDS OF TABLE gt_line
+    FROM zc102fit0010
+    WHERE kostl = gs_cost-kostl
+    ORDER BY belnr ASCENDING.
+
+  PERFORM make_body.
+  PERFORM refresh_table.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_table
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_table .
+  CALL METHOD go_left_grid->refresh_table_display.
+
+  CALL METHOD go_right_grid->refresh_table_display.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_line_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_line_fcat USING pv_key pv_field pv_table pv_just pv_emphasize.
+  gs_line_fcat = VALUE #( key        = pv_key
+                          fieldname  = pv_field
+                          ref_table  = pv_table
+                          just       = pv_just
+                          emphasize  = pv_emphasize ).
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_line_fcat-cfieldname = 'WAERS'.
+      gs_line_fcat-do_sum = abap_true.
+  ENDCASE.
+
+  APPEND gs_line_fcat TO gt_line_fcat.
+  CLEAR gs_line_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form sort_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM sort_data .
+  CLEAR : gs_sort, gt_sort.
+
+  gs_sort-spos      = 1.
+  gs_sort-fieldname = 'KOSTL'.
+  gs_sort-down      = abap_true.
+*  gs_sort-subtot    = abap_true.
+
+  APPEND gs_sort TO gt_sort.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form tree_screen_ctrl
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM tree_screen_ctrl .
+  IF go_tree IS NOT BOUND.
+    PERFORM init_tree.
+    PERFORM define_hierachy_header CHANGING gs_hierhdr.
+    PERFORM build_comment USING gt_list_commentary gv_logo.
+    CLEAR : gs_tree_fcat, gt_tree_fcat.
+    PERFORM define_tree_catalog USING : 'PLAN'     '계획'     ' ' 'R',
+                                        'ACTUAL'   '실제'     ' ' 'R',
+                                        'DIFF'     '편차'     ' ' 'R',
+                                        'PERCT'    '편차율(%)' ' ' 'C',
+                                        'WAERS'    '통화키'    ' ' 'C'.
+    PERFORM create_hierarchy.
+    PERFORM fill_column_tree.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form init_tree
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM init_tree .
+  CREATE OBJECT go_tree_cont
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = go_tree_cont->dock_at_left
+      extension = 5000.
+
+  CREATE OBJECT go_tree
+    EXPORTING
+      parent              = go_tree_cont
+      node_selection_mode = cl_gui_column_tree=>node_sel_mode_multiple
+      item_selection      = 'X'
+      no_html_header      = pa_check.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form define_hierachy_header
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- GS_HIERHDR
+*&---------------------------------------------------------------------*
+FORM define_hierachy_header  CHANGING ps_hierhdr TYPE treev_hhdr.
+  ps_hierhdr-heading = '코스트센터'.
+  ps_hierhdr-tooltip = '코스트센터'.
+  ps_hierhdr-width = 35.
+  ps_hierhdr-width_pix = space.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form build_comment
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> GT_LIST_COMMENTARY
+*&      --> GV_LOGO
+*&---------------------------------------------------------------------*
+FORM build_comment USING pt_list_commentary TYPE slis_t_listheader
+                         pv_logo            TYPE sdydo_value.
+  DATA: ls_line TYPE slis_listheader.
+
+  CLEAR ls_line.
+  ls_line-typ = 'H'. " High font
+  ls_line-info = '코스트센터 비용 집계 현황'.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " Small font
+  ls_line-key = '회사명'.
+  ls_line-info = '푸드 온 보람'.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " Small font
+  ls_line-key = '관리회계 영역'.
+  ls_line-info = '1000'.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " Small font
+  ls_line-key = '회사 코드'.
+  ls_line-info = '1000'.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " High font
+  ls_line-key = '회계 연도'.
+  ls_line-info = sy-datum(4) && '년'.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " High font
+  ls_line-key = ' '.
+  ls_line-info = ' '.
+  APPEND ls_line TO pt_list_commentary.
+
+*  pv_logo = 'ENJOYSAP_LOGO'.
+  gs_tree_variant-report = sy-repid.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form define_tree_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM define_tree_catalog USING pv_field pv_text pv_noout pv_just.
+
+  gs_tree_fcat-fieldname  = pv_field.
+  gs_tree_fcat-coltext    = pv_text.
+  gs_tree_fcat-no_out     = pv_noout.
+  gs_tree_fcat-just       = pv_just.
+  gs_tree_fcat-outputlen  = 36.
+
+  CASE pv_field.
+    WHEN 'PLAN' OR 'ACTUAL' OR 'DIFF'.
+      gs_tree_fcat-cfieldname = 'WAERS'.
+  ENDCASE.
+
+  APPEND gs_tree_fcat TO gt_tree_fcat.
+  CLEAR gs_tree_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_hierarchy
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_hierarchy .
+  CALL METHOD go_tree->set_table_for_first_display
+    EXPORTING
+      is_variant          = gs_tree_variant
+      i_save              = 'A'
+      i_default           = 'X'
+      is_hierarchy_header = gs_hierhdr
+      it_list_commentary  = gt_list_commentary
+      i_logo              = 'FOODLOGO'
+      i_background_id     = 'SBACK1'
+    CHANGING
+      it_outtab           = gt_tree
+      it_fieldcatalog     = gt_tree_fcat.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form fill_column_tree
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM fill_column_tree .
+  DATA : lv_node_text    TYPE lvc_value,
+         lv_bu_group_key TYPE lvc_nkey,
+         lv_hier_key     TYPE lvc_nkey,
+         lv_root_key     TYPE lvc_nkey,
+         lv_kostl_key    TYPE lvc_nkey,
+         lv_last_key     TYPE lvc_nkey,
+         lt_layout_item  TYPE lvc_t_layi,
+         ls_layout       TYPE lvc_s_layn.
+
+  DATA : lt_nodes TYPE lvc_t_nkey.
+
+  LOOP AT gt_hier INTO gs_hier.
+    CLEAR : gs_tree, ls_layout.
+
+*-- Layout
+    ls_layout-isfolder = 'X'.
+    ls_layout-n_image  = '@06@'.
+    ls_layout-exp_image = '@3M@'.
+
+    ON CHANGE OF gs_hier-kohir.
+
+      PERFORM create_item_layouts USING abap_false CHANGING lt_layout_item.
+
+      lv_node_text = gs_hier-desct.
+      CALL METHOD go_tree->add_node
+        EXPORTING
+          i_relat_node_key = lv_hier_key
+          i_relationship   = cl_gui_column_tree=>relat_last_child
+          i_node_text      = lv_node_text
+          is_node_layout   = ls_layout
+          is_outtab_line   = gs_tree
+        IMPORTING
+          e_new_node_key   = lv_root_key.
+    ENDON.
+
+    CLEAR : gs_cost.
+    READ TABLE gt_cost INTO gs_cost WITH KEY kostl = gs_hier-kostl.
+    IF sy-subrc <> 0.
+      CONTINUE.
+    ENDIF.
+
+    CLEAR : gs_tree, ls_layout.
+
+*-- Layout
+    ls_layout-isfolder = 'X'.
+    ls_layout-n_image  = '@06@'.
+    ls_layout-exp_image = '@0N@'.
+
+*-- Value
+    gs_tree-plan   = gs_cost-wrbtr.
+    gs_tree-actual = gs_cost-awrbtr.
+    gs_tree-diff   = gs_cost-diff.
+    gs_tree-perct  = gs_cost-perct.
+    gs_tree-waers  = gs_cost-waers.
+
+
+    PERFORM create_item_layouts USING abap_false CHANGING lt_layout_item.
+
+*-- Root Node 세팅
+    lv_node_text = gs_cost-kostl.
+    CALL METHOD go_tree->add_node
+      EXPORTING
+        i_relat_node_key = lv_root_key           " 상위 노드 키
+        i_relationship   = cl_gui_column_tree=>relat_last_child
+        i_node_text      = lv_node_text
+        is_node_layout   = ls_layout
+        it_item_layout   = lt_layout_item
+        is_outtab_line   = gs_tree
+      IMPORTING
+        e_new_node_key   = lv_kostl_key.
+
+    APPEND lv_kostl_key TO lt_nodes.
+
+    LOOP AT gt_cel INTO gs_cel WHERE kostl = gs_cost-kostl.
+      CLEAR gs_tree.
+      gs_tree-plan   = gs_cel-wrbtr.
+      gs_tree-actual = gs_cel-awrbtr.
+      gs_tree-diff   = gs_cel-diff.
+      gs_tree-perct  = gs_cel-perct.
+      gs_tree-waers  = gs_cel-waers.
+
+      PERFORM create_item_layouts USING abap_false CHANGING lt_layout_item.
+
+      lv_node_text = gs_cel-txt20.
+      CALL METHOD go_tree->add_node
+        EXPORTING
+          i_relat_node_key = lv_kostl_key           " 상위 노드 키
+          i_relationship   = cl_gui_column_tree=>relat_last_child
+          i_node_text      = lv_node_text
+          it_item_layout   = lt_layout_item
+          is_outtab_line   = gs_tree
+        IMPORTING
+          e_new_node_key   = lv_last_key.
+
+    ENDLOOP.
+
+  ENDLOOP.
+  " 추가된 노드를 자동으로 펼침
+  CALL METHOD go_tree->expand_nodes
+    EXPORTING
+      it_node_key = lt_nodes.
+
+*-- Tree 출력
+  CALL METHOD : go_tree->update_calculations,
+              go_tree->frontend_update,
+              cl_gui_cfw=>flush.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_item_layouts
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> ABAP_FALSE
+*&      <-- LT_LAYOUT_ITEM
+*&---------------------------------------------------------------------*
+FORM create_item_layouts USING pv_mode
+                         CHANGING pt_item_layout TYPE lvc_t_layi.
+
+  DATA: ls_item_layout TYPE lvc_s_layi.
+
+  CLEAR pt_item_layout.
+
+  CLEAR ls_item_layout.
+  ls_item_layout-fieldname = go_tree->c_hierarchy_column_name.
+*  ls_item_layout-class = cl_gui_column_tree=>item_class_checkbox.
+  ls_item_layout-editable = pv_mode.
+  ls_item_layout-chosen = pv_mode.
+  APPEND ls_item_layout TO pt_item_layout.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_cel_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_cel_data .
+  CLEAR : gt_cel, gs_cel.
+
+  SELECT kokrs kostl saknr txt20
+         wrbtr awrbtr waers
+    INTO CORRESPONDING FIELDS OF TABLE gt_cel
+    FROM zvc102co0014
+    WHERE kostl IN so_kostl.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_txt20
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_txt20 .
+  CLEAR : gt_txt20, gs_txt20.
+
+  SELECT saknr txt20
+    INTO CORRESPONDING FIELDS OF TABLE gt_txt20
+    FROM zc102fit0002.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form make_body
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM make_body .
+  CLEAR : gv_tabix, gs_line, gs_txt20.
+
+  LOOP AT gt_line INTO gs_line.
+    gv_tabix = sy-tabix.
+    READ TABLE gt_txt20 INTO gs_txt20 WITH KEY saknr = gs_line-saknr.
+    IF sy-subrc = 0.
+      gs_line-txt20 = gs_txt20-txt20.
+      MODIFY gt_line FROM gs_line INDEX gv_tabix
+                                  TRANSPORTING txt20.
+    ENDIF.
+
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form make_tree_body
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM make_tree_body .
+  CLEAR : gv_tabix, gs_cost, gv_perct.
+
+  LOOP AT gt_cost INTO gs_cost.
+    gv_tabix = sy-tabix.
+
+    gs_cost-diff = gs_cost-wrbtr - gs_cost-awrbtr.
+    gv_perct = ( gs_cost-awrbtr / gs_cost-wrbtr ) * 100.
+    gs_cost-perct = gv_perct && '%'.
+    MODIFY gt_cost FROM gs_cost INDEX gv_tabix
+                                TRANSPORTING diff perct.
+  ENDLOOP.
+
+  CLEAR : gv_tabix, gs_cel, gv_perct.
+
+  LOOP AT gt_cel INTO gs_cel.
+    gv_tabix = sy-tabix.
+
+    gs_cel-diff = gs_cel-wrbtr - gs_cel-awrbtr.
+    gv_perct = ( gs_cel-awrbtr / gs_cel-wrbtr ) * 100.
+    gs_cel-perct = gv_perct && '%'.
+    MODIFY gt_cel FROM gs_cel INDEX gv_tabix
+                              TRANSPORTING diff perct.
+
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_init_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_init_value .
+  pa_kokrs = '1000'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form screen_ctrl
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM screen_ctrl .
+  LOOP AT SCREEN.
+    CASE screen-name.
+      WHEN 'PA_KOKRS'.
+        screen-input = 0.
+    ENDCASE.
+
+    MODIFY SCREEN.
+
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form f4_kostl
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM f4_kostl .
+  DATA : lt_return   LIKE TABLE OF ddshretval WITH HEADER LINE.
+
+  DATA : BEGIN OF ls_kostl,
+           kostl TYPE zc102cot0003-kostl,
+           desct TYPE zc102cot0003-desct,
+         END OF ls_kostl,
+         lt_kostl LIKE TABLE OF ls_kostl.
+
+  CLEAR lt_kostl.
+
+  SELECT kostl desct
+    INTO CORRESPONDING FIELDS OF TABLE lt_kostl
+    FROM zc102cot0003.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'KOSTL'
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      dynprofield     = 'SO_KOSTL'
+      window_title    = '코스트센터 번호'
+      value_org       = 'S'
+    TABLES
+      value_tab       = lt_kostl
+      return_tab      = lt_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_hierachy_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_hierachy_data .
+  CLEAR : gt_hier, gs_hier.
+
+  SELECT kohir kostl desct
+    INTO CORRESPONDING FIELDS OF TABLE gt_hier
+    FROM zc102cot0008
+    ORDER BY kohir kostl ASCENDING.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

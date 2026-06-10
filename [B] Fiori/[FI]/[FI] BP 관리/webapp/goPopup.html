@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="UTF-8">
+  <title>주소 검색</title>
+  <script src="https://ssl.daumcdn.net/dmaps/map_js_init/postcode.v2.js"></script>
+  <style>
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
+    #wrap {
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="wrap"></div>
+  <script>
+    new daum.Postcode({
+      oncomplete: function (data) {
+        window.opener.postMessage({
+          roadAddr: data.roadAddress,
+          jibunAddr: data.jibunAddress,
+          zonecode: data.zonecode
+        }, "*");
+        window.close();
+      }
+    }).embed(document.getElementById("wrap")); // ✅ embed로 내 창에 삽입
+  </script>
+</body>
+
+</html>

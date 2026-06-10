@@ -1,0 +1,328 @@
+<mvc:View controllerName="bpcontrol.bpcontrol.controller.BP_Create"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.uxap"
+    xmlns:layout="sap.ui.layout"
+    xmlns:partner="blocks.partner"
+    xmlns:customer="blocks.customer"
+    xmlns:vendor="blocks.vendor"
+    xmlns:forms="sap.ui.layout.form"
+    xmlns:m="sap.m"
+    xmlns:f="sap.f"
+    xmlns:t="sap.ui.table"
+    xmlns:u="sap.ui.unified"
+    xmlns:c="sap.ui.core"
+    xmlns:sfb="sap.ui.comp.smartfilterbar"
+    xmlns:smartTable="sap.ui.comp.smarttable"
+    xmlns:sv="sap.ui.comp.smartvariants"
+    xmlns:sf="sap.ui.comp.smartfield"
+    xmlns:smartForm="sap.ui.comp.smartform">
+
+    <m:Page id="page4" title="비즈니스 파트너 생성" showHeader="true">
+
+        <m:customHeader>
+            <m:Bar>
+                <m:contentLeft>
+                    <m:Button icon="sap-icon://nav-back" tooltip="nav-back" press="onBack" />
+                </m:contentLeft>
+                <m:contentMiddle>
+                    <m:Text text="비즈니스 파트너 생성" />
+                </m:contentMiddle>
+                <m:contentRight>
+                    <!-- 저장/취소 버튼 -->
+                    <m:HBox justifyContent="End">
+                        <m:Button text="Cancel" type="Reject" press="onBack"/>
+                        <m:Button text="Save" type="Emphasized" press="onSave" class="sapUiTinyMarginBegin"/>
+                    </m:HBox>
+                </m:contentRight>
+            </m:Bar>
+        </m:customHeader>
+        <m:content>
+            <!-- 상단 Form -->
+            <m:VBox class="sapUiSmallMargin">
+                <forms:SimpleForm id="SimpleFormCreate" editable="true" layout="ResponsiveGridLayout" title="비즈니스 파트너 공통 정보" columnsM="1" columnsL="3" columnsXL="4">
+                    <forms:content>
+
+                        <!-- ✅ 이미지 + 버튼 묶기 -->
+                        <m:VBox alignItems="Center" class="sapUiSmallMarginBottom">
+                            <m:Image id="imagePreview" src="{CreateBPModel>/ImagePreviewSrc}" width="14rem" height="14rem" decorative="false" alt="Profile Image" class="customImageStyle" />
+                            <u:FileUploader id="fileUploader" buttonOnly="true" buttonText="이미지 업로드" uploadOnChange="false" change="onImageChange" fileType="jpg,png,jpeg" mimeType="image/jpeg,image/png" />
+                        </m:VBox>
+
+                        <core:Title text="파트너 정보" />
+                        <m:Label text="이름" class="sapUiSmallMarginBottom" />
+                        <m:Input id="nameText" value="{CreateBPModel>/Name1}" liveChange="onNameChange" required="true" placeholder="솔데스크" class="sapUiSmallMarginBottom" />
+
+                        <m:Label text="주소" class="sapUiSmallMarginBottom" />
+                        <m:VBox class="sapUiSmallMarginBottom">
+                            <m:Input id="addressText" value="{CreateBPModel>/Stras}" liveChange="onAddressChange" required="true" placeholder="서울특별시 종로구 종로12길 15" />
+                            <m:HBox>
+                                <m:Input value="{CreateBPModel>/Detail}" placeholder="상세 주소" required="true" class="sapUiSmallMarginEnd" />
+                                <m:Button text="주소 검색" press="onSearchAddressPopup" />
+                            </m:HBox>
+                        </m:VBox>
+
+                        <m:Label text="전화번호" class="sapUiSmallMarginBottom" />
+                        <m:Input value="{CreateBPModel>/Telf1}" id="phoneInput" liveChange="onPhoneChange" placeholder="010-1234-5678" type="Tel" required="true" class="sapUiSmallMarginBottom" />
+
+                        <m:Label text="이메일" class="sapUiSmallMarginBottom" />
+                        <m:Input id="emailInput" value="{CreateBPModel>/Email}" liveChange="onEmailChange" placeholder="lych0918@naver.com" type="Tel" required="true" class="sapUiSmallMarginBottom" />
+
+
+                        <core:Title text="파트너 구분" />
+
+                        <m:Label text="파트너 그룹" class="sapUiSmallMarginBottom" />
+                        <m:Select id="bpGroupSelect" selectedKey="{CreateBPModel>/BpGroup}" width="200px" items="{ path: 'BpSearch>/groups' }" required="true" class="sapUiSmallMarginBottom">
+                            <core:Item key="{BpSearch>DomvalueL}" text="{BpSearch>Ddtext}" />
+                        </m:Select>
+
+                        <m:Label text="파트너 역할" class="sapUiSmallMarginBottom" />
+                        <m:Select id="bpRoleSelect" selectedKey="{CreateBPModel>/BpRole}" change="onBpRoleChange" width="200px" required="true" class="sapUiSmallMarginBottom">
+                            <core:Item key="C" text="고객" />
+                            <core:Item key="V" text="거래처" />
+                            <core:Item key="D" text="고객/거래처" />
+                        </m:Select>
+
+                        <m:Label text="파트너 타입" class="sapUiSmallMarginBottom" />
+                        <m:Select id="bpTypeSelect" selectedKey="{CreateBPModel>/BpType}" width="200px" required="true" class="sapUiSmallMarginBottom">
+                            <core:Item key="P" text="개인" />
+                            <core:Item key="G" text="그룹" />
+                            <core:Item key="O" text="조직" />
+                        </m:Select>
+
+                        <m:Label text="국가" class="sapUiSmallMarginBottom" />
+                        <m:Select id="countrySelect" selectedKey="{CreateBPModel>/Land1}" width="200px" required="true" items="{ path : 'BpSearch>/countries' }" class="sapUiSmallMarginBottom">
+                            <core:Item key="{BpSearch>Land1}" text="{BpSearch>Landx}"/>
+                        </m:Select>
+
+                    </forms:content>
+                </forms:SimpleForm>
+            </m:VBox>
+
+            <!-- 하단 탭 영역 -->
+            <m:IconTabBar expandable="false">
+                <!-- Customer Tab -->
+                <m:items>
+                    <m:IconTabFilter text="고객" visible="{CreateBPModel>/ShowCustomer}">
+                        <forms:SimpleForm editable="true" layout="ResponsiveGridLayout" labelSpanM="3" columnsM="2" class="sapUiSmallMarginBottom">
+                            <core:Title text="고객 정보 설정"/>
+
+                            <m:Label text="거래 통화키"/>
+                            <m:Select id="waersSelect" selectedKey="{CreateCustomerModel>/Waers}" width="200px" required="true" class="sapUiSmallMarginBottom">
+                                <core:Item key="KRW" text="KRW"/>
+                                <core:Item key="USD" text="USD" />
+                                <core:Item key="EUR" text="EUR" />
+                            </m:Select>
+
+                            <m:Label text="고객 등급" />
+                            <m:Select id="knkliSelect" selectedKey="{CreateCustomerModel>/Knkli}" width="200px" required="true" class="sapUiSmallMarginBottom">
+                                <core:Item key="VVIP" text="최우수 고객"/>
+                                <core:Item key="VIP" text="우수 고객" />
+                                <core:Item key="FAMILY" text="일반 고객" />
+                                <core:Item key="GOLD" text="신용 등급 양호 고객" />
+                                <core:Item key="SILVER" text="주의 필요 고객" />
+                                <core:Item key="BRONZE" text="신용 등급 낮은 고객" />
+                            </m:Select>
+
+                            <m:Label text="신용 평가" />
+                            <m:Select id="ctlzlSelect" selectedKey="{CreateCustomerModel>/Ctlzl}" width="200px" required="true" class="sapUiSmallMarginBottom">
+                                <core:Item key="A" text="신용 상태 양호"/>
+                                <core:Item key="B" text="신용 상태 보통" />
+                                <core:Item key="C" text="신용 상태 낮음" />
+                            </m:Select>
+                            <!-- <m:Input value="{CreateCustomerModel>/Ctlzl}" width="10rem"/> -->
+
+                            <core:Title text="여신 정보 설정"/>
+
+                            <m:Label text="여신 한도"/>
+                            <m:Input id="creditLimitInput" liveChange="onCreditLimitChange" value="{CreateCreditModel>/CreditLimit}" required="true" placeholder="20,000,000,000"/>
+
+                            <m:Label text="최종 갱신일" />
+                            <m:Input value="{CreateCreditModel>/LastUpdated}" editable="false" required="true"/>
+                        </forms:SimpleForm>
+
+                        <forms:SimpleForm editable="true">
+                            <t:Table id="custmatCreateTable" rows="{CreateCusMatnrModel>/matnrList}" width="100%" selectionMode="Multi" paste="onPaste" ariaLabelledBy="title" visibleRowCountMode="Auto" minAutoRowCount="5">
+                                <t:extension>
+                                    <m:OverflowToolbar id="cusmatnrbSubheader">
+                                        <m:Title text="판매 제품" level="H2" />
+                                        <m:ToolbarSpacer />
+                                        <m:Button id="createButtonCusMat" text="Create" type="Transparent" press="onCreateCusMat" visible="true" />
+                                        <m:Button id="deleteButtonCusMat" text="Delete" type="Transparent" press="onDeleteCusMat" visible="true" />
+                                        <!-- <m:Button id="editButtonMatnr" text="Edit" type="Transparent" press="onEdit" /> -->
+                                        <!-- <m:Button id="saveButtonMatnr" text="Save" type="Transparent" press="onSaveEdit" visible="false" /> -->
+                                        <!-- <m:Button id="cancelButtonMatnr" text="Cancel" type="Transparent" press="onCancel" visible="false" /> -->
+                                    </m:OverflowToolbar>
+                                </t:extension>
+                                <t:columns>
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="인덱스" />
+                                        <t:template>
+                                            <m:Text text="{CreateCusMatnrModel>Index}" wrapping="false" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="20rem" autoResizable="true">
+                                        <m:Label text="제품코드" />
+                                        <t:template>
+                                            <m:Select id="custmatnrSelect" change="onCusMatnrChange" selectedKey="{CreateCusMatnrModel>Matnr}" width="400px" items="{ path: 'BpSearch>/cusmatnr' }" class="sapUiSmallMarginBottom">
+                                                <core:Item key="{BpSearch>Matnr}" text="{= ${BpSearch>Matnr} + ' - ' + ${BpSearch>Maktx} }" />
+                                            </m:Select>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="제품명" />
+                                        <t:template>
+                                            <m:Text text="{CreateCusMatnrModel>Maktx}" wrapping="false" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="제품타입" />
+                                        <t:template>
+                                            <m:Text text="{CreateCusMatnrModel>Mtart}" wrapping="false" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="설명" />
+                                        <t:template>
+                                            <m:Text text="{CreateCusMatnrModel>Ddtext}" wrapping="false" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+                                </t:columns>
+                            </t:Table>
+                        </forms:SimpleForm>
+                    </m:IconTabFilter>
+
+                    <!-- Credit Information -->
+                    <m:IconTabFilter text="거래처" visible="{CreateBPModel>/ShowVendor}">
+                        <forms:SimpleForm editable="true" layout="ResponsiveGridLayout" labelSpanM="3" columnsM="2" class="sapUiSmallMarginBottom">
+                            <core:Title text="거래처 정보 설정"/>
+
+                            <m:Label text="거래 통화키"/>
+                            <m:Select id="waersSelectVendor" selectedKey="{CreateVendorModel>/Waers}" width="200px" required="true" class="sapUiSmallMarginBottom">
+                                <core:Item key="KRW" text="KRW"/>
+                                <core:Item key="USD" text="USD" />
+                                <core:Item key="EUR" text="EUR" />
+                            </m:Select>
+
+                            <m:Label text="거래처 등급" />
+                            <m:Select id="knkliSelectVendor" selectedKey="{CreateVendorModel>/Knkli}" width="200px" required="true" class="sapUiSmallMarginBottom">
+                                <core:Item key="A" text="우수 거래처"/>
+                                <core:Item key="B" text="일반 거래처" />
+                                <core:Item key="C" text="관리 필요 거래처" />
+                            </m:Select>
+
+                            <m:Label text="최종 갱신일" />
+                            <m:Input value="{CreateCreditModel>/LastUpdated}" editable="false" width="13rem" required="true"/>
+                        </forms:SimpleForm>
+                        <forms:SimpleForm editable="true">
+                            <t:Table id="accountCreateTable" rows="{CreateAccountModel>/accountList}" width="100%" selectionMode="Multi" paste="onPaste" ariaLabelledBy="title" visibleRowCountMode="Auto" minAutoRowCount="5">
+                                <t:extension>
+                                    <m:OverflowToolbar id="accountbSubheader">
+                                        <m:Title text="거래 계좌" level="H2" />
+                                        <m:ToolbarSpacer />
+                                        <m:Button id="createButtonAccount" text="Create" type="Transparent" press="onCreateAcc" visible="true" />
+                                        <m:Button id="deleteButtonAccount" text="Delete" type="Transparent" press="onDeleteAcc" visible="true" />
+                                        <!-- <m:Button id="editButtonMatnr" text="Edit" type="Transparent" press="onEdit" /> -->
+                                        <!-- <m:Button id="saveButtonMatnr" text="Save" type="Transparent" press="onSaveEdit" visible="false" /> -->
+                                        <!-- <m:Button id="cancelButtonMatnr" text="Cancel" type="Transparent" press="onCancel" visible="false" /> -->
+                                    </m:OverflowToolbar>
+                                </t:extension>
+                                <t:columns>
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="인덱스" />
+                                        <t:template>
+                                            <m:Text text="{CreateAccountModel>Index}" wrapping="false" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="은행" />
+                                        <t:template>
+                                            <m:Select selectedKey="{CreateAccountModel>Bank}" width="200px" change="onChangeBank" class="sapUiSmallMarginBottom">
+                                                <core:Item key="YR" text="우리은행"/>
+                                                <core:Item key="KB" text="국민은행" />
+                                                <core:Item key="SH" text="신한은행" />
+                                                <core:Item key="IB" text="기업은행" />
+                                            </m:Select>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="계좌번호" />
+                                        <t:template>
+                                            <m:Input liveChange="onChangeAccnum" value="{CreateAccountModel>Accnum}" placeholder="93770200650738" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="통화키" />
+                                        <t:template>
+                                            <m:Select selectedKey="{Waers}" width="200px" class="sapUiSmallMarginBottom">
+                                                <core:Item key="KRW" text="KRW"/>
+                                                <core:Item key="USD" text="USD" />
+                                                <core:Item key="EUR" text="EUR" />
+                                            </m:Select>
+                                        </t:template>
+                                    </t:Column>
+                                </t:columns>
+                            </t:Table>
+                        </forms:SimpleForm>
+                        <forms:SimpleForm editable="true">
+                            <t:Table id="matnrCreateTable" rows="{CreateMatnrModel>/matnrList}" width="100%" selectionMode="Multi" paste="onPaste" ariaLabelledBy="title" visibleRowCountMode="Auto" minAutoRowCount="5">
+                                <t:extension>
+                                    <m:OverflowToolbar id="matnrbSubheader">
+                                        <m:Title text="거래 자재" level="H2" />
+                                        <m:ToolbarSpacer />
+                                        <m:Button id="createButtonMatnr" text="Create" type="Transparent" press="onCreate" visible="true" />
+                                        <m:Button id="deleteButtonMatnr" text="Delete" type="Transparent" press="onDelete" visible="true" />
+                                    </m:OverflowToolbar>
+                                </t:extension>
+                                <t:columns>
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="인덱스" />
+                                        <t:template>
+                                            <m:Text text="{CreateMatnrModel>Index}" wrapping="false" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="20rem" autoResizable="true">
+                                        <m:Label text="자재코드" />
+                                        <t:template>
+                                            <m:Select id="matnrSelect" change="onMatnrChange" selectedKey="{CreateMatnrModel>Matnr}" width="400px" items="{ path: 'BpSearch>/matnr' }" class="sapUiSmallMarginBottom">
+                                                <core:Item key="{BpSearch>Matnr}" text="{= ${BpSearch>Matnr} + ' - ' + ${BpSearch>Maktx} }" />
+                                            </m:Select>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="자재명" />
+                                        <t:template>
+                                            <m:Text text="{CreateMatnrModel>Maktx}" wrapping="false" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="자재타입" />
+                                        <t:template>
+                                            <m:Text text="{CreateMatnrModel>Mtart}" wrapping="false" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+
+                                    <t:Column width="11rem" autoResizable="true">
+                                        <m:Label text="설명" />
+                                        <t:template>
+                                            <m:Text text="{CreateMatnrModel>Ddtext}" wrapping="false" class="centeredText"/>
+                                        </t:template>
+                                    </t:Column>
+                                </t:columns>
+                            </t:Table>
+                        </forms:SimpleForm>
+                    </m:IconTabFilter>
+                </m:items>
+            </m:IconTabBar>
+        </m:content>
+    </m:Page>
+</mvc:View>

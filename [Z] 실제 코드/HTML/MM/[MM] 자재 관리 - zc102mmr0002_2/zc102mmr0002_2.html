@@ -1,0 +1,350 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102MMR0002_2</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102MMR0002_2</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Program ZC102MMR0002_2</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102MMR0002_2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102mmr0002_2.
+
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DATA: lt_data    TYPE TABLE OF zc102sdt0006,</font>
+<font color ="#0000FF">*      ls_data    TYPE zc102sdt0006,</font>
+<font color ="#0000FF">*      lv_partner TYPE zc102sdt0006-partner,</font>
+<font color ="#0000FF">*      lv_index   TYPE i,</font>
+<font color ="#0000FF">*      lv_char(1),</font>
+<font color ="#0000FF">*      lt_matnr   TYPE TABLE OF zc102mmt0004,</font>
+<font color ="#0000FF">*      ls_matnr   TYPE zc102mmt0004.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">***********************************************************************</font>
+<font color ="#0000FF">** BP번호 채우기</font>
+<font color ="#0000FF">***********************************************************************</font>
+<font color ="#0000FF">*" 2. PARTNER가 비어 있는 레코드 읽기</font>
+<font color ="#0000FF">*SELECT *</font>
+<font color ="#0000FF">*  FROM zc102sdt0006</font>
+<font color ="#0000FF">*  WHERE partner IS INITIAL</font>
+<font color ="#0000FF">*      INTO TABLE @lt_data.</font>
+
+<font color ="#0000FF">*LOOP AT lt_data INTO ls_data.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  IF ls_data-vbeln_so = 'SO1000000145'.</font>
+<font color ="#0000FF">*    ls_data-partner = 'BP03'.</font>
+<font color ="#0000FF">*  ELSEIF ls_data-vbeln_so = 'SO1000000148'.</font>
+<font color ="#0000FF">*    ls_data-partner = 'BP05'.</font>
+<font color ="#0000FF">*  ELSEIF ls_data-vbeln_so = 'SO1000000161'.</font>
+<font color ="#0000FF">*    ls_data-partner = 'BP05'.</font>
+<font color ="#0000FF">*  ELSEIF ls_data-vbeln_so = 'SO1000000163'.</font>
+<font color ="#0000FF">*    ls_data-partner = 'BP02'.</font>
+<font color ="#0000FF">*  ELSEIF ls_data-vbeln_so = 'SO1000000168'.</font>
+<font color ="#0000FF">*    ls_data-partner = 'BP04'.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  MODIFY lt_data FROM ls_data TRANSPORTING partner.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*MODIFY zc102sdt0006 FROM TABLE lt_data.</font>
+<font color ="#0000FF">*" 3. LOOP 하면서 랜덤 파트너 할당</font>
+<font color ="#0000FF">*LOOP AT lt_data INTO ls_data.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  CALL FUNCTION 'QF05_RANDOM_INTEGER'</font>
+<font color ="#0000FF">*    EXPORTING</font>
+<font color ="#0000FF">*      ran_int_max = 5</font>
+<font color ="#0000FF">*      ran_int_min = 1</font>
+<font color ="#0000FF">*    IMPORTING</font>
+<font color ="#0000FF">*      ran_int     = lv_index.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  lv_char = CONV char1( lv_index ).</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  lv_partner = |{ 'BP0' }{ lv_char }|.</font>
+<font color ="#0000FF">*  " 인덱스는 1부터 시작하니 맞춰서 가져오기</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ls_data-partner = lv_partner.</font>
+<font color ="#0000FF">*  MODIFY zc102sdt0006 FROM ls_data.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  IF sy-subrc EQ 0.</font>
+<font color ="#0000FF">*    COMMIT WORK.</font>
+<font color ="#0000FF">*  ELSE.</font>
+<font color ="#0000FF">*    ROLLBACK WORK.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* MTYPE 채우기</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*SELECT *</font>
+<font color ="#0000FF">*  INTO CORRESPONDING FIELDS OF TABLE lt_matnr</font>
+<font color ="#0000FF">*  FROM zc102mmt0004</font>
+<font color ="#0000FF">*  ORDER BY matnr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*LOOP AT lt_matnr INTO ls_matnr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  IF ls_matnr-matnr = 'M0001'.</font>
+<font color ="#0000FF">*    ls_matnr-mtype = 'F'.</font>
+<font color ="#0000FF">*  ELSEIF ls_matnr-matnr = 'M0004'.</font>
+<font color ="#0000FF">*    ls_matnr-mtype = 'F'.</font>
+<font color ="#0000FF">*  ELSEIF ls_matnr-matnr = 'M0005'.</font>
+<font color ="#0000FF">*    ls_matnr-mtype = 'F'.</font>
+<font color ="#0000FF">*  ELSEIF ls_matnr-mtart = 'P'.</font>
+<font color ="#0000FF">*    ls_matnr-mtype = 'M'.</font>
+<font color ="#0000FF">*  ELSEIF ls_matnr-mtart = 'R'.</font>
+<font color ="#0000FF">*    ls_matnr-mtype = 'F'.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  MODIFY lt_matnr FROM ls_matnr TRANSPORTING mtype.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*cl_demo_output=&gt;display( lt_matnr ).</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*MODIFY zc102mmt0004 FROM TABLE lt_matnr.</font>
+
+<font color ="#0000FF">*-- 자재관리 테이블 업데이트</font>
+<font color ="#0000FF">*DELETE FROM zc102mmt0001</font>
+<font color ="#0000FF">*  WHERE matnr = 'M0001'</font>
+<font color ="#0000FF">*    AND stlno = 'SL100'</font>
+<font color ="#0000FF">*    AND stltype = 'P'</font>
+<font color ="#0000FF">*    AND werks = 'P1000'.</font>
+<font color ="#0000FF">**    AND aenam = 'LSYN-A-02'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*UPDATE zc102mmt0004</font>
+<font color ="#0000FF">*SET mtype = 'F'</font>
+<font color ="#0000FF">*  WHERE matnr = 'M0005'.</font>
+
+<font color ="#0000FF">*UPDATE zc102mmt0001</font>
+<font color ="#0000FF">*SET labst = 5000</font>
+<font color ="#0000FF">*  WHERE matnr = 'M0041'</font>
+<font color ="#0000FF">*    AND stlno = 'SL'</font>
+<font color ="#0000FF">*    AND stltype = 'P'</font>
+<font color ="#0000FF">*    AND werks = 'P2000'.</font>
+
+<font color ="#0000FF">*-- 전표 생성</font>
+DATA : lv_duedt     TYPE zc102fit0010-duedt,
+       lv_fieldname TYPE fieldname,
+       lv_month_idx(2) TYPE n,
+       lv_month(2).
+
+<font color ="#0000FF">*-- 저장용 임시 테이블</font>
+DATA : ls_save_header TYPE zc102sdt0006,
+       ls_save_item   TYPE zc102sdt0007.
+
+DATA : BEGIN OF gs_header.
+         include structure <a href ="zc102mmt0019/dictionary-zc102mmt0019.html">zc102mmt0019</a>. "BP-자재
+DATA : END OF gs_header,
+gt_header LIKE TABLE OF gs_header.
+
+DATA : BEGIN OF gs_so.
+         include structure <a href ="zc102sdt0006/dictionary-zc102sdt0006.html">zc102sdt0006</a>. "판매오더 헤더
+DATA : END OF gs_so,
+gt_so LIKE TABLE OF gs_so.
+
+DATA : BEGIN OF gs_item.
+         include structure <a href ="zc102sdt0007/dictionary-zc102sdt0007.html">zc102sdt0007</a>. "판매오더 라인 아이템
+DATA : END OF gs_item,
+gt_item LIKE TABLE OF gs_item.
+
+CLEAR : gt_header.
+<font color ="#0000FF">*DATA : BEGIN OF gs_so2.</font>
+<font color ="#0000FF">*         INCLUDE TYPE zc102sdt0004. "납품 헤더</font>
+<font color ="#0000FF">*DATA : END OF gs_so2,</font>
+<font color ="#0000FF">*gt_so2 LIKE TABLE OF gs_so2.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DATA : gt_item2 TYPE TABLE OF zc102sdt0005, " 납품 아이템</font>
+<font color ="#0000FF">*       gs_item2 TYPE zc102sdt0005.</font>
+
+SELECT * FROM zc102mmt0019 INTO TABLE gt_header WHERE contype = 'C'.
+
+<font color ="#0000FF">***********************************************************************</font>
+DATA: lv_range_nr TYPE inri-nrrangenr,
+      lv_prefix   TYPE char3,
+      lv_quantity TYPE inri-quantity,
+      pv_sono     TYPE string.
+
+lv_prefix = 'SO'.   " 판매오더 번호 prefix
+lv_range_nr = '01'. " 번호 범위
+lv_quantity = 1.
+
+CALL METHOD zclc102cm_auto_sequence=&gt;get_next_value
+  EXPORTING
+    pv_range_nr = lv_range_nr
+    pv_prefix   = lv_prefix
+    pv_quantity = lv_quantity
+  IMPORTING
+    pv_result   = pv_sono.
+
+SELECT * FROM zc102mmt0019 INTO TABLE gt_header WHERE contype = 'C'.
+
+SORT gt_header BY matnr ASCENDING.
+LOOP AT gt_header INTO gs_header.
+
+  DO 5 TIMES. " 월별 데이터 반복 처리 (01~05)
+
+    lv_month_idx = sy-index.
+
+    FIELD-SYMBOLS: &lt;fs_qty&gt; TYPE zc102e_mm_month.
+
+    lv_fieldname = |MONTH{ lv_month_idx WIDTH = 2 PAD = '0' }|.
+
+    ASSIGN COMPONENT lv_fieldname OF STRUCTURE gs_header TO &lt;fs_qty&gt;.
+    IF sy-subrc &lt;&gt; 0 OR &lt;fs_qty&gt; IS INITIAL.
+      CONTINUE.
+    ENDIF.
+
+    " 판매오더 번호 생성
+    CLEAR: pv_sono.
+    CALL METHOD zclc102cm_auto_sequence=&gt;get_next_value
+      EXPORTING
+        pv_range_nr = '01'
+        pv_prefix   = 'SO'
+        pv_quantity = 1
+      IMPORTING
+        pv_result   = pv_sono.
+
+    " 계산
+    DATA(lv_netwr) = gs_header-stprs * &lt;fs_qty&gt;.
+    DATA(lv_stax)  = lv_netwr * '0.10'.
+    DATA(lv_final) = lv_netwr + lv_stax.
+
+    " 지급기한 설정
+    lv_month = |{ lv_month_idx WIDTH = 2 PAD = '0' }|.
+    CONCATENATE gs_header-year_sd lv_month '01' INTO lv_duedt.
+    lv_duedt = lv_duedt + 15.
+
+    " 아이템 세팅
+    CLEAR: gs_item.
+    gs_item-vbeln_so  = pv_sono.
+    gs_item-matnr     = gs_header-matnr.
+    gs_item-partner   = gs_header-partner.
+    gs_item-scost     = gs_header-stprs.
+    gs_item-waers     = gs_header-waers.
+    gs_item-pequan     = &lt;fs_qty&gt;.
+    gs_item-meins     = gs_header-meins.
+    APPEND gs_item TO gt_item.
+
+    ls_save_item = CORRESPONDING #( gs_item ).
+    ls_save_item = VALUE #( BASE ls_save_item
+                              erdat = sy-datum
+                              ernam = sy-uname
+                              erzet = sy-uzeit
+                              ).
+    MODIFY zc102sdt0007 FROM ls_save_item.
+
+    " 판매오더 헤더 세팅
+    CLEAR: gs_so.
+    gs_so-vbeln_so = pv_sono.
+    gs_so-partner  = gs_header-partner.
+    gs_so-netwr    = lv_netwr.
+    gs_so-stax     = lv_stax.
+    gs_so-finalsp  = lv_final.
+    gs_so-waers    = gs_header-waers.
+    gs_so-dismo    = '0'.
+
+    APPEND gs_so TO gt_so.
+    ls_save_header = CORRESPONDING #( gs_so ).
+    ls_save_header = VALUE #( BASE ls_save_header
+                              erdat = sy-datum
+                              ernam = sy-uname
+                              erzet = sy-uzeit
+                              ).
+    MODIFY zc102sdt0006 FROM ls_save_header.
+
+    IF sy-subrc = 0.
+      COMMIT WORK AND WAIT.
+    ENDIF.
+
+    " 회계 전표 호출
+    IF gs_header-waers = 'KRW'.
+      call function <a href ="zfm_cl102_fi_06/zfm_cl102_fi_06.html">'ZFM_CL102_FI_06'</a>
+        EXPORTING
+          iv_partner   = gs_so-partner
+          iv_vbeln     = gs_so-vbeln_so
+          iv_ar_wrbtr  = gs_so-finalsp
+          iv_dc_wrbtr  = gs_so-dismo
+          iv_wrbtr_vat = gs_so-stax
+          iv_wrbtr     = gs_so-netwr
+          iv_duedt     = lv_duedt.
+
+      call function <a href ="zfm_cl102_fi_11/zfm_cl102_fi_11.html">'ZFM_CL102_FI_11'</a>
+        EXPORTING
+          iv_vbeln = gs_so-vbeln_so
+        TABLES
+          it_matnr = gt_item.
+
+    ELSE.
+      call function <a href ="zfm_cl102_fi_07/zfm_cl102_fi_07.html">'ZFM_CL102_FI_07'</a>
+        EXPORTING
+          iv_waers   = gs_so-waers
+          iv_wrbtr   = gs_so-netwr
+          iv_partner = gs_so-partner
+          iv_vbeln   = gs_so-vbeln_so
+          iv_duedt   = lv_duedt.
+
+      call function <a href ="zfm_cl102_fi_11/zfm_cl102_fi_11.html">'ZFM_CL102_FI_11'</a>
+        EXPORTING
+          iv_vbeln = gs_so-vbeln_so
+        TABLES
+          it_matnr = gt_item.
+    ENDIF.
+
+
+
+  ENDDO. " 각 월별
+
+ENDLOOP. " 자재별
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**-- 2025 판매오더 삭제 (판매오더 헤더, 아이템, 납품오더 헤더, 아이템, 전표 헤더, 아이템 삭제 로직)</font>
+<font color ="#0000FF">*DATA: lt_vbeln_so TYPE TABLE OF zc102sdt0006,</font>
+<font color ="#0000FF">*      lt_belnr    TYPE TABLE OF zc102fit0010.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**-- Step 1: AUDAT 기준 VBELN_SO 추출</font>
+<font color ="#0000FF">*SELECT vbeln_so</font>
+<font color ="#0000FF">*  INTO TABLE lt_vbeln_so</font>
+<font color ="#0000FF">*  FROM zc102sdt0006</font>
+<font color ="#0000FF">*  WHERE audat &gt;= '20250101'.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*CHECK lt_vbeln_so IS NOT INITIAL.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**-- Step 2: BELNR 추출 (전표라인)</font>
+<font color ="#0000FF">*SELECT belnr</font>
+<font color ="#0000FF">*  INTO TABLE lt_belnr</font>
+<font color ="#0000FF">*  FROM zc102fit0010</font>
+<font color ="#0000FF">*  FOR ALL ENTRIES IN lt_vbeln_so</font>
+<font color ="#0000FF">*  WHERE vbeln = lt_vbeln_so-vbeln_so.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*LOOP AT lt_vbeln_so INTO DATA(ls_vbeln_so).</font>
+<font color ="#0000FF">*  DELETE FROM zc102sdt0007</font>
+<font color ="#0000FF">*  WHERE vbeln_so = ls_vbeln_so-vbeln_so.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  DELETE FROM zc102sdt0004</font>
+<font color ="#0000FF">*  WHERE vbeln_so = ls_vbeln_so-vbeln_so.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  DELETE FROM zc102sdt0005</font>
+<font color ="#0000FF">*  WHERE vbeln_so = ls_vbeln_so-vbeln_so.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*LOOP AT lt_belnr INTO DATA(ls_belnr).</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  DELETE FROM zc102fit0010</font>
+<font color ="#0000FF">*  WHERE belnr = ls_belnr-belnr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  DELETE FROM zc102fit0009</font>
+<font color ="#0000FF">*  WHERE belnr = ls_belnr-belnr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*ENDLOOP.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

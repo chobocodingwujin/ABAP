@@ -1,0 +1,816 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0014F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form display_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_fcat, gs_fcat.
+    PERFORM main_catalog USING : 'X' 'PDONO' 'ZC102PPT0007' 'C' ' ',
+                                 ' ' 'MATNR' 'ZC102PPT0007' 'C' ' ',
+                                 ' ' 'WCTNO' 'ZC102PPT0007' 'C' ' ',
+                                 ' ' 'WERKS' 'ZC102PPT0007' 'C' ' ',
+                                 ' ' 'MENGE' 'ZC102PPT0007' ' ' ' ',
+                                 ' ' 'MEINS' 'ZC102PPT0007' 'C' ' '.
+
+    PERFORM main_layout.
+    PERFORM exclude_toolbar.
+    PERFORM create_object.
+
+    SET HANDLER lcl_event_handler=>double_click FOR go_alv_grid.
+
+    CALL METHOD go_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_check
+        it_fieldcatalog      = gt_fcat.
+
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form main_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM main_catalog USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat-key       = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'MENGE'.
+      gs_fcat-coltext = '생산 수량'.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form main_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM main_layout .
+
+  gs_layout-zebra      = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = ''.
+  gs_layout-grid_title = '품질 미검수 목록'.
+
+  gs_variant-report = sy-repid.
+  gs_variant-handle = 'ALV1'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form exclude_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM exclude_toolbar .
+
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_main_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_main_data .
+
+  DATA : lv_random TYPE p,
+         lv_tabix  TYPE sy-tabix.
+
+
+  SELECT *
+    INTO CORRESPONDING FIELDS OF TABLE gt_check
+    FROM zc102ppt0007
+   WHERE qcheck NE 'X'.
+
+*-- 폐기율 Random 추출 함수
+  CALL METHOD cl_abap_random_packed_dec1=>create
+    EXPORTING
+      min  = '0'
+      max  = '3.0'
+    RECEIVING
+      prng = go_random.
+
+*-- 오차율
+  LOOP AT gt_check INTO gs_check.
+
+    lv_tabix = sy-tabix.
+
+    CALL METHOD go_random->get_next
+      RECEIVING
+        value = lv_random.
+
+    gs_check-rate = lv_random.
+
+    MODIFY gt_check FROM gs_check TRANSPORTING rate.
+
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_double_click
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_ROW
+*&      --> E_COLUMN
+*&---------------------------------------------------------------------*
+FORM handle_double_click  USING pv_row pv_column.
+
+  READ TABLE gt_check INTO gs_check INDEX pv_row.
+
+  IF gs_check-rate = 0.
+
+    gv_eqty = 0.
+    gv_rqty = gs_check-menge.
+
+  ELSE.
+
+    gv_eqty = ceil( gs_check-menge * ( gs_check-rate / 100 ) ).
+    gv_rqty = gs_check-menge - gv_eqty.
+
+  ENDIF.
+
+  CALL SCREEN 110 STARTING AT 10 15.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form goods_receipt
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM goods_receipt .
+
+  DATA : lv_labst   TYPE zc102e_mm_labst,
+         lv_rabst   TYPE ZC102E_MM_rabst,
+
+         ls_rstl    TYPE zc102mmt0006,
+         ls_pstl    TYPE zc102mmt0003,
+         ls_disable TYPE zc102mmt0018.
+
+*-- 창고 Master에서 Select
+  SELECT SINGLE stlno, werks
+    INTO @DATA(ls_receipt)
+    FROM zc102mmt0008
+   WHERE stltype = 'P'
+     AND werks   = @gs_check-werks.
+
+*-- 자재 Master Select
+  SELECT SINGLE labst, rabst
+    INTO @DATA(ls_matnr)
+    FROM zc102mmt0001
+   WHERE matnr = @gs_check-matnr
+     AND werks = @gs_check-werks
+     AND stltype = 'P'.
+
+*-- 자재 창고 이동용 Master Select
+  SELECT SINGLE matnr, mtype
+    INTO @DATA(ls_mtype)
+    FROM zc102mmt0004
+   WHERE matnr = @gs_check-matnr.
+
+
+*-- Update 값 Set
+  lv_labst = ls_matnr-labst + gv_rqty.
+  lv_rabst = ls_matnr-rabst + gv_rqty.
+
+*-- 배치번호 Set
+  PERFORM set_batch.
+
+*-- 창고 업데이트
+
+  IF sy-subrc = 0.
+
+    " 입고
+*    UPDATE zc102mmt0006
+*       SET labst = lv_labst
+*           rabst = lv_rabst
+*           aedat = sy-datum
+*           aenam = sy-uname
+*           aezet = sy-uzeit
+*     WHERE matnr = gs_check-matnr
+*       AND stltype = 'P'
+*       AND werks  = gs_check-werks
+*       AND stlno  = ls_receipt-stlno.
+
+
+*-- 신선 완제품
+    IF ls_mtype-mtype = 'F'.
+
+      ls_rstl-stlno   = ls_receipt-stlno.
+      ls_rstl-stltype = 'P'.
+      ls_rstl-werks   = gs_check-werks.
+      ls_rstl-batno   = gv_full_code.
+      ls_rstl-matnr   = gs_check-matnr.
+      ls_rstl-labst   = lv_labst.
+      ls_rstl-meins   = gs_check-meins.
+      ls_rstl-lfdat   = sy-datum.
+      ls_rstl-erdat   = sy-datum.
+      ls_rstl-ernam   = sy-uname.
+      ls_rstl-erzet   = sy-uzeit.
+
+      INSERT zc102mmt0006 FROM ls_rstl.
+
+*-- 가공완제품
+    ELSEIF ls_mtype-mtype = 'M'.
+
+      ls_pstl-stlno   = ls_receipt-stlno.
+      ls_pstl-stltype = 'P'.
+      ls_pstl-werks   = gs_check-werks.
+      ls_pstl-batno   = gv_full_code.
+      ls_pstl-matnr   = gs_check-matnr.
+      ls_pstl-labst   = lv_labst.
+      ls_pstl-meins   = gs_check-meins.
+      ls_pstl-lfdat   = sy-datum.
+      ls_pstl-erdat   = sy-datum.
+      ls_pstl-ernam   = sy-uname.
+      ls_pstl-erzet   = sy-uzeit.
+
+      MODIFY zc102mmt0003 FROM ls_pstl.
+
+      PERFORM set_md USING 101.
+
+    ENDIF.
+
+
+
+    " 폐기
+    PERFORM get_disable_num.
+
+    ls_disable-disno = gv_retno.
+    ls_disable-matnr = gs_check-matnr.
+    ls_disable-batno = gv_full_code.
+    ls_disable-disda = sy-datum.
+    ls_disable-distype = '02'.
+    ls_disable-disme = gv_eqty.
+    ls_disable-meins = gs_check-meins.
+    ls_disable-perdi = gs_check-rate.
+    ls_disable-reaso = 'Z03'.
+    ls_disable-refno = gs_check-pdono.
+    ls_disable-erdat = sy-datum.
+    ls_disable-ernam = sy-uname.
+    ls_disable-erzet = sy-uzeit.
+
+    INSERT zc102mmt0018 FROM ls_disable.
+
+    PERFORM set_md USING 103.
+
+    MESSAGE s035.
+
+  ELSE.
+    MESSAGE e032 WITH '입고 및 폐기 '.
+
+  ENDIF.
+
+
+  UPDATE zc102ppt0007
+     SET qcheck = 'X'
+         aedat = sy-datum
+         aenam = sy-uname
+         aezet = sy-uzeit
+   WHERE pdono EQ gs_check-pdono.
+
+  PERFORM get_main_data.
+  PERFORM refresh_alv.
+  PERFORM get_dispose_rate_of_wc.
+
+  PERFORM pop_exit_btn.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_disable_num
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_disable_num .
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      nr_range_nr = '01'
+      object      = 'ZC102DIS'
+    IMPORTING
+      number      = gv_retno.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form f4_pdonum
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM f4_pdonum .
+
+  DATA : lt_return   LIKE TABLE OF ddshretval WITH HEADER LINE.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'PDONO' " ALV 에 박히는 값
+      dynpprog        = sy-repid
+      dynpnr          = sy-dynnr
+      dynprofield     = 'GV_PDONUM'
+      window_title    = '생산 오더 번호'
+      value_org       = 'S'
+    TABLES
+      value_tab       = gt_check
+      return_tab      = lt_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_pdonum_master
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_pdonum_master .
+
+*-- SEARCH Help 데이터 발췌
+  SELECT DISTINCT pdono
+    FROM zc102ppt0007
+    INTO CORRESPONDING FIELDS OF TABLE gt_pdonum
+   ORDER BY pdono.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_pdonum
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_pdonum .
+
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'PDONO'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GV_PDONUM'
+      window_title = '생산 오더 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_pdonum
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_matnr_master
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_matnr_master .
+
+*-- SEARCH Help 데이터 발췌
+  SELECT DISTINCT matnr maktx
+    FROM zc102mmt0004
+    INTO CORRESPONDING FIELDS OF TABLE gt_matnr
+   WHERE mtart EQ 'P'
+   ORDER BY matnr.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_matnr
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_matnr .
+
+*-- Screen Data 발췌
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE STRUCTURE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 발췌)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+*-- Search Help 데이터 발췌
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'MATNR'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'LT_MATNR'
+      window_title = '자재 이름'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_matnr
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc EQ 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_plant_master
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_plant_master .
+
+*-- SEARCH Help 데이터 발췌
+  SELECT DISTINCT werks
+    FROM zc102ppt0002
+    INTO CORRESPONDING FIELDS OF TABLE gt_plant.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_plant
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_plant .
+
+*-- Screen Data 발췌
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE STRUCTURE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 발췌)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+*-- Search Help 데이터 발췌
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'WERKS'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_PLANT'
+      window_title = '플랜트 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_plant
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+
+  IF sy-subrc EQ 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_conditional_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_conditional_data .
+
+  SELECT *
+    INTO CORRESPONDING FIELDS OF TABLE gt_check
+    FROM zc102ppt0007
+   WHERE pdono EQ gv_pdonum
+      OR werks EQ gv_plant
+      OR matnr EQ gv_matnr.
+
+
+  PERFORM refresh_alv.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_alv
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_alv .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+* 현재 Cursor 위치를 유지
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+  CALL METHOD go_alv_grid->refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_display
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_display .
+
+  PERFORM get_main_data.
+  PERFORM refresh_alv.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_batch
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_batch .
+
+  CALL METHOD zclc102cm_auto_sequence=>get_next_value
+    EXPORTING
+      pv_range_nr = gv_range_nr
+      pv_prefix   = gv_prefix
+      pv_quantity = gv_quantity
+    IMPORTING
+      pv_result   = gv_full_code.
+
+*-- 배치 Insert
+
+  gs_batch-batno = gv_full_code.
+  gs_batch-matnr = gs_check-matnr.
+  gs_batch-mtart = 'R'.
+  gs_batch-lfdat = sy-datum.
+  gs_batch-stlno = gs_check-stlno.
+  gs_batch-bwart = '101'.
+  " Time stamp
+  gs_batch-erdat = sy-datum.
+  gs_batch-ernam = sy-uname.
+  gs_batch-erzet = sy-uzeit.
+
+  APPEND gs_batch TO gt_batch.
+
+  INSERT zc102ppt0005 FROM gs_batch.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_md
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_101
+*&---------------------------------------------------------------------*
+FORM set_md USING pv_value.
+
+  DATA : lv_batno TYPE zc102mmt0013-batno.
+
+  lv_batno = CONV zc102mmt0013-batno( gv_full_code ).
+
+  CALL FUNCTION 'ZFM_CL102_MM_02'
+    EXPORTING
+      iv_bwart = pv_value
+      iv_usnam = '경다연'
+      iv_batno = lv_batno
+      iv_matnr = gs_check-matnr
+      iv_menge = gs_check-menge
+      iv_meins = gs_check-meins
+      iv_werks = gs_check-werks
+      iv_stlno = gs_check-stlno.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_dispose_rate_of_wc
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_dispose_rate_of_wc .
+
+*-- Get AVG Num
+  SELECT AVG( perdi ) AS perdi, wctno
+    INTO TABLE @DATA(lt_wc)
+    FROM zc102ppt0007 AS a INNER JOIN zc102mmt0018 AS b
+      ON a~pdono EQ b~refno
+   GROUP BY wctno.
+
+  LOOP AT lt_wc INTO DATA(ls_wc).
+
+    CASE ls_wc-wctno.
+      WHEN 'WC100'.
+        gv_wc100 = ls_wc-perdi.
+      WHEN 'WC200'.
+        gv_wc200 = ls_wc-perdi.
+      WHEN 'WC300'.
+        gv_wc300 = ls_wc-perdi.
+      WHEN 'WC400'.
+        gv_wc400 = ls_wc-perdi.
+    ENDCASE.
+
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form pop_exit_btn
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM pop_exit_btn .
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form load_webpage
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM load_webpage .
+
+  DATA : lv_url       TYPE string,
+         lv_flag,
+         lv_answer(1).
+
+  lv_url = TEXT-u01.
+
+  CALL FUNCTION 'ZFM_CL102_CM_POP_UP'
+    EXPORTING
+      iv_titlebar = '[PP] 폐기율 차트'
+      iv_question = '폐기율 현황을 관리하고 있는 웹 페이지 차트로 이동하시겠습니까?'
+    IMPORTING
+      ev_answer   = lv_answer.
+
+  IF lv_answer EQ 1.
+
+    CALL METHOD cl_gui_frontend_services=>execute
+      EXPORTING
+        application = lv_url
+      EXCEPTIONS
+        OTHERS      = 1.
+
+  ELSE.
+
+    MESSAGE s091.
+    EXIT.
+
+  ENDIF.
+
+
+
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

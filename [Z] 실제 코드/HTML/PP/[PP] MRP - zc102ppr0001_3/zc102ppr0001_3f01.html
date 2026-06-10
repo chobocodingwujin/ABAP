@@ -1,0 +1,2009 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0001_3F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0001_3F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0001_2F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102PPR0001_2F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_main_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_main_data .
+
+  PERFORM mrp_data.        "MRP : ALV에 출력될 Data Select
+  PERFORM set_avail_stock. "MRP : 가용재고 계산
+  PERFORM set_count_data.
+
+  IF sy-batch IS INITIAL.
+    PERFORM set_mrp_status USING abap_false.
+    PERFORM refresh_alv.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_fcat, gs_fcat.
+    PERFORM main_catalog USING : 'X' 'ICON'      ''             'C' '',
+                                 'X' 'MATNR'    'ZC102PPT0013' 'C' ' ',
+                                 ' ' 'MRPEL'     'ZC102PPT0013' ' ' ' ',
+                                 ' ' 'PPLNO'     'ZC102PPT0013' ' ' ' ',
+<font color ="#0000FF">*                                 ' ' 'VBELN_SO'  'ZC102PPT0013' ' ' ' ',</font>
+<font color ="#0000FF">*                                 ' ' 'PLONO'    'ZC102PPT0013' ' ' ' ',</font>
+<font color ="#0000FF">*                                 ' ' 'WKCNO'     'ZC102PPT0013' ' ' ' ',</font>
+                                 ' ' 'REQ_QTY'   'ZC102PPT0013' ' ' ' ',
+                                 ' ' 'LABST'     'ZC102MMT0001' ' ' ' ',
+<font color ="#0000FF">*                                 ' ' 'ABAIL_QTY' 'GT_MRP'       ' ' ' ',</font>
+                                 ' ' 'MEINS'     'ZC102PPT0013' ' ' ' '.
+
+    CLEAR : gt_fcat2, gs_fcat2.
+    PERFORM set_field_catalog2 USING :
+                                       'X' 'PPLNO'    'ZC102PPT0001' 'C' '',
+                                       'X' 'MATNR'    'ZC102PPT0004' 'C' '',
+                                       ' ' 'REQ_QTY'  'ZC102PPT0013' ''  '',
+                                       ' ' 'MEINS'    'ZC102PPT0004' 'C' 'X',
+                                       ' ' 'WERKS'    'ZC102MMT0001' 'C' '',
+                                       'X' 'STLNO'    'ZC102MMT0001' 'C' '',
+                                       ' ' 'WKCNO'    'ZC102SDT0010' 'C' ''.
+
+    CLEAR: gt_fcat3, gs_fcat3.
+
+    PERFORM set_field_catalog3 USING :
+                                       'X' 'PRNO'     'ZC102MMT0017' 'C' '',
+                                       'X' 'MATNR'    'ZC102PPT0004' 'C' '',
+                                       ' ' 'PEQUAN'   'ZC102MMT0017' ''  '',
+                                       ' ' 'MEINS'    'ZC102PPT0004' 'C' 'X',
+                                       ' ' 'WERKS'    'ZC102MMT0001' 'C' '',
+                                       ' ' 'STLNO'    'ZC102MMT0001' 'C' ''.
+
+
+    PERFORM main_layout.
+    PERFORM exclude_toolbar.
+    PERFORM create_object.
+
+<font color ="#0000FF">*-- Display LEFT ALV</font>
+    gs_variant-handle = 'ALV1'.
+
+    CALL METHOD go_alv_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_mrp
+        it_fieldcatalog      = gt_fcat.
+
+<font color ="#0000FF">*-- Display TabALV</font>
+
+    gs_variant-handle = 'ALV2'.
+
+    CALL METHOD go_alv_grid2-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_podocu
+        it_fieldcatalog      = gt_fcat2.
+
+    CALL METHOD go_alv_grid3-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_prdocu
+        it_fieldcatalog      = gt_fcat3.
+
+
+<font color ="#0000FF">*    PERFORM refresh_alv.</font>
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form main_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM main_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat-key       = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'REQ_QTY'.
+      gs_fcat-coltext = '필요 수량'.
+    WHEN 'PPLNO'.
+      gs_fcat-coltext = '참조번호'.
+    WHEN 'ICON'.
+      gs_fcat-coltext = 'MRP 수행 상태'.
+    WHEN 'MEINS'.
+      gs_fcat-coltext = '단위'.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form main_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM main_layout .
+
+  gs_layout-zebra      = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = 'D'.
+
+  gs_variant-report = sy-repid.
+  gs_variant-handle = 'ALV1'.
+
+  gs_layout-ctab_fname = 'COLOR'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form exclude_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM exclude_toolbar .
+
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+<font color ="#0000FF">*-- Main Custom container</font>
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+<font color ="#0000FF">*-- ALV IN TABSTRIP (102)</font>
+  CREATE OBJECT go_container2
+    EXPORTING
+      container_name = 'CONT2'.
+
+  CREATE OBJECT go_alv_grid2
+    EXPORTING
+      i_parent = go_container2.
+
+<font color ="#0000FF">*-- ALV IN TABSTRIP (103)</font>
+  CREATE OBJECT go_container3
+    EXPORTING
+      container_name = 'CONT3'.
+
+  CREATE OBJECT go_alv_grid3
+    EXPORTING
+      i_parent = go_container3.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_alv</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_alv .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+  CALL METHOD go_alv_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_document</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_document .
+
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_avail_stock</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_avail_stock .
+
+  DATA : lv_avail_qty   TYPE menge_d VALUE 0, "요구수량, 생산계획수량 합
+         lv_plan_sum    TYPE menge_d VALUE 0, "생산계획량 + lv_avail_qty.
+
+
+         lv_tabix       TYPE sy-tabix,
+         ls_scol        TYPE lvc_s_scol,
+         lv_labst       TYPE zc102mmt0001-labst,
+
+         lv_rate_factor TYPE p DECIMALS 2. "목표생산율
+
+
+  CLEAR: lv_labst. "처음 한 번만 초기화
+
+  LOOP AT gt_mrp INTO gs_mrp.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR: lv_avail_qty, lv_rate_factor.
+
+    " 목표 생산률 반영
+    lv_rate_factor = gv_rate / 100.
+
+    " 수요예측량 × 목표 생산률
+    lv_avail_qty = gs_mrp-req_qty * lv_rate_factor.
+
+    " 자재관리 테이블에서 가용재고 읽기
+    READ TABLE gt_mange INTO gs_mange WITH KEY matnr = gv_matnr
+                                               werks = gv_plant.
+
+    IF sy-subrc = 0.
+
+      " 초기에 첫 row면 현재 재고값을 기준으로 시작
+      IF lv_labst IS INITIAL.
+        lv_labst = gs_mange-labst.
+      ENDIF.
+
+      " 재고 충분 여부 판단
+      IF lv_labst &gt;= lv_avail_qty.
+
+        IF gs_mrp-mrpel = 'SalRqs'.
+          " SalRqs → 수요 수량만큼 차감
+          gs_mrp-labst = lv_labst - gs_mrp-req_qty.
+        ELSE.
+          " 나머지 → 수요예측값 반영
+          gs_mrp-labst = lv_labst + lv_avail_qty.
+        ENDIF.
+
+        " 다음 루프를 위해 누적 재고 유지
+        lv_labst = gs_mrp-labst.
+
+      ELSE.
+        " 재고 부족 시 처리
+        gs_mrp-labst = 0. " 또는 부족값만 따로 표시
+      ENDIF.
+
+    ENDIF.
+
+    CASE gs_mrp-mrpel.
+      WHEN 'Stock'.
+        ls_scol-color-col = 3.
+        ls_scol-nokeycol  = 'X'.
+        INSERT ls_scol INTO TABLE gs_mrp-color.
+    ENDCASE.
+
+
+
+    MODIFY gt_mrp FROM gs_mrp INDEX lv_tabix TRANSPORTING labst color.
+
+  ENDLOOP.
+
+
+
+<font color ="#0000FF">*  LOOP AT gt_mrp INTO gs_mrp.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    lv_tabix = sy-tabix.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    CLEAR: lv_avail_qty, lv_rate_factor.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    gs_mrp-labst = lv_labst.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    " 목표 생산률 반영</font>
+<font color ="#0000FF">*    lv_rate_factor = gv_rate / 100.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    " 수요예측량 × 목표 생산률 = 실제 필요한 생산량</font>
+<font color ="#0000FF">*    lv_avail_qty = gs_mrp-req_qty * lv_rate_factor.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    " 자재관리 테이블에서 현재 가용재고 조회</font>
+<font color ="#0000FF">*    READ TABLE gt_mange INTO gs_mange WITH KEY matnr = gv_matnr</font>
+<font color ="#0000FF">*                                               werks = gv_plant.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    IF sy-subrc = 0.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      " 가용재고와 비교해서 부족/잉여 판단</font>
+<font color ="#0000FF">*      IF gs_mange-labst &gt;= lv_avail_qty.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*        IF gs_mrp-mrpel = 'SalRqs'.</font>
+<font color ="#0000FF">*          gs_mrp-labst = gs_mange-labst + lv_avail_qty - gs_mrp-req_qty.</font>
+<font color ="#0000FF">**          gs_mrp-labst = gs_mrp-labst - gs_mrp-req_qty.</font>
+<font color ="#0000FF">*        ELSE.</font>
+<font color ="#0000FF">*          gs_mrp-labst = gs_mange-labst + lv_avail_qty . "재고가 충분한 경우 → 잔여 재고</font>
+<font color ="#0000FF">*        ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*        lv_labst = gs_mrp-labst.</font>
+<font color ="#0000FF">*      ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**      IF gs_mrp-mrpel = 'SalRqs'.</font>
+<font color ="#0000FF">***        gs_mrp-labst = gs_mange-labst - gs_mrp-req_qty.</font>
+<font color ="#0000FF">**        gs_mrp-labst = lv_labst - gs_mrp-req_qty.</font>
+<font color ="#0000FF">**      ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    CASE gs_mrp-mrpel.</font>
+<font color ="#0000FF">*      WHEN 'Stock'.</font>
+<font color ="#0000FF">*        ls_scol-color-col = 3.</font>
+<font color ="#0000FF">*        ls_scol-nokeycol  = 'X'.        " Intensified</font>
+<font color ="#0000FF">*        INSERT ls_scol INTO TABLE gs_mrp-color.</font>
+<font color ="#0000FF">*    ENDCASE.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    MODIFY gt_mrp FROM gs_mrp INDEX lv_tabix TRANSPORTING labst color.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_matnr_master</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_matnr_master .
+
+<font color ="#0000FF">*-- SEARCH Help 데이터 발췌</font>
+  SELECT DISTINCT matnr maktx
+    FROM zc102mmt0004
+    INTO CORRESPONDING FIELDS OF TABLE gt_matnr
+   WHERE mtart EQ 'P'
+   ORDER BY matnr.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_search_help_matnr</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_search_help_matnr .
+
+<font color ="#0000FF">*-- Screen Data 발췌</font>
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE STRUCTURE dynpread.
+  DATA : END OF dynpfields.
+
+<font color ="#0000FF">*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 발췌)</font>
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+<font color ="#0000FF">*-- Search Help 데이터 발췌</font>
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'MATNR'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'LT_MATNR'
+      window_title = '자재 이름'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_matnr
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc EQ 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form execute_mrp</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM execute_mrp .
+
+  DATA : lv_answer,
+         lv_check       VALUE abap_false,
+         lv_pdo_created TYPE abap_bool VALUE abap_false,
+         lv_pr_created  TYPE abap_bool VALUE abap_false,
+         lv_status      TYPE abap_bool VALUE abap_true.
+
+  call function <a href ="zfm_cl102_cm_pop_up/zfm_cl102_cm_pop_up.html">'ZFM_CL102_CM_POP_UP'</a>
+    EXPORTING
+      iv_titlebar = 'MRP 실행'
+      iv_question = 'MRP를 실행하시겠습니까?'
+    IMPORTING
+      ev_answer   = lv_answer.
+
+  CHECK lv_answer EQ '1'.
+
+<font color ="#0000FF">*--생산계획, 구매요청 채번</font>
+<font color ="#0000FF">*  PERFORM create_docu.</font>
+
+<font color ="#0000FF">*-- 데이터 작업</font>
+  PERFORM get_bom_data. "bom 아이템 가져오기
+  PERFORM get_bpinfo. "bp 자재명 매핑  가져오기
+  PERFORM get_bp_master. "bp 마스터
+  PERFORM get_stlno_master. "창고 마스터
+  PERFORM get_matnr_master_all. "자재마스터
+  PERFORM -calculate_qty. "계산
+
+  LOOP AT gt_minus INTO gs_minus.
+
+    " 생산계획: 한 번만 생성
+    IF gs_minus-ppquan &gt; 0 AND lv_pdo_created = abap_false.
+      PERFORM get_pdo_num CHANGING gv_plono.
+      PERFORM send_pdo_no USING gv_plono.
+      lv_pdo_created = abap_true.
+      " 생산 계획 카운트
+      CLEAR gv_newpo.
+      gv_newpo = 1.
+<font color ="#0000FF">*    ELSE.</font>
+<font color ="#0000FF">*      gv_newpo = 0.</font>
+    ENDIF.
+
+    " 구매요청: 한 번만 생성
+    IF gs_minus-i_lequan &gt; 0 AND lv_pr_created = abap_false.
+      PERFORM create_prno CHANGING gv_prno.
+      PERFORM send_pr USING gv_prno.
+      lv_pr_created = abap_true.
+      gv_newpr = 1.
+<font color ="#0000FF">*    ELSE.</font>
+<font color ="#0000FF">*      gv_newpr = 0.</font>
+    ENDIF.
+
+    " 둘 다 생성되면 루프 탈출
+    IF lv_pdo_created = abap_true AND lv_pr_created = abap_true.
+      EXIT.
+    ENDIF.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*-- 계획오더 / 구매오더 생성 후 Refresh</font>
+  PERFORM set_main_data.
+  PERFORM set_mrp_status USING lv_status.
+  PERFORM refresh_alv.
+  PERFORM refresh_right_alv.
+
+  CALL FUNCTION 'SAPGUI_SET_FUNCTIONCODE'
+    EXPORTING
+      functioncode           = 'POPUP'
+    EXCEPTIONS
+      function_not_supported = 1
+      OTHERS                 = 2.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  INFO_EXIT  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE info_exit INPUT.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_subscreen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_subscreen .
+
+<font color ="#0000FF">*-- 활성화된 탭에 해당하는 서브스크린 번호 Set</font>
+  CASE gc_tab-activetab.
+    WHEN 'TAB1'.
+      gv_subscreen = '0101'.
+    WHEN 'TAB2'.
+      gv_subscreen = '0102'.
+    WHEN 'TAB3'.
+      gv_subscreen = '0103'.
+    WHEN OTHERS.
+      gc_tab-activetab = 'TAB1'.
+      gv_subscreen     = '0101'.
+  ENDCASE.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_field_catalog2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_field_catalog2   USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat2-key       = pv_key.
+  gs_fcat2-fieldname = pv_field.
+  gs_fcat2-ref_table = pv_table.
+  gs_fcat2-just      = pv_just.
+  gs_fcat2-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'ICON'.
+      gs_fcat2-coltext = 'MRP상태'.
+    WHEN 'REQ_QTY'.
+      gs_fcat2-coltext = '생산수량'.
+  ENDCASE.
+
+  APPEND gs_fcat2 TO gt_fcat2.
+  CLEAR gs_fcat2.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form mrp_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM mrp_data .
+
+  CLEAR : gs_mrp, gt_mrp.
+
+  PERFORM set_stock_info.
+
+  PERFORM get_matnr_manage. "자재관리 테이블 가져오기
+
+  PERFORM get_process_plan. "생산계획 테이블 가져오기, 생산량 gt_mrp 에 담아두기
+
+  PERFORM get_so_item.      "For 판매 오더 아이템, 헤더, bp별 제품,  gt_mrp에 판매오더 정보 담아두기
+
+<font color ="#0000FF">*  PERFORM get_pr_item.      "구매요청 가져오기</font>
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_docu</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_docu .
+
+<font color ="#0000FF">*--</font>
+  IF gt_prdocu IS NOT INITIAL.
+    PERFORM create_purchase_request. "구매요청 헤더, 아이템 데이터 보내기
+  ELSE.
+    PERFORM create_planed_order. "계획오더 테이블에 보내는거
+  ENDIF.
+
+  PERFORM insert_table.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_bom_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_bom_data .
+
+  DATA : lv_bomno         TYPE char10,
+         lv_bomno_pattern TYPE char15,
+         lv_tabix         TYPE sy-tabix.
+
+<font color ="#0000FF">***완제품 번호에서 BOMNO(필요자재) 만들어서 가져오기</font>
+
+  CLEAR : gs_bom.
+
+  lv_bomno = 'B' && gv_matnr+1(4).
+  CONCATENATE lv_bomno '%' INTO lv_bomno_pattern. "합쳐줘야 됨
+
+  SELECT matnr bomno menge meins
+         usable dauno mtart
+    INTO CORRESPONDING FIELDS OF TABLE gt_bom
+    FROM zc102ppt0004
+    WHERE bomno LIKE lv_bomno_pattern
+      AND matnr &lt;&gt; gv_matnr. "완제품 번호만 빼고 들고옴
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_right_alv</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_right_alv .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+  CALL METHOD go_alv_grid2-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+  CALL METHOD go_alv_grid3-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form calculate_qty</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM -calculate_qty .
+
+<font color ="#0000FF">*-- Data</font>
+  DATA : lv_possible   TYPE i VALUE 99999999, "자재별 생산 가능 수량
+         lv_temp       TYPE zc102ppt0004-menge,
+
+         lv_shortage   TYPE i, "부족 수량
+         lv_tabix      TYPE sy-tabix,
+         lv_need       TYPE i,  "필요한 자재 수량
+
+         "bom자재 창고와 가용재고량
+         lv_max_stlno  TYPE zc102mmt0001-stlno,
+         lv_max_labst  TYPE i VALUE 0,
+
+         "부족한 bom자재번호와 수량
+         lv_min_matnr  TYPE zc102mmt0001-matnr,
+         lv_min_ppquan TYPE i VALUE 999999,
+
+         lt_mange_temp TYPE TABLE OF zc102mmt0001 WITH HEADER LINE.
+
+<font color ="#0000FF">****---자재관리 테이블에서 bom자재들 labst합을 구함, 또한 bom자재 해당하는 창고와 가용재고량 찾기---***</font>
+
+  LOOP AT gt_bom INTO gs_bom.
+    lv_tabix = sy-tabix.
+
+    CLEAR: lv_max_labst, lv_max_stlno, gs_minus.
+
+    READ TABLE gt_mrp INTO gs_mrp WITH KEY matnr = gs_bom-matnr.
+
+    " BP 플랜트와 일치하는 재고만 찾는다 (없으면 아무 처리 안 함)
+
+    LOOP AT gt_mange INTO gs_mange WHERE matnr = gs_bom-matnr
+                                     AND werks = gv_plant.
+
+      IF lv_max_stlno IS INITIAL OR gs_mange-labst &gt; lv_max_labst.
+        lv_max_labst = gs_mange-labst.
+        lv_max_stlno = gs_mange-stlno.
+        gs_minus-werks = gs_mange-werks.
+      ENDIF.
+
+    ENDLOOP.
+
+
+<font color ="#0000FF">*    "우선 gs_bpinfo-werks 와 일치하는 재고 찾기</font>
+<font color ="#0000FF">*    LOOP AT gt_mange INTO gs_mange WHERE matnr = gs_bom-matnr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      "최우선: BP의 플랜트(WERKS)와 일치하는 창고 찾기</font>
+<font color ="#0000FF">*      IF gs_mange-werks = gs_bpinfo-werks.</font>
+<font color ="#0000FF">*        IF lv_max_stlno IS INITIAL OR gs_mange-labst &gt; lv_max_labst.</font>
+<font color ="#0000FF">*          lv_max_labst = gs_mange-labst.</font>
+<font color ="#0000FF">*          lv_max_stlno = gs_mange-stlno.</font>
+<font color ="#0000FF">*          gs_minus-werks = gs_mange-werks.</font>
+<font color ="#0000FF">*        ENDIF.</font>
+<font color ="#0000FF">*      ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**    "혹시라도 BP 플랜트에 해당하는 재고가 없으면 → 전체 중 최대값 사용</font>
+<font color ="#0000FF">*    IF lv_max_stlno IS INITIAL.</font>
+<font color ="#0000FF">*      LOOP AT gt_mange INTO gs_mange WHERE matnr = gs_bom-matnr.</font>
+<font color ="#0000FF">*        IF gs_mange-labst &gt; lv_max_labst.</font>
+<font color ="#0000FF">*          lv_max_labst = gs_mange-labst.</font>
+<font color ="#0000FF">*          lv_max_stlno = gs_mange-stlno.</font>
+<font color ="#0000FF">*          gs_minus-werks = gs_mange-werks.</font>
+<font color ="#0000FF">*        ENDIF.</font>
+<font color ="#0000FF">*      ENDLOOP.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+
+<font color ="#0000FF">*    gs_minus-vbeln_so = gs_item-vbeln_so.</font>
+    gs_minus-matnr    = gs_bom-matnr.
+    gs_minus-stlno    = lv_max_stlno.
+    gs_minus-labst    = lv_max_labst.
+
+    APPEND gs_minus TO gt_minus.
+
+  ENDLOOP.
+
+<font color ="#0000FF">***---gt_minus에 담아 둔 bom자재의 menge(완제품 하나 당 필요 수량) 가져오기---***</font>
+  LOOP AT gt_minus INTO gs_minus.
+
+    READ TABLE gt_bom INTO gs_bom WITH KEY matnr = gs_minus-matnr.
+
+    IF sy-subrc = 0.
+      gs_minus-menge = gs_bom-menge. "완제품 하나당 필요한 수량
+      MODIFY gt_minus FROM gs_minus TRANSPORTING menge.
+    ENDIF.
+
+  ENDLOOP.
+
+<font color ="#0000FF">***---생산에 필요한 각각의 BOM자재들의 menge를 구함---***</font>
+  CLEAR: lv_need.
+
+  LOOP AT gt_minus INTO gs_minus.
+
+    CLEAR lv_need.
+
+    LOOP AT gt_mrp INTO gs_mrp.
+      lv_need = lv_need + ( gs_mrp-req_qty * gs_minus-menge ).
+    ENDLOOP.
+
+    gs_minus-needed = lv_need.
+
+    MODIFY gt_minus FROM gs_minus TRANSPORTING needed.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*  LOOP AT gt_minus INTO gs_minus.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    lv_need = gs_minus-menge * gs_mrp-req_qty.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    gs_minus-needed = lv_need.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    MODIFY gt_minus FROM gs_minus TRANSPORTING needed.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+
+<font color ="#0000FF">***--생산가능수량, 부족수량 계산--***</font>
+  CLEAR lv_possible.
+
+  lv_possible = 9999999.
+
+  " 1. 전체 자재 중 최소 생산 가능 수량(완제품 기준)을 구함
+  "생산가능수량 -&gt; BP번호에 해당하는 창고번호 가용재고 기준
+  "가용재고량 차감도 BP번호에 해당하는 창고번호 가용재고 기준
+  "구매요청 할 경우도 BP번호에 해당하는 창고번호 가용재고 기준
+
+  LOOP AT gt_minus INTO gs_minus.
+
+    IF gs_minus-menge &gt; 0.
+      lv_temp = gs_minus-labst DIV gs_minus-menge.
+
+      IF lv_temp &lt; lv_possible.
+        lv_possible = lv_temp.
+        gs_minus-ppquan = lv_temp.
+      ENDIF.
+
+    ENDIF.
+
+    gs_minus-ppquan = lv_temp.
+
+    MODIFY gt_minus FROM gs_minus TRANSPORTING ppquan.
+
+  ENDLOOP.
+
+  " 2. 부족 수량 계산 (주문에 대한 필요량 needed와 생산 가능한 ppquan 비교)
+
+  LOOP AT gt_minus INTO gs_minus.
+    lv_tabix = sy-tabix.
+
+    " 최소 생산 가능 수량 초기화
+    lv_min_ppquan = 99999999.
+
+    " gt_minus 전체에서 가장 작은 ppquan 찾기
+    LOOP AT gt_minus INTO DATA(ls_tmp).
+      IF ls_tmp-ppquan &lt; lv_min_ppquan .
+        lv_min_ppquan = ls_tmp-ppquan.
+      ENDIF.
+    ENDLOOP.
+
+    " 현재 행의 ppquan을 최소값으로 대체
+    gs_minus-ppquan = lv_min_ppquan.
+
+    " lequan 계산 (주문 수량 대비 부족량)
+    gs_minus-lequan = gs_mrp-req_qty - gs_minus-ppquan.
+<font color ="#0000FF">*    gs_minus-lequan = gs_item-pequan - gs_minus-ppquan.</font>
+
+    IF gs_minus-lequan &lt; 0.
+      gs_minus-lequan = 0.
+    ENDIF.
+
+    " i_lequan 계산: 실제 재고 기준 부족 수량
+    IF gs_minus-lequan &gt; 0.
+      gs_minus-i_lequan = gs_minus-needed - gs_minus-labst.
+      IF gs_minus-i_lequan &lt; 0.
+        gs_minus-i_lequan = 0.
+      ENDIF.
+    ENDIF.
+
+    MODIFY gt_minus FROM gs_minus TRANSPORTING lequan ppquan i_lequan.
+
+  ENDLOOP.
+
+
+  PERFORM refresh_right_alv.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_item_status</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_item_status .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  lv_tabix = sy-tabix.
+
+  IF gs_docu-req_qty GT 0.
+    gs_docu-icon = icon_led_green.
+  ELSE.
+    gs_docu-icon = icon_led_red.
+  ENDIF.
+
+  MODIFY gt_docu FROM gs_docu INDEX lv_tabix TRANSPORTING icon. "usable.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_planed_order</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_planed_order .
+
+  DATA : lt_save        TYPE TABLE OF zc102ppt0006,
+         ls_save        TYPE zc102ppt0006,
+         lv_message(50),
+         lv_tabix       TYPE sy-tabix,
+
+         lt_roid        TYPE lvc_t_roid,
+         ls_roid        TYPE lvc_s_roid,
+         lv_answer.
+
+
+  PERFORM get_stlno_master. "STLNO
+
+<font color ="#0000FF">*-- 계획 오더 생성</font>
+  READ TABLE gt_header INTO gs_header WITH KEY matnr = gv_matnr.
+  READ TABLE gt_stlno  INTO gs_stlno    WITH KEY werks = gv_plant.
+
+  lv_tabix = sy-tabix.
+
+  MOVE-CORRESPONDING gs_header TO ls_save.
+
+  ls_save-plono  = gv_full_code.
+  ls_save-werks  = gv_plant.
+  ls_save-matnr  = gv_matnr.
+  ls_save-meins  = gs_header-meins.
+  ls_save-menge  = gs_header-req_qty.
+  ls_save-status = 'P'.
+  ls_save-psttr = sy-datum + 7.
+  ls_save-pedtr = sy-datum + 14.
+  ls_save-stlno = gs_stlno-stlno.
+  ls_save-wkcno = gs_stlno-wkcno.
+  ls_save-erdat = sy-datum.
+  ls_save-ernam = sy-uname.
+  ls_save-erzet = sy-uzeit.
+
+  APPEND ls_save TO lt_save.
+
+
+  lv_message = '계획오더 ' && gv_full_code.
+
+  MODIFY zc102ppt0006 FROM TABLE lt_save.
+
+  IF sy-subrc EQ 0.
+    MESSAGE s031 WITH lv_message.
+  ENDIF.
+
+
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_purchase_request</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_purchase_request .
+
+  DATA : lt_save        TYPE TABLE OF zc102mmt0016,
+         ls_save        TYPE zc102mmt0016,
+         lt_save2       TYPE TABLE OF zc102mmt0017,
+         ls_save2       TYPE zc102mmt0017,
+         lv_cost        TYPE zc102e_mm_tolco,
+         lv_waers       TYPE waers,
+         lv_message(50),
+         lv_tabix       TYPE sy-tabix,
+
+         lt_roid        TYPE lvc_t_roid,
+         ls_roid        TYPE lvc_s_roid,
+
+         lv_price       TYPE zc102mmt0017-stprs,
+         lv_rgtime      TYPE zc102mmt0017-rgtime,
+         lv_partner     TYPE zc102mmt0019-partner,
+         lv_answer.
+
+  PERFORM get_bp_master.
+  PERFORM get_stlno_master.
+
+
+  LOOP AT gt_prdocu INTO gs_prdocu.
+
+    PERFORM get_purchase_cost USING lv_cost lv_waers.
+
+    PERFORM read_matmaster USING gs_prdocu-matnr
+                           CHANGING lv_price lv_partner lv_rgtime.
+
+    READ TABLE gt_bpmaster INTO gs_bpmaster WITH KEY matnr = gs_prdocu-matnr.
+    READ TABLE gt_stlno    INTO gs_stlno    WITH KEY werks = gv_plant.
+
+    lv_tabix = sy-tabix.
+
+<font color ="#0000FF">*-- 데이터 이관</font>
+<font color ="#0000FF">*-- Header</font>
+    MOVE-CORRESPONDING gs_prdocu TO ls_save.
+
+    ls_save-prno  = gv_full_code2.
+    ls_save-depno = 'MRP'. "생산팀
+    ls_save-redat = sy-datum.
+    ls_save-menge = gs_prdocu-req_qty.
+    ls_save-tolco = gs_prdocu-req_qty * lv_cost.
+    ls_save-meins = gs_prdocu-meins.
+    ls_save-waers = lv_waers.
+    ls_save-ernam = sy-uname.
+    ls_save-erdat = sy-datum.
+    ls_save-erzet = sy-uzeit.
+
+    APPEND ls_save TO lt_save.
+
+<font color ="#0000FF">*-- Line</font>
+
+    MOVE-CORRESPONDING gs_prdocu TO ls_save2.
+
+    ls_save2-prno  = gv_full_code2.
+    ls_save2-matnr = gs_prdocu-matnr.
+    ls_save2-depno = 'MRP'. "생산팀
+    ls_save2-pequan = gs_prdocu-req_qty. "생산팀
+    ls_save2-stprs = gs_prdocu-req_qty * lv_cost.
+    ls_save2-partner = gs_bpmaster-partner.
+    ls_save2-stlno = gs_stlno-stlno.
+    ls_save2-rgtime = lv_rgtime.
+    ls_save2-meins = gs_prdocu-meins.
+    ls_save2-waers = lv_waers.
+    ls_save2-ernam = sy-uname.
+    ls_save2-erdat = sy-datum.
+    ls_save2-erzet = sy-uzeit.
+
+    APPEND ls_save2 TO lt_save2.
+
+  ENDLOOP.
+
+  lv_message = '구매요청 ' && gv_full_code2.
+
+  MODIFY zc102mmt0016 FROM TABLE lt_save.
+
+  MODIFY zc102mmt0017 FROM TABLE lt_save2.
+
+  IF sy-subrc EQ 0.
+    MESSAGE s031 WITH lv_message.
+  ENDIF.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form move_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM move_data .
+
+<font color ="#0000FF">*  CLEAR : gv_newpo, gv_newpr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**  LOOP AT gt_docu INTO gs_docu.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  LOOP AT gt_minus INTO gs_minus.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**    READ TABLE gt_mrp INTO gs_mrp WITH KEY.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    IF  gs_mrp-req_qty &gt; gs_minus-lequan.</font>
+<font color ="#0000FF">**      gs_docu-icon = icon_led_green.</font>
+<font color ="#0000FF">**      APPEND gs_docu TO gt_podocu.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      gv_newpo += gv_newpo + 1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    ELSE.</font>
+<font color ="#0000FF">**      gs_docu-icon = icon_led_red.</font>
+<font color ="#0000FF">**      APPEND gs_docu TO gt_prdocu.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      gv_newpr += gv_newpr + 1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+
+<font color ="#0000FF">*  CLEAR : gv_newpo, gv_newpr.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  DATA(lv_count) = lines( gt_plo ).</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    LOOP AT gt_plo INTO gs_plo.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    ENDLOOP.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    IF  gs_mrp-req_qty &gt; gs_minus-lequan.</font>
+<font color ="#0000FF">*      gs_docu-icon = icon_led_green.</font>
+<font color ="#0000FF">*      APPEND gs_docu TO gt_podocu.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      gv_newpo += gv_newpo + 1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    ELSE.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      gs_docu-icon = icon_led_green.</font>
+<font color ="#0000FF">*      APPEND gs_docu TO gt_prdocu.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      gv_newpr += gv_newpr + 1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_plant_master</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_plant_master .
+
+<font color ="#0000FF">*-- SEARCH Help 데이터 발췌</font>
+  SELECT DISTINCT werks b~ddtext AS werks_name
+    FROM zc102ppt0002 AS a INNER JOIN dd07t AS b
+      ON a~werks EQ b~domvalue_l
+     AND b~domname = 'ZC102D_PP_WERKS'
+    INTO CORRESPONDING FIELDS OF TABLE gt_plant
+   ORDER BY werks.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_search_help_plant</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_search_help_plant .
+
+<font color ="#0000FF">*-- Screen Data 발췌</font>
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE STRUCTURE dynpread.
+  DATA : END OF dynpfields.
+
+<font color ="#0000FF">*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 발췌)</font>
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+<font color ="#0000FF">*-- Search Help 데이터 발췌</font>
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'WERKS'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_PLANT'
+      window_title = '플랜트 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_plant
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+
+  IF sy-subrc EQ 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_count_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_count_data .
+
+  DATA: lv_cnt_pldord TYPE i VALUE 0,
+        lv_cnt_salrqs TYPE i VALUE 0,
+        lv_cnt_ppor   TYPE i VALUE 0.
+
+  LOOP AT gt_mrp INTO gs_mrp.
+
+    CASE gs_mrp-mrpel.
+      WHEN 'PrducPln'.
+        lv_cnt_pldord = lv_cnt_pldord + 1.
+      WHEN 'SalRqs'.
+        lv_cnt_salrqs = lv_cnt_salrqs + 1.
+      WHEN 'PldOrd'.
+        lv_cnt_ppor   = lv_cnt_ppor + 1.
+    ENDCASE.
+
+  ENDLOOP.
+
+  gv_cnt_pldord = lv_cnt_pldord.
+  gv_cnt_salrqs = lv_cnt_salrqs.
+  gv_cnt_ppor   = lv_cnt_ppor.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_purchase_cost</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; LV_COST</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_purchase_cost  USING pv_cost pv_waers.
+
+  SELECT SINGLE stprs waers
+    INTO (pv_cost, pv_waers)
+    FROM zc102mmt0004
+   WHERE matnr EQ gv_matnr.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_mrp_num</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_mrp_num .
+
+<font color ="#0000FF">*-- MRP 번호 생성</font>
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_pdo_num</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_pdo_num CHANGING pv_plono.
+
+  DATA: lv_range_nr TYPE inri-nrrangenr,
+        lv_prefix   TYPE char3,
+        lv_quantity TYPE inri-quantity.
+
+
+  lv_prefix = 'PPO'. "구매요청 번호 prefix
+  lv_range_nr = '01'. "번호 범위
+  lv_quantity = 1.
+
+<font color ="#0000FF">*-- 계획 오더 채번</font>
+  CALL METHOD zclc102cm_auto_sequence=&gt;get_next_value
+    EXPORTING
+      pv_range_nr = lv_range_nr
+      pv_prefix   = lv_prefix
+      pv_quantity = lv_quantity
+    IMPORTING
+      pv_result   = pv_plono.
+
+  IF sy-subrc &lt;&gt; 0 .
+    MESSAGE s002 WITH '채번실패' DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form insert_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM insert_table .
+
+  DATA : ls_save TYPE zc102ppt0013.
+
+<font color ="#0000FF">*  PERFORM get_mrp_num.</font>
+
+  ls_save-matnr    = gv_matnr.
+  ls_save-mrpdt    = sy-datum.
+  ls_save-pplno    = gs_plan-pplno.
+  ls_save-vbeln_so = gs_order-vbeln_so.
+  ls_save-plono    = gs_item-plono.
+  ls_save-req_qty  = gs_header-req_qty.
+  ls_save-meins    = gs_header-meins.
+  ls_save-erdat    = sy-datum.
+  ls_save-ernam    = sy-uname.
+  ls_save-erzet    = sy-uzeit.
+
+  MODIFY zc102ppt0013 FROM ls_save.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form exit_btn</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM exit_btn .
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_bp_master</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_bp_master .
+
+  SELECT partner matnr
+    INTO CORRESPONDING FIELDS OF TABLE gt_bpmaster
+    FROM zc102mmt0019.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form read_matmaster</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GS_PRDOCU_MATNR</font>
+<font color ="#0000FF">*&      &lt;-- LV_PRICE</font>
+<font color ="#0000FF">*&      &lt;-- LV_WAERS</font>
+<font color ="#0000FF">*&      &lt;-- LV_RGTIME</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM read_matmaster   USING pv_matnr TYPE zc102mmt0017-matnr
+                      CHANGING pv_price   TYPE zc102mmt0017-stprs
+<font color ="#0000FF">*                               pv_waers   TYPE zc102mmt0017-waers</font>
+                               pv_partner TYPE zc102mmt0017-partner
+                               pv_rgtime  TYPE zc102mmt0017-rgtime.
+
+  CLEAR: pv_price. ", pv_waers.
+
+  SORT: gt_matnr BY matnr ASCENDING.
+
+  READ TABLE gt_matnr INTO gs_matnr
+                      WITH KEY matnr = gv_matnr
+                      BINARY SEARCH.
+
+  IF sy-subrc = 0.
+<font color ="#0000FF">*    pv_price = gs_prdocu-stprs.</font>
+<font color ="#0000FF">*    pv_waers   = gs_prdocu-waers.</font>
+    pv_partner = gs_prdocu-partner.
+    pv_rgtime  = gs_prdocu-rgtime.
+  ELSE.
+    MESSAGE e001 WITH '가격을 불러올 수 없습니다.'.
+    EXIT.
+  ENDIF.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_stlno_master</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_stlno_master .
+
+  SELECT stlno werks wkcno
+    INTO CORRESPONDING FIELDS OF TABLE gt_stlno
+    FROM zc102ppt0002
+   WHERE werks EQ gv_plant.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_matnr_manage</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_matnr_manage .
+
+<font color ="#0000FF">*-- 자재관리테이블 가져오기</font>
+  SELECT labst matnr eisbe werks stlno
+    INTO CORRESPONDING FIELDS OF TABLE gt_mange
+    FROM zc102mmt0001.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_process_plan</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_process_plan .
+
+  DATA: lv_div_wemng TYPE i, "생산량 담아줄 변수
+        lv_month     TYPE sy-datum.
+
+  lv_month = sy-datum+4(2). "이번 달만 가져오기
+
+<font color ="#0000FF">*-- For 생산 계획 수요예측</font>
+  SELECT pplno matnr_pp werks wemng meins
+    INTO CORRESPONDING FIELDS OF TABLE gt_plan
+    FROM zc102ppt0001
+   WHERE matnr_pp EQ gv_matnr
+     AND state    NE 'X'
+     AND month_pp = lv_month .      "State가 'X'면 실행
+
+
+
+<font color ="#0000FF">*--생산계획을 가져와서 생산량 구해서 넣어주기</font>
+  LOOP AT gt_plan INTO gs_plan.
+
+    CLEAR lv_div_wemng.
+
+    lv_div_wemng = gs_plan-wemng / 30. "나누기 30해서 가져와야 됨 월별 생산량이라
+
+    APPEND VALUE #(
+      pplno     = gs_plan-pplno
+      matnr     = gs_plan-matnr_pp
+      req_qty   = lv_div_wemng "생산량
+<font color ="#0000FF">*      wemng  = lv_div_wemng "생산량</font>
+      meins     = gs_plan-meins
+      mrpel     = 'PrducPln'
+    ) TO gt_mrp.
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_so_item</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_so_item .
+
+<font color ="#0000FF">*-- For 판매 오더 아이템, 헤더, bp별 제품</font>
+<font color ="#0000FF">*   SELECT a~vbeln_so a~matnr a~pequan a~meins</font>
+<font color ="#0000FF">*    INTO CORRESPONDING FIELDS OF TABLE gt_order</font>
+<font color ="#0000FF">*    FROM zc102sdt0007 AS a INNER JOIN zc102sdt0006 AS b</font>
+<font color ="#0000FF">*                                  ON a~vbeln_so = b~vbeln_so</font>
+<font color ="#0000FF">*                                  AND a~partner = b~partner</font>
+<font color ="#0000FF">*   WHERE a~matnr     EQ gv_matnr</font>
+<font color ="#0000FF">*     AND b~werks     EQ gv_plant</font>
+<font color ="#0000FF">*     AND b~state     = 'P'</font>
+<font color ="#0000FF">*     AND b~rdate     =  sy-datum.</font>
+
+<font color ="#0000FF">*  SELECT a~vbeln_so a~matnr a~pequan a~meins</font>
+  SELECT a~vbeln_so a~matnr a~ppmen a~meins
+         b~werks b~stlno
+    INTO CORRESPONDING FIELDS OF TABLE gt_order
+    FROM zc102sdt0007 AS a INNER JOIN zc102sdt0010 AS b
+                                   ON a~partner EQ b~partner
+                           INNER JOIN zc102sdt0006 AS c
+                                   ON a~vbeln_so = c~vbeln_so
+                                  AND a~partner = c~partner
+   WHERE a~matnr     EQ gv_matnr
+<font color ="#0000FF">*   WHERE b~werks    EQ gv_plant</font>
+     AND b~werks     EQ gv_plant
+     AND c~state     = 'P'
+     AND c~rdate     =  sy-datum.
+
+
+  "판매오더에서 가져온 정보 넣어두기
+  LOOP AT gt_order INTO gs_order.
+
+    gs_mrp-pplno     = gs_order-vbeln_so.
+    gs_mrp-matnr     = gs_order-matnr.
+<font color ="#0000FF">*    gs_mrp-req_qty  = gs_order-pequan * -1. "판매오더 요구수량</font>
+<font color ="#0000FF">*    gs_mrp-req_qty  = gs_order-pequan. "판매오더 요구수량</font>
+    gs_mrp-req_qty  = gs_order-ppmen. "판매오더 요구수량
+<font color ="#0000FF">*    gs_mrp-pequan    = gs_order-pequan. "판매오더 요구수량</font>
+    gs_mrp-meins     = gs_order-meins.
+    gs_mrp-mrpel     = 'SalRqs'.
+
+    APPEND gs_mrp TO gt_mrp.
+
+  ENDLOOP.
+
+  CLEAR : gs_order.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_pr_item</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_pr_item .
+
+<font color ="#0000FF">*--구매요청 아이템 불러오기--*</font>
+  SELECT *
+    INTO CORRESPONDING FIELDS OF TABLE gt_ipr
+    FROM zc102mmt0017
+    WHERE matnr = gv_matnr.
+
+<font color ="#0000FF">*--구매요청 mrp에 담아두기--*</font>
+  LOOP AT gt_ipr INTO gs_ipr .
+
+    READ TABLE gt_mrp INTO gs_mrp  WITH KEY matnr = gs_ipr-matnr.
+
+
+
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_stock_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_stock_info .
+
+<font color ="#0000FF">*-- For 가용 재고</font>
+  SELECT SINGLE labst
+    INTO (gs_mrp-labst)
+    FROM zc102mmt0001
+   WHERE matnr EQ gv_matnr
+     AND werks EQ gv_plant.
+
+  gs_mrp-mrpel = 'Stock'.
+
+  APPEND gs_mrp TO gt_mrp.
+
+<font color ="#0000FF">*  gv_labst = gs_mrp-labst.</font>
+
+<font color ="#0000FF">**-- For 안전 재고</font>
+<font color ="#0000FF">*  SELECT SINGLE eisbe</font>
+<font color ="#0000FF">*    INTO (gs_mrp-req_qty)</font>
+<font color ="#0000FF">*    FROM zc102mmt0001</font>
+<font color ="#0000FF">*   WHERE matnr EQ gv_matnr.</font>
+<font color ="#0000FF">**     AND werks EQ gv_plant</font>
+<font color ="#0000FF">**     AND stlno EQ gv_stlno.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  gs_mrp-mrpel = 'SafeSt'.</font>
+<font color ="#0000FF">*  gs_mrp-req_qty = gs_mrp-req_qty * -1.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_mrp TO gt_mrp.</font>
+
+<font color ="#0000FF">*  gv_labst_cal = gs_mrp-labst. "가용재고 한줄로 보이는 연산을 위한 값 저장</font>
+<font color ="#0000FF">*  gv_eisbe_cal = gs_mrp-labst. "진짜 안전재고 저장</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**  gv_eisbe = gs_mrp-req_qty.</font>
+
+  CLEAR : gs_mrp.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_bpinfo</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_bpinfo .
+
+  SELECT partner mtype cusno
+       stras werks wkcno stlno
+  INTO CORRESPONDING FIELDS OF TABLE gt_bpinfo
+  FROM zc102sdt0010.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_field_catalog3</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_field_catalog3   USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat3-key       = pv_key.
+  gs_fcat3-fieldname = pv_field.
+  gs_fcat3-ref_table = pv_table.
+  gs_fcat3-just      = pv_just.
+  gs_fcat3-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'ICON'.
+      gs_fcat3-coltext = 'MRP상태'.
+    WHEN 'MEINS'.
+      gs_fcat3-coltext = '단위'.
+
+  ENDCASE.
+
+  APPEND gs_fcat3 TO gt_fcat3.
+  CLEAR gs_fcat3.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_prno</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_prno CHANGING pv_prno .
+
+  DATA: lv_range_nr TYPE inri-nrrangenr,
+        lv_prefix   TYPE char3,
+        lv_quantity TYPE inri-quantity.
+
+
+  lv_prefix = 'PR'. "구매요청 번호 prefix
+  lv_range_nr = '01'. "번호 범위
+  lv_quantity = 1.
+
+<font color ="#0000FF">**순번 호출</font>
+
+  CALL METHOD zclc102cm_auto_sequence=&gt;get_next_value
+    EXPORTING
+      pv_range_nr = lv_range_nr
+      pv_prefix   = lv_prefix
+      pv_quantity = lv_quantity
+    IMPORTING
+      pv_result   = pv_prno.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form send_pdo_no</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GV_PONO</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM send_pdo_no  USING    pv_plono.
+
+  DATA: lv_tabix     TYPE sy-tabix,
+        lv_pedtr     TYPE zc102e_mm_pedtr, "계획종료일
+        lv_stlno     TYPE zc102e_mm_stlno, "창고번호
+        lv_existing  TYPE i, "중복 여부 확인용 변수
+        lv_total_qty TYPE zc102ppt0004-menge. "요구수량 합계
+
+  CLEAR: gt_podocu, gs_podocu.
+
+  LOOP AT gt_mrp INTO gs_mrp WHERE matnr &lt;&gt; ''.
+
+    READ TABLE gt_minus INTO gs_minus WITH KEY matnr = gs_mrp-matnr.
+<font color ="#0000FF">*    READ TABLE gt_bpmaster INTO gs_bpmaster WITH KEY matnr = gs_mrp-matnr.</font>
+    READ TABLE gt_bpmaster INTO gs_bpmaster WITH KEY matnr = gv_matnr.
+    READ TABLE gt_order INTO gs_order  WITH KEY matnr = gs_mrp-matnr.
+    READ TABLE gt_stlno  INTO gs_stlno WITH KEY werks = gv_plant.
+
+    READ TABLE gt_bom INTO gs_bom WITH KEY matnr = gs_plo-matnr.
+    READ TABLE gt_bpinfo INTO gs_bpinfo WITH KEY stlno = gs_stlno-stlno.
+
+    CLEAR: lv_total_qty, gs_plo.
+
+<font color ="#0000FF">*    "보낼 생산 수량 합계</font>
+<font color ="#0000FF">*    LOOP AT gt_mrp INTO gs_mrp WHERE matnr = gs_plo-matnr.</font>
+<font color ="#0000FF">*      lv_total_qty = lv_total_qty + gs_mrp-req_qty.</font>
+<font color ="#0000FF">*    ENDLOOP.</font>
+
+    lv_tabix = sy-tabix.
+
+    gs_plo-plono = pv_plono.
+    gs_plo-matnr = gs_mrp-matnr.
+
+    "보낼 생산 수량 합계
+
+    IF gs_minus-lequan &gt; 0. "부족수량이 있다면
+      lv_total_qty = gs_minus-ppquan. "생산가능 수량
+    ELSE.
+      lv_total_qty = lv_total_qty + gs_mrp-req_qty. "없다면 요구수량 만큼.
+    ENDIF.
+
+    gs_plo-stlno = gs_stlno-stlno.
+    gs_plo-meins = gs_mrp-meins.
+    gs_plo-psttr = sy-datum.
+<font color ="#0000FF">*    gs_plo-psttr = sy-datum + 7.</font>
+    gs_plo-status = 'P'.
+    gs_plo-menge  = lv_total_qty.
+<font color ="#0000FF">*    gs_plo-menge  = gs_minus-ppquan.</font>
+    gs_plo-wkcno = gs_bpinfo-wkcno.
+
+    IF gs_mrp-matnr = 'M0002'.
+      gs_plo-pedtr = sy-datum + 11.
+    ELSE.
+      gs_plo-pedtr = sy-datum + 4.
+    ENDIF.
+
+    gs_plo-erdat = sy-datum.
+    gs_plo-ernam = sy-uname.
+    gs_plo-erzet = sy-uzeit.
+    gs_plo-werks = gs_minus-werks.
+
+    " 계획오더 번호 중복 체크
+    READ TABLE gt_plo INTO gs_plo WITH KEY plono = pv_plono.
+
+    APPEND gs_plo TO gt_plo.
+
+    EXIT. "한건 담기면 나가기
+
+  ENDLOOP.
+
+  gs_podocu-pplno = pv_plono.
+  gs_podocu-matnr = gs_plo-matnr.
+<font color ="#0000FF">*  gs_podocu-bomno = gs_bom-matnr.</font>
+  gs_podocu-req_qty = gs_minus-ppquan. "생산수량
+<font color ="#0000FF">*  gs_podocu-req_qty = lv_total_qty. "생산수량</font>
+  gs_podocu-meins = gs_bom-meins.
+  gs_podocu-stlno = gs_stlno-stlno.
+  gs_podocu-wkcno = gs_bpinfo-wkcno.
+  gs_podocu-werks = gs_minus-werks.
+
+
+  APPEND gs_podocu TO gt_podocu.
+
+
+  IF gt_plo IS NOT INITIAL.
+
+    " 중복 체크: 이미 같은 plono가 있으면 중복 처리
+    LOOP AT gt_plo INTO gs_plo.
+      IF gs_plo-plono = pv_plono.
+        " 중복된 계획오더 번호가 있으면 메시지 출력 후 종료
+        MESSAGE s001 WITH '이미 요청된 건입니다!' DISPLAY LIKE 'E'.
+        EXIT.
+      ENDIF.
+    ENDLOOP.
+
+    " 중복이 없으면 zc102ppt0006에 삽입 (계획오더)
+    INSERT zc102ppt0006 FROM TABLE gt_plo ACCEPTING DUPLICATE KEYS.
+
+    IF sy-subrc = 0.
+      COMMIT WORK AND WAIT.
+      MESSAGE s001 WITH 'MRP실행이 정상적으로 수행되었습니다.'.
+      CLEAR gt_plo.
+    ELSE.
+      ROLLBACK WORK.
+      MESSAGE s001 WITH '계획오더 생성 실패' DISPLAY LIKE 'E'.
+      EXIT.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_pr_list</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GV_PLONO</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_pr_list  USING    pv_plono.
+
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form send_pr</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GV_PRNO</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM send_pr  USING    pv_prno.
+
+  DATA: lv_tabix         TYPE sy-tabix,
+        lv_menge         TYPE zc102e_mm_menge_d, "총 구매수량
+        lv_stprs         TYPE zc102e_mm_stprs,
+        lv_found         TYPE abap_bool VALUE abap_false,
+        lv_tolco         TYPE zc102e_mm_tolco, "구매총액
+        lv_header_lequan TYPE menge_d.
+
+  CLEAR: gs_hpr, gs_ipr, lv_menge, lv_tolco, gt_hpr, gt_ipr, gt_shortage, gs_shortage.
+
+  "부족한 자재 담은 거 이동하기
+  LOOP AT gt_minus INTO gs_minus.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR: gs_prdocu, gs_matnr_master, gs_mange.
+
+    READ TABLE gt_mange INTO gs_mange WITH KEY matnr = gs_minus-matnr. "자재관리 테이블
+    READ TABLE gt_bpmaster INTO gs_bpmaster WITH KEY matnr = gs_minus-matnr. "bp별 제품 매핑
+    READ TABLE gt_matnr_master INTO gs_matnr_master WITH KEY matnr = gs_minus-matnr. "자재마스터(가격)
+    READ TABLE gt_bpinfo INTO gs_bpinfo WITH KEY stlno = gs_minus-stlno. "워크센터 번호 가져오기
+    READ TABLE gt_bom INTO gs_bom WITH KEY matnr = gs_minus-matnr.
+
+
+<font color ="#0000FF">*    gs_shortage-matnr = gs_minus-matnr. "부족한 bom 자재</font>
+<font color ="#0000FF">*    gs_shortage-meins = gs_mange-meins.</font>
+<font color ="#0000FF">*    gs_shortage-lequan = gs_minus-i_lequan. "완제품 생산에 부족한 bom 자재의 수량</font>
+
+<font color ="#0000FF">* 누적 금액 계산</font>
+    lv_stprs = lv_stprs + gs_matnr_master-stprs * gs_minus-i_lequan. "구매가
+    lv_tolco = lv_tolco + ( lv_stprs * gs_minus-lequan ).
+    lv_menge = lv_menge + gs_minus-lequan.
+
+<font color ="#0000FF">* 구매요청 아이템 구성</font>
+
+    IF gs_minus-i_lequan &lt;&gt; 0.
+      gs_ipr-prno    = pv_prno.
+      gs_ipr-matnr   = gs_minus-matnr.
+      gs_ipr-depno   = 'MRP'.
+      gs_ipr-partner = gs_bpmaster-partner.
+      gs_ipr-stprs   = gs_matnr_master-stprs * gs_minus-i_lequan.
+      gs_ipr-waers   = gs_matnr_master-waers.
+      gs_ipr-partner = gs_bpmaster-partner.
+<font color ="#0000FF">*      gs_ipr-meins   = gs_mange-meins.</font>
+      gs_ipr-meins   = gs_bom-meins.
+      gs_ipr-pequan  = gs_minus-lequan.
+<font color ="#0000FF">*      gs_ipr-pequan  = gs_minus-i_lequan.</font>
+      gs_ipr-state   = '3'.
+      gs_ipr-erdat   = sy-datum.
+      gs_ipr-ernam   = sy-uname.
+      gs_ipr-erzet   = sy-uzeit.
+      gs_ipr-rgtime  = gs_matnr_master-rgtime.
+      gs_ipr-stlno   = gs_minus-stlno.
+
+      APPEND gs_ipr TO gt_ipr.
+
+
+<font color ="#0000FF">*오른쪽 구매요청 alv 탭</font>
+      gs_prdocu-prno = pv_prno. "
+      gs_prdocu-matnr = gs_minus-matnr. "
+      gs_prdocu-pequan = gs_minus-i_lequan. "
+      gs_prdocu-meins = gs_bom-meins. "
+<font color ="#0000FF">*      gs_prdocu-stlno = gs_stlno-stlno.</font>
+      gs_prdocu-stlno = gs_minus-stlno.
+      gs_prdocu-werks = gs_minus-werks. "
+
+      APPEND gs_prdocu TO gt_prdocu.
+
+    ENDIF.
+
+  ENDLOOP.
+
+<font color ="#0000FF">* 헤더 구성</font>
+  gs_hpr-prno   = pv_prno.
+  gs_hpr-depno  = 'MRP'.
+  gs_hpr-tolco  = lv_stprs.
+  gs_hpr-waers  = gs_matnr_master-waers.
+  gs_hpr-menge  = lv_menge.
+  gs_hpr-meins  = gs_bom-meins.
+  gs_hpr-redat  = sy-datum.
+  gs_hpr-erdat  = sy-datum.
+  gs_hpr-ernam  = sy-uname.
+  gs_hpr-erzet  = sy-uzeit.
+
+  APPEND gs_hpr TO gt_hpr.
+
+
+<font color ="#0000FF">* DB 저장</font>
+  MODIFY zc102mmt0016 FROM TABLE gt_hpr.
+  MODIFY zc102mmt0017 FROM TABLE gt_ipr.
+
+  IF sy-subrc = 0.
+    COMMIT WORK AND WAIT.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_matnr_master_all</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_matnr_master_all .
+
+  SELECT matnr maktx mtart
+         price rgtime
+         stprs waers mtype
+    INTO CORRESPONDING FIELDS OF TABLE gt_matnr_master
+    FROM zc102mmt0004.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_mrp_status</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_mrp_status USING pv_status.
+
+  LOOP AT gt_mrp INTO gs_mrp FROM 2.
+
+    IF pv_status = abap_true.
+      gs_mrp-icon = icon_led_green.
+    ELSE.
+      gs_mrp-icon = icon_led_red.
+    ENDIF.
+
+    MODIFY gt_mrp FROM gs_mrp INDEX sy-tabix TRANSPORTING icon.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_value_initialize</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_value_initialize .
+
+  CLEAR : gv_matnr, gv_plant, gv_rate.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

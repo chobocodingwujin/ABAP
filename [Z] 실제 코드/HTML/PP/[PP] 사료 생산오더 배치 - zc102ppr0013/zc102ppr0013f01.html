@@ -1,0 +1,285 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0013F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0013F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0013F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102PPR0013F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_fo_route_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_fo_route_data .
+  CLEAR gt_fo.
+
+  SELECT *
+    INTO CORRESPONDING FIELDS OF TABLE gt_fo
+    FROM zc102ppt0014
+    WHERE rouno IN ( ' ', 'R50', 'R60', 'R40' )
+      AND mksta &lt;&gt; 'F'.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_plus_routeno</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_plus_routeno .
+  DATA : lv_tabix TYPE sy-tabix.
+
+  CLEAR lv_tabix.
+
+
+<font color ="#0000FF">*  LOOP AT gt_fo INTO gs_fo WHERE pdstt &lt;= sy-datum. " 오늘 또는 과거 시작일인 항목만 처리</font>
+<font color ="#0000FF">*    lv_tabix = sy-tabix.</font>
+<font color ="#0000FF">*    CASE gs_fo-rouno.</font>
+<font color ="#0000FF">*      WHEN ''.</font>
+<font color ="#0000FF">*        gs_fo-rouno = 'R50'.</font>
+<font color ="#0000FF">*        gs_fo-mksta = 'I'.</font>
+<font color ="#0000FF">*        gs_fo-prog = 30.</font>
+<font color ="#0000FF">*        gs_fo-p_unit = '%'.                       " 사료 라우팅 분쇄</font>
+<font color ="#0000FF">*      WHEN 'R50'.</font>
+<font color ="#0000FF">*        gs_fo-rouno = 'R60'.</font>
+<font color ="#0000FF">*        gs_fo-mksta = 'I'.</font>
+<font color ="#0000FF">*        gs_fo-prog = 80.</font>
+<font color ="#0000FF">*        gs_fo-p_unit = '%'.</font>
+<font color ="#0000FF">*      WHEN 'R60'.</font>
+<font color ="#0000FF">*        gs_fo-rouno = 'R40'.                       " 사료 라우팅 건조</font>
+<font color ="#0000FF">*        gs_fo-mksta = 'I'.</font>
+<font color ="#0000FF">*        gs_fo-prog = 90.</font>
+<font color ="#0000FF">*        gs_fo-p_unit = '%'.</font>
+<font color ="#0000FF">*      WHEN 'R40'.</font>
+<font color ="#0000FF">*        IF gs_fo-prog = 90.</font>
+<font color ="#0000FF">*          gs_fo-mksta = 'F'.</font>
+<font color ="#0000FF">*          gs_fo-prog = 100.</font>
+<font color ="#0000FF">*          gs_fo-p_unit = '%'.</font>
+<font color ="#0000FF">*          gs_fo-pdfns = gs_fo-aedat.               " 생산 종료일 찍어주기</font>
+<font color ="#0000FF">*        ENDIF.                                     " 사료 라우팅 포장 (완료)</font>
+<font color ="#0000FF">*      WHEN OTHERS.</font>
+<font color ="#0000FF">*        CONTINUE.</font>
+<font color ="#0000FF">*    ENDCASE.</font>
+  LOOP AT gt_fo INTO gs_fo WHERE pdstt &lt;= sy-datum.
+    lv_tabix = sy-tabix.
+
+    IF gs_fo-rouno IS INITIAL.
+      gs_fo-rouno = 'R50'.
+      gs_fo-mksta = 'I'.
+      gs_fo-prog  = 30.
+      gs_fo-p_unit = '%'.
+
+    ELSEIF gs_fo-rouno = 'R50'.
+      gs_fo-rouno = 'R60'.
+      gs_fo-mksta = 'I'.
+      gs_fo-prog  = 80.
+      gs_fo-p_unit = '%'.
+
+    ELSEIF gs_fo-rouno = 'R60'.
+      gs_fo-rouno = 'R40'.
+      gs_fo-mksta = 'I'.
+      gs_fo-prog  = 90.
+      gs_fo-p_unit = '%'.
+
+    ELSEIF gs_fo-rouno = 'R40' AND gs_fo-prog = 90.
+      gs_fo-mksta = 'F'.
+      gs_fo-prog  = 100.
+      gs_fo-p_unit = '%'.
+      gs_fo-pdfns = gs_fo-aedat.
+
+    ELSE.
+      CONTINUE.
+    ENDIF.
+
+<font color ="#0000FF">*</font>
+    gs_fo-aedat = sy-datum.
+    gs_fo-aenam = sy-uname.
+    gs_fo-aezet = sy-uzeit.
+
+    MODIFY gt_fo FROM gs_fo INDEX lv_tabix
+                            TRANSPORTING rouno mksta prog p_unit
+                                         pdfns
+                                         erdat ernam erzet
+                                         aedat aenam aezet.
+
+<font color ="#0000FF">*--사료 생산오더 테이블 수정 ( 생산 완료 일자 제대로 찍어주기 )</font>
+<font color ="#0000FF">*    UPDATE zc102ppt0014</font>
+<font color ="#0000FF">*         SET rouno = @gs_fo-rouno,</font>
+<font color ="#0000FF">*           mksta = @gs_fo-mksta,</font>
+<font color ="#0000FF">*           pdstt = @gs_fo-pdstt,</font>
+<font color ="#0000FF">*           pdfns = @gs_fo-pdfns,</font>
+<font color ="#0000FF">*           prog  = @gs_fo-prog,</font>
+<font color ="#0000FF">*           p_unit = @gs_fo-p_unit,</font>
+<font color ="#0000FF">*           aedat  = @sy-datum,</font>
+<font color ="#0000FF">*           aezet  = @sy-uzeit,</font>
+<font color ="#0000FF">*           aenam  = @sy-uname</font>
+<font color ="#0000FF">*           WHERE pdono = @gs_fo-pdono.</font>
+
+
+<font color ="#0000FF">*--1. 배치번호  ( 생산완료된 것들에 한해서 배치번호 넘겨주기 )</font>
+    IF gs_fo-mksta = 'F' AND gs_fo-prog EQ 100.
+      PERFORM create_batno. " 배치번호 GET
+      PERFORM set_batch.
+
+      gs_complit-pdono = gs_fo-pdono.
+      gs_complit-menge = gs_fo-menge.
+      gs_complit-meins = gs_fo-meins.
+      gs_complit-batno = gs_batch-batno.  "배치번호 읽어와서 넣어주기
+      gs_complit-wctno = gs_fo-wkcno.
+      gs_complit-werks = gs_fo-werks.
+      gs_complit-bomno = gs_fo-bomno.
+      gs_complit-matnr = gs_fo-matnr.
+      gs_complit-erdat = sy-datum.
+      gs_complit-ernam = sy-uname.
+      gs_complit-erzet = sy-uzeit.
+
+      APPEND gs_complit TO gt_complit.
+
+      PERFORM set_finish_data.
+      PERFORM create_md.
+    ENDIF.
+
+  ENDLOOP.
+  UPDATE zc102ppt0014 FROM TABLE gt_fo.
+<font color ="#0000FF">*--배치번호 배치 테이블에 넘겨주기</font>
+  MODIFY zc102ppt0005 FROM TABLE gt_batch.
+
+<font color ="#0000FF">*--2. 생산완료 테이블에 넘겨주기</font>
+  MODIFY zc102ppt0007 FROM TABLE gt_complit.
+
+<font color ="#0000FF">*--3. 가공완제품 테이블로 이동</font>
+  MODIFY zc102mmt0003 FROM TABLE gt_finish.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_batno</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_batno .
+
+  DATA: gv_number    TYPE n LENGTH 10,
+        gv_prefix(3),
+        gv_full_code TYPE string,
+        gv_range_nr  TYPE inri-nrrangenr,
+        gv_quantity  TYPE inri-quantity.
+
+  DATA: ls_nriv TYPE nriv.
+
+  gv_prefix = 'B'.  " 원하는 prefix 사용
+  gv_range_nr = '02'. " 원하는 번호 - 도메인 정의서에 있음!!!
+  gv_quantity = 1.    " 원하는 증가량 사용
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* 순번 호출</font>
+<font color ="#0000FF">**********************************************************************</font>
+  CALL METHOD zclc102cm_auto_sequence=&gt;get_next_value
+    EXPORTING
+      pv_range_nr = gv_range_nr
+      pv_prefix   = gv_prefix
+      pv_quantity = gv_quantity
+    IMPORTING
+      pv_result   = gv_full_code.
+
+  gv_batno = CONV zc102ppt0005-batno( gv_full_code ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_batch</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_batch .
+
+  gs_batch-batno = gv_batno.
+  gs_batch-matnr = gs_fo-matnr.
+  gs_batch-mtart = 'P'.
+  gs_batch-lfdat = sy-datum.
+  gs_batch-stlno = 'S1400'. "사료 창고 1400번
+  gs_batch-bwart = '107'.
+  " Time stamp
+  gs_batch-erdat = sy-datum.
+  gs_batch-ernam = sy-uname.
+  gs_batch-erzet = sy-uzeit.
+
+  APPEND gs_batch TO gt_batch.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_finish_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_finish_data .
+
+  gs_finish-stlno   = 'SL1400'.       " 창고번호
+  gs_finish-stltype = 'P'.           " 완제품 창고
+  gs_finish-werks   = gs_fo-werks.   " Plant 번호
+  gs_finish-matnr   = gs_fo-matnr.   " 자재번호
+  gs_finish-batno   = gv_batno.      " 배치번호
+  gs_finish-labst   = gs_fo-menge.   " 최종 재고량 = 가용재고량
+  gs_finish-meins   = gs_fo-meins.   " 수량 단위
+  gs_finish-lfdat   = sy-datum.      " 입고일 = 날짜
+  " 온도 습도 유통기한
+  " Time stamp
+  gs_finish-erdat = sy-datum.
+  gs_finish-ernam = sy-uname.
+  gs_finish-erzet = sy-uzeit.
+
+  APPEND gs_finish TO  gt_finish.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_md</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_md .
+
+<font color ="#0000FF">*-- 자재문서 생성</font>
+  call function <a href ="zfm_cl102_mm_02/zfm_cl102_mm_02.html">'ZFM_CL102_MM_02'</a>
+    EXPORTING
+      iv_bwart          = '101'                          " 유형 : 입고
+      iv_usnam          = '이예인'                         " 담당자명(OPTIONAL),
+      iv_werks          = 'P1000'                        " Plant 번호
+      iv_stlno          = 'SL1400'                       " 창고번호
+      iv_batno          = gv_batno
+      iv_matnr          = gs_fo-matnr
+      iv_menge          = gs_fo-menge
+      iv_meins          = gs_fo-meins
+    EXCEPTIONS
+      missing_key_value = 1
+      OTHERS            = 2.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

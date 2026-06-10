@@ -1,0 +1,281 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0003TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0003TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0003TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102PPR0003TOP                          - Report ZC102PPR0003</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102ppr0003 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES :zc102ppt0002, zc102ppt0006, zc102ppt0012, zc102hrt0002.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Macro</font>
+<font color ="#0000FF">**********************************************************************</font>
+DEFINE _init.
+
+  REFRESH &1.
+  CLEAR &1.
+
+END-OF-DEFINITION.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*Tap Strip controls</font>
+<font color ="#0000FF">**********************************************************************</font>
+CONTROLS gc_tab TYPE TABSTRIP.      " TAB Strip object
+
+DATA : gv_subscreen TYPE sy-dynnr.  " Subscreen number
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* CLASS INSTANCE</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_container   TYPE REF TO cl_gui_custom_container,
+       go_alv_grid    TYPE REF TO cl_gui_alv_grid,
+       go_text_editer TYPE REF TO cl_gui_textedit,
+
+       go_tab_cont1   TYPE REF TO cl_gui_custom_container,
+       go_tab_grid1   TYPE REF TO cl_gui_alv_grid,
+       go_tab_cont2   TYPE REF TO cl_gui_custom_container,
+       go_tab_grid2   TYPE REF TO cl_gui_alv_grid,
+       go_tab_cont3   TYPE REF TO cl_gui_custom_container,
+       go_tab_grid3   TYPE REF TO cl_gui_alv_grid.
+
+
+DATA : go_pop_cont TYPE REF TO cl_gui_custom_container, " 반려 POP-UP
+       go_pop_grid TYPE REF TO cl_gui_alv_grid.
+
+
+<font color ="#0000FF">*-- Text editor용</font>
+DATA : go_text_edit TYPE REF TO cl_gui_textedit,
+       go_text_cont TYPE REF TO cl_gui_custom_container.
+
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*internal table and workarea</font>
+<font color ="#0000FF">**********************************************************************</font>
+
+DATA : BEGIN OF gs_data,                "상단
+         ostatus     TYPE icon-id.
+         include structure <a href ="zc102ppt0006/dictionary-zc102ppt0006.html">zc102ppt0006</a>.
+DATA :   reason(30)  TYPE c,
+<font color ="#0000FF">*         reason_text(30) TYPE c,</font>
+         resonbutton TYPE  icon-id,        "반려 사유 텍스트 에디터 버튼용
+         cell_tab    TYPE lvc_t_styl,
+         modi_yn,
+         sort_key,
+       END OF gs_data,
+       gt_data   LIKE TABLE OF gs_data,
+       gt_save   LIKE TABLE OF gs_data,
+       gt_backup LIKE TABLE OF gs_data,
+       gs_backup LIKE gs_data.
+
+DATA : BEGIN OF gs_tab1,                "전체 조회 TAB
+         ostatus     TYPE icon-id.
+         include structure <a href ="zc102ppt0006/dictionary-zc102ppt0006.html">zc102ppt0006</a>.
+DATA :   reason(30)  TYPE c,
+<font color ="#0000FF">*         reason_text(30) TYPE c,</font>
+         resonbutton TYPE  icon-id,            "반려 사유 텍스트 에디터 버튼용
+         cell_tab    TYPE lvc_t_styl,
+         modi_yn,
+         sort_key,
+       END OF gs_tab1,
+       gt_tab1 LIKE TABLE OF gs_tab1.
+
+
+
+DATA : BEGIN OF gs_tab2,                "승인 조회 TAB
+         ostatus     TYPE icon-id.
+         include structure <a href ="zc102ppt0006/dictionary-zc102ppt0006.html">zc102ppt0006</a>.
+DATA :   reason(30)  TYPE c,
+<font color ="#0000FF">*         reason_text(30) TYPE c,</font>
+         resonbutton TYPE icon-id,      "반려 사유 텍스트 에디터 버튼용
+         cell_tab    TYPE lvc_t_styl,
+         modi_yn,
+         sort_key,
+       END OF gs_tab2,
+       gt_tab2 LIKE TABLE OF gs_tab2.
+
+
+DATA : BEGIN OF gs_tab3,                "반려 조회 TAB
+         ostatus     TYPE icon-id.
+         include structure <a href ="zc102ppt0006/dictionary-zc102ppt0006.html">zc102ppt0006</a>.
+DATA :   reason(30)  TYPE c,
+<font color ="#0000FF">*         reason_text(30) TYPE c,</font>
+         resonbutton TYPE  icon-id,             "반려 사유 텍스트 에디터 버튼용
+         cell_tab    TYPE lvc_t_styl,
+         modi_yn,
+         sort_key,
+       END OF gs_tab3,
+       gt_tab3 LIKE TABLE OF gs_tab3.
+
+DATA : gt_delt TYPE TABLE OF zc102ppt0006, " 삭제용 Internal table
+       gs_delt TYPE zc102ppt0006.
+
+
+DATA : gt_approved TYPE TABLE OF zc102ppt0006, " 승인된 데이터 모아서 저장시 모두 생산오더 생성
+       gs_approved TYPE zc102ppt0006.
+
+
+DATA : gt_reject TYPE TABLE OF zc102ppt0006, " 반려된 데이터 모아서 저장시 모두 생산오더 생성
+       gs_reject TYPE zc102ppt0006.
+
+DATA: gt_route TYPE TABLE OF zc102ppt0010, "라우팅 테이블
+      gs_route TYPE zc102ppt0010.
+
+
+DATA: gt_mroute TYPE TABLE OF zc102ppt0009, "라우팅 마스터테이블
+      gs_mroute TYPE zc102ppt0009.
+
+DATA : BEGIN OF gs_pop,                "반려 사유 POP
+         ostatus     TYPE icon-id.
+         include structure <a href ="zc102ppt0006/dictionary-zc102ppt0006.html">zc102ppt0006</a>.
+DATA :   resonbutton TYPE  icon-id,        "반려 사유 텍스트 에디터 버튼용
+<font color ="#0000FF">*      reason(30)  TYPE c,</font>
+<font color ="#0000FF">*         reason_text(50) TYPE c,       "반려상세내역</font>
+         cell_tab    TYPE lvc_t_styl,
+         modi_yn,
+       END OF gs_pop,
+       gt_pop LIKE TABLE OF gs_pop.
+
+<font color ="#0000FF">*--plant 번호</font>
+DATA : BEGIN OF gs_plant,
+         stlno TYPE zc102ppt0002-stlno,
+         werks TYPE zc102ppt0002-werks,       " plant 마스터 테이블 / plant 번호
+         wkcno TYPE zc102ppt0002-wkcno,       "workcenter 번호
+       END OF gs_plant,
+       gt_plant LIKE TABLE OF gs_plant.
+
+
+
+<font color ="#0000FF">*-- For ALV List Box</font>
+DATA : gt_list TYPE TABLE OF zc102ppt0006,
+       gs_list TYPE zc102ppt0006.
+
+
+<font color ="#0000FF">*--Search Help 계획오더번호</font>
+DATA : BEGIN OF gs_plono,
+         plono TYPE zc102ppt0006-plono,
+       END OF gs_plono,
+       gt_plono LIKE TABLE OF gs_plono.
+
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gt_fcat          TYPE lvc_t_fcat, " TOP Field catalog
+       gs_fcat          TYPE lvc_s_fcat,
+       gs_top_layout    TYPE lvc_s_layo,
+       gs_bottom_layout TYPE lvc_s_layo,
+       gs_pop_layout    TYPE lvc_s_layo,
+       gs_style         TYPE lvc_s_styl,
+
+       gt_tab_fcat1     TYPE lvc_t_fcat,   " 탭 1 FCAT
+       gt_tab_fcat2     TYPE lvc_t_fcat,   " 탭 2 FCAT
+       gt_tab_fcat3     TYPE lvc_t_fcat,   " 탭 3 FCAT
+       gs_tab_fcat1     TYPE lvc_s_fcat,
+       gs_tab_fcat2     TYPE lvc_s_fcat,
+       gs_tab_fcat3     TYPE lvc_s_fcat,
+       gs_variant       TYPE disvariant.
+
+DATA : gt_pop_fcat TYPE lvc_t_fcat, " 검수 POP-UP FCAT
+       gs_pop_fcat TYPE lvc_s_fcat.
+
+
+DATA : gs_sort TYPE lvc_s_sort,     " 정렬
+       gt_sort TYPE lvc_t_sort.
+
+DATA : gv_save_flag.                 " 승인 버튼 누르고 저장버튼 눌렀을 때 메세지
+
+
+<font color ="#0000FF">*-- For ALV List box</font>
+DATA : gt_drop TYPE lvc_t_drop,       "반품사유 list box
+       gs_drop TYPE lvc_s_drop.
+
+<font color ="#0000FF">*--사원 이름 SEARCH HELP</font>
+DATA : BEGIN OF gs_empno,
+         empno  TYPE zc102hrt0002-empno,
+         empnam TYPE zc102hrt0002-empnam,
+       END OF gs_empno,
+       gt_empno LIKE TABLE OF gs_empno.
+
+DATA : gt_memo      TYPE STANDARD TABLE OF string WITH EMPTY KEY.  " 메모 내용 저장
+
+DATA : gt_roid  TYPE lvc_t_roid,
+       gs_roid  TYPE lvc_s_roid,
+       gt_roid2 TYPE lvc_t_roid,
+       gs_roid2 TYPE lvc_s_roid.
+
+DATA : gt_ui_functions TYPE ui_functions,
+       gs_button       TYPE stb_button.
+
+DATA: gt_sort_clear TYPE lvc_t_sort,       "아래 탭에 새로 생긴거 맨 위로 정렬
+      gs_sort_clear TYPE lvc_s_sort.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* SCREEN ELEMENT</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_psttr_fr TYPE zc102ppt0006-psttr,
+       gv_psttr_to TYPE zc102ppt0006-psttr,
+       gv_cnt1     TYPE i,  "전체
+       gv_cnt2     TYPE i,
+       gv_cnt3     TYPE i,
+       gv_cnt4     TYPE i.
+
+
+RANGES gr_psttr FOR zc102ppt0006-psttr.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* COMMON VARIABLE</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_mode   VALUE 'D',
+       gv_lock   TYPE bool,
+       gv_answer,
+       gv_empnam TYPE zc102hrt0002-empnam,
+       gv_empno TYPE zc102hrt0002-empno,
+       gv_plono  TYPE zc102ppt0006-plono.   " Search help
+
+<font color ="#0000FF">*--For pop up</font>
+DATA : gv_name TYPE sy-uname,
+       gv_date TYPE c LENGTH 10,     " 문자열 날짜 포맷 (예: 2025.04.22)
+       gv_time TYPE c LENGTH 8.      " 문자열 시간 포맷 (예: 10:32:45)
+
+<font color ="#0000FF">*--생산오더 번호 채번</font>
+DATA : gv_pdono TYPE zc102ppt0012,
+       gs_pdono TYPE zc102ppt0012,
+       gt_pdono TYPE TABLE OF zc102ppt0012.
+
+
+DATA: BEGIN OF gs_text, "반려 사유를 입력하기 위한 전역 변수 선언 ( 팝업 스크린으로 값을 받기 때문)
+<font color ="#0000FF">*        plono     TYPE zc102ppt0006-plono,</font>
+        text(100),
+      END OF gs_text,
+      gt_text LIKE TABLE OF gs_text.
+
+
+DATA : gv_from(1).   "조회용인지 작성용인지 구분용
+
+<font color ="#0000FF">*-- 텍스트 에디터를 위한 인덱스 저장</font>
+DATA : gv_tabix TYPE sy-tabix.
+
+
+DATA: gv_empno_inserted.  " 글로벌 변수 선언 (사원 정보 유효성 체크)
+
+DATA : gv_button_grid TYPE string.  " TAB1일때 tab1 Read, TAB3일때 tab3 Read, POP일때 pop Read, 반려 상세 사유 ALV 버튼 체크 용
+
+DATA: gv_modified TYPE abap_bool.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

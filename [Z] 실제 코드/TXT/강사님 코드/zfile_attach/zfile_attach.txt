@@ -1,0 +1,49 @@
+*&---------------------------------------------------------------------*
+*& Report ZFILE_ATTACH
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zfile_attachtop                         .    " Global Data
+
+INCLUDE zfile_attachs01                         .  " Selection screen
+INCLUDE zfile_attachc01                         .  " ALV Events
+INCLUDE zfile_attacho01                         .  " PBO-Modules
+INCLUDE zfile_attachi01                         .  " PAI-Modules
+INCLUDE zfile_attachf01                         .  " FORM-Routines
+
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+  PERFORM get_data.
+  PERFORM check_attache.
+
+  CALL SCREEN 100.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> [C1] File attach in ALV
+* TITLE100 --> [C1] File attach in ALV
+
+*Text elements
+*----------------------------------------------------------
+* F01 Attach
+* M01 Data not found
+* T01 Condition
+
+
+*Selection texts
+*----------------------------------------------------------
+* SO_EBELN D       .
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: K5
+*001   & & & &
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

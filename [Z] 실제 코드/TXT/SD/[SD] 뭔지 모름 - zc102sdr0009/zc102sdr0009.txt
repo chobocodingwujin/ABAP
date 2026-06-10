@@ -1,0 +1,161 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102SDR0009
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT zc102sdr0009.
+
+*-- 납품오더, 판매오더
+DATA : gs_so_h TYPE zc102sdt0006,
+       gt_so_h TYPE TABLE OF zc102sdt0006.
+
+DATA : gs_so_i TYPE zc102sdt0007,
+       gt_so_i TYPE TABLE OF zc102sdt0007.
+
+DATA : gs_do_h TYPE zc102sdt0004.
+
+DATA : gs_do_i TYPE zc102sdt0005,
+       gt_do_i TYPE TABLE OF zc102sdt0005.
+
+*-- 납품 오더번호 채번
+DATA: gv_number    TYPE n LENGTH 10,     " 도메인의 길이에 맞게
+      gv_prefix(3),  " PPO, PD0 등
+      gv_full_code TYPE string,
+      gv_range_nr  TYPE inri-nrrangenr,
+      gv_quantity  TYPE inri-quantity.
+
+DATA : gs_nriv TYPE nriv.
+
+DATA : gv_delno TYPE zc102sdt0005-vbeln_del.
+
+DATA: lv_today TYPE d,
+      lv_plus  TYPE d.
+
+*-- 배송 테이블
+DATA : lv_text(20).
+DATA : ls_save TYPE zc102sdt0011.
+
+DATA : lv_stlno TYPE zc102mmt0008-stlno.
+
+
+lv_today = sy-datum.
+lv_plus = lv_today + 3.
+
+
+*-- 판매오더 헤더 가져오기
+SELECT *
+  INTO CORRESPONDING FIELDS OF TABLE @gt_so_h
+  FROM zc102sdt0006
+  WHERE ortype EQ 'G'
+    AND isreg  EQ 'R'
+    AND state  NE 'Y'
+    AND audat > '20250101'
+    AND delid = @lv_plus.
+
+LOOP AT gt_so_h INTO gs_so_h.
+
+*-- 판매오더 라인 get
+  SELECT *
+    INTO CORRESPONDING FIELDS OF TABLE gt_so_i
+    FROM zc102sdt0007
+    WHERE vbeln_so = gs_so_h-vbeln_so.
+
+*-- 판매오더 헤더 업데이트
+  UPDATE zc102sdt0006
+    SET state = 'Y'
+  WHERE vbeln_so = gs_so_h-vbeln_so.
+
+*-- 납품오더번호
+  CLEAR : gv_delno.
+
+  gv_prefix = 'DV'.  " 원하는 prefix 사용
+  gv_range_nr = '01'. " 원하는 번호 - 도메인 정의서에 있음!!!
+  gv_quantity = 1.    " 원하는 증가량 사용
+
+**********************************************************************
+* 순번 호출
+**********************************************************************
+  CALL METHOD zclc102cm_auto_sequence=>get_next_value
+    EXPORTING
+      pv_range_nr = gv_range_nr
+      pv_prefix   = gv_prefix
+      pv_quantity = gv_quantity
+    IMPORTING
+      pv_result   = gv_full_code.
+
+  gv_delno = CONV zc102sdt0005-vbeln_del( gv_full_code ).
+
+*-- 납품오더 헤더 생성
+  gs_do_h-vbeln_del = gv_delno.
+  gs_do_h-vbeln_so  = gs_so_h-vbeln_so.
+  gs_do_h-partner   = gs_so_h-partner.
+  gs_do_h-cusno     = gs_so_h-cusno.
+  gs_do_h-vdatu     = gs_so_h-delid.      " 납품예정일 = 납품일
+  gs_do_h-finalsp   = gs_so_h-finalsp.
+  gs_do_h-waers     = gs_so_h-waers.
+  gs_do_h-gbstk     = 'P'.                  " 포장완료
+  gs_do_h-iseme     = 'G'.
+  " Time stamp
+  gs_do_h-erdat = sy-datum.
+  gs_do_h-ernam = sy-uname.
+  gs_do_h-erzet = sy-uzeit.
+
+  INSERT zc102sdt0004 FROM gs_do_h.
+
+*-- 헤더 - 배송
+  ls_save-vbeln_del = gv_delno.
+  ls_save-partner   = gs_so_h-partner.
+  ls_save-erdat = sy-datum.
+  ls_save-ernam = sy-uname.
+  ls_save-erzet = sy-uzeit.
+
+  INSERT zc102sdt0011 FROM ls_save.
+
+*-- 라인 + 가용재고 감소
+  LOOP AT gt_so_i INTO gs_so_i.
+
+    CLEAR lv_stlno.
+    SELECT SINGLE stlno INTO lv_stlno
+     FROM zc102sdt0010
+      WHERE partner = gs_so_h-partner.
+
+    " 라인
+    gs_do_i-vbeln_del = gv_delno.
+    gs_do_i-vbeln_so  = gs_so_i-vbeln_so.
+    gs_do_i-partner   = gs_so_i-partner.
+    gs_do_i-matnr     = gs_so_i-matnr.
+    gs_do_i-stlno     = lv_stlno.
+    gs_do_i-stprs     = gs_so_i-scost.
+    gs_do_i-waers     = gs_so_i-waers.
+    gs_do_i-menge     = gs_so_i-pequan.
+    gs_do_i-meins     = gs_so_i-meins.
+    " Time stamp
+    gs_do_i-erdat = sy-datum.
+    gs_do_i-ernam = sy-uname.
+    gs_do_i-erzet = sy-uzeit.
+
+    APPEND gs_do_i TO gt_do_i.
+
+    " 자재관리 테이블에서 가용재고 감소
+    UPDATE zc102mmt0001
+    SET labst = labst - gs_so_i-pequan
+    WHERE matnr = gs_so_i-matnr
+      AND stlno = lv_stlno
+      AND stltype = 'P'.
+
+  ENDLOOP.
+
+  INSERT zc102sdt0005 FROM TABLE gt_do_i.
+
+  IF sy-subrc EQ 0.
+    COMMIT WORK.
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
+
+  CLEAR : gs_do_h, gt_do_i, gs_do_i, gt_so_i.
+
+ENDLOOP.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

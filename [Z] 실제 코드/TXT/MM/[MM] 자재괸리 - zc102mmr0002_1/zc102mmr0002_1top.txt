@@ -1,0 +1,188 @@
+*&---------------------------------------------------------------------*
+*& Include ZC102MMR0002TOP                          - Report ZC102MMR0002
+*&---------------------------------------------------------------------*
+REPORT zc102mmr0002 MESSAGE-ID zc102msg.
+
+**********************************************************************
+* TABLES
+**********************************************************************
+TABLES : zc102mmt0005, zc102mmt0008.
+
+**********************************************************************
+* Macro
+**********************************************************************
+DEFINE _init.
+
+  REFRESH &1.
+  CLEAR &1.
+
+END-OF-DEFINITION.
+
+**********************************************************************
+* Class Instance
+**********************************************************************
+DATA : go_container TYPE REF TO cl_gui_custom_container,
+       go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_pop_cont TYPE REF TO cl_gui_custom_container, " 폐기 POP-UP
+       go_pop_grid TYPE REF TO cl_gui_alv_grid.
+
+**********************************************************************
+* Internal table and Work area
+**********************************************************************
+*-- 창고(원자재, 완제품 통합)
+DATA : BEGIN OF gs_storage,
+         stlno    TYPE zc102mmt0005-stlno,   " 창고번호
+         stltype  TYPE zc102mmt0005-stltype, " 창고유형
+         werks    TYPE zc102mmt0005-werks,   " Plant 번호
+         matnr    TYPE zc102mmt0005-matnr,   " 자재번호
+         maktx    TYPE zc102mmt0004-maktx,   " 자재이름
+         batno    TYPE zc102mmt0005-batno,   " 배치번호
+         labst    TYPE zc102mmt0005-labst,   " 가용재고량
+         meins    TYPE zc102mmt0005-meins,   " 수량 단위
+         lfdat    TYPE zc102mmt0005-lfdat,   " 입고일
+         vfdat    TYPE zc102mmt0005-vfdat,   " 유통기한
+         status   TYPE icon-id,              " 유통기한 상태 표시
+         leday    TYPE i,                    " 남은 유통기한
+         check    TYPE c,
+         cell_tab TYPE lvc_t_styl,           " 체크박스용
+       END OF gs_storage,
+       gt_storage   LIKE TABLE OF gs_storage,
+       gs_st_backup LIKE gs_storage,
+       gt_st_backup LIKE TABLE OF gs_storage.
+
+*-- 폐기용 테이블
+DATA : BEGIN OF gs_dispose,
+         stlno         TYPE zc102mmt0005-stlno,   " 창고번호
+         stltype       TYPE zc102mmt0005-stltype, " 창고유형
+         werks         TYPE zc102mmt0005-werks,   " Plant 번호
+         matnr         TYPE zc102mmt0005-matnr,   " 자재번호
+         maktx         TYPE zc102mmt0004-maktx,   " 자재이름
+         batno         TYPE zc102mmt0005-batno,   " 배치번호
+         labst         TYPE zc102mmt0005-labst,   " 가용재고량
+         disme         TYPE zc102mmt0018-disme,   " <폐기 테이블 INSERT> 폐기 수량
+         meins         TYPE zc102mmt0005-meins,   " 수량 단위
+         lfdat         TYPE zc102mmt0005-lfdat,   " 입고일
+         vfdat         TYPE zc102mmt0005-vfdat,   " 유통기한
+         reaso         TYPE zc102mmt0018-reaso,   " <검수 테이블 INSERT> 반품 사유
+         reasotext(10),                           " <검수> 반품 사유 text(ALV용)
+         modi_yn,                                 " 해당 레코드 변경 여부
+         cell_tab      TYPE lvc_t_styl,           " ALV Edit style
+       END OF gs_dispose,
+       gt_dispose LIKE TABLE OF gs_dispose.
+
+*-- 자재번호 F4
+DATA : BEGIN OF gs_maktx,
+         matnr TYPE zc102mmt0005-matnr,   " 자재번호
+         maktx TYPE zc102mmt0004-maktx,   " 자재이름
+       END OF gs_maktx,
+       gt_maktx LIKE TABLE OF gs_maktx.
+
+*-- 재고실사용 Work area
+DATA : gs_inventory TYPE zc102mmt0005.
+
+*-- For ALV 리스트박스(폐기사유)
+DATA : gt_drop   TYPE lvc_t_drop,        " 반품사유 list box
+       gs_drop   TYPE lvc_s_drop,
+       gt_ddtext TYPE TABLE OF dd07t,    " 반품사유 도메인 값
+       gs_ddtext TYPE dd07t.
+
+*-- For ALV
+DATA : gt_fcat     TYPE lvc_t_fcat,
+       gs_fcat     TYPE lvc_s_fcat,
+       gs_variant  TYPE disvariant,
+       gs_layout   TYPE lvc_s_layo,
+
+       gt_pop_fcat TYPE lvc_t_fcat, " 폐기 POP-UP FCAT
+       gs_pop_fcat TYPE lvc_s_fcat.
+
+DATA : gt_ui_functions TYPE ui_functions, " screen 100
+       gs_button       TYPE stb_button,   " screen 100
+       gs_button_pop   TYPE stb_button.   " screen 110
+
+*-- 자재 리스트에서 선택된 행 받아서 폐기 pop up
+DATA : gt_select TYPE lvc_t_roid,
+       gs_select TYPE lvc_s_roid.
+
+*-- 자재별 가용재고 SUM
+DATA : gs_sort TYPE lvc_s_sort,
+       gt_sort TYPE lvc_t_sort.
+
+*-- Data insert table
+DATA : gs_return   TYPE zc102mmt0018,          " 폐기 WA
+       gt_return   TYPE TABLE OF zc102mmt0018, " 폐기 IT
+       gs_mat_info TYPE zc102mmt0001,          " 자재관리 WA
+       gt_mat_info TYPE TABLE OF zc102mmt0001. " 자재관리 IT
+
+*-- 자재번호 F4
+" 도메인 값을 읽어옴
+DATA : gt_value LIKE t093t OCCURS 0 WITH HEADER LINE,
+       gt_werks TYPE TABLE OF dd07v,
+       gs_werks TYPE dd07v.
+
+" F4에 띄워줄 테이블
+DATA : BEGIN OF gs_werks_d,
+         werks TYPE zc102mmt0008-werks,   " PLANT 번호
+         pname TYPE zc102e_pp_regno,      " PLANT 지역
+       END OF gs_werks_d,
+       gt_werks_d LIKE TABLE OF gs_werks_d.
+
+**********************************************************************
+* Global Variable
+**********************************************************************
+
+*-- 폐기리스트 번호
+DATA : gv_retno TYPE zc102mmt0018-disno.
+
+*-- Screen 100
+DATA : gv_okcode    TYPE sy-ucomm,
+       gv_pname(2),
+       gv_rcheck(1),
+       gv_pcheck(1),
+       gv_ccheck(1),
+       gv_date_fr   TYPE zc102mmt0005-lfdat,
+       gv_date_to   TYPE zc102mmt0005-lfdat,
+       gv_matnr     TYPE zc102mmt0005-matnr,
+       gv_stlno     TYPE zc102mmt0005-stlno,
+       gv_good_days TYPE i,
+       gv_soso_days TYPE i,
+       gv_bad_days  TYPE i.
+
+*-- Screen 120 -> 재고 실사
+DATA : gv_maktx  TYPE zc102mmt0004-maktx, " 자재번호
+       gv_batno  TYPE zc102mmt0005-batno, " 배치번호
+       gv_labst  TYPE zc102mmt0005-labst, " 현재 재고 수량
+       gv_real   TYPE zc102mmt0005-labst, " 실제 재고 수량()
+       gv_change TYPE zc102mmt0005-labst. " 변경 재고 수량
+
+*-- For Pop-up
+DATA : gv_id       TYPE sy-uname,
+       gv_date(10).
+
+*-- 선택 조회 조건
+RANGES : gr_matnr FOR zc102mmt0005-matnr.
+RANGES : gr_lfdat FOR zc102mmt0005-lfdat.
+
+DATA: gv_threshold    TYPE i, " 유통기한 평가 기준일
+      gv_left_good(2), " 여유
+      gv_left_soso(2), " 주의
+      gv_left_bad(2).  " 위험
+
+*-- 창고 정보 : 창고 TEXT  & 유형
+DATA : gv_stltype   TYPE zc102mmt0008-stltype, " 창고유형
+       gv_werks(10).                           " 창고 지역(강원, 충청..)
+
+*-- 필터 적용
+DATA: gv_filter_on TYPE abap_bool VALUE abap_true.
+
+*-- 수량 계산
+DATA : gv_menge TYPE zc102mmt0005-labst.
+
+*-- 유효 입력값인지 체크
+DATA : gv_valid_lfdat TYPE abap_bool VALUE abap_true.
+
+*-- 사유가 유통기한 폐기인지
+DATA : gv_expired TYPE abap_bool.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

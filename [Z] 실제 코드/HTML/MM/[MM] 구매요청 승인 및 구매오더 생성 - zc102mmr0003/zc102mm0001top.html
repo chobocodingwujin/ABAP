@@ -1,0 +1,165 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102MM0001TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102MM0001TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102MM0001TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102MM0001TOP                           - Report ZC102MMR0003</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102mmr0003 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Macro</font>
+<font color ="#0000FF">**********************************************************************</font>
+DEFINE _init.
+
+  REFRESH &1.
+  CLEAR &1.
+
+END-OF-DEFINITION.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zc102mmt0011, zc102hrt0002, zc102mmt0017.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TAB Strip control</font>
+<font color ="#0000FF">**********************************************************************</font>
+CONTROLS gc_tab TYPE TABSTRIP. " TAB Strip object
+
+DATA : gv_subscreen TYPE sy-dynnr.   " Subscreen number
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Class instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_tab_cont1 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid1 TYPE REF TO cl_gui_alv_grid,
+       go_tab_cont2 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid2 TYPE REF TO cl_gui_alv_grid,
+       go_tab_cont3 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid3 TYPE REF TO cl_gui_alv_grid,
+       go_tab_cont4 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid4 TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">*-- For Popup</font>
+DATA : go_pop_cont TYPE REF TO cl_gui_custom_container.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- TOP : 구매요청 내역</font>
+DATA : BEGIN OF gs_pr,
+         prno           TYPE zc102mmt0017-prno,      " 구매요청 번호
+         matnr          TYPE zc102mmt0017-matnr,     " 자재 번호
+         stlno          TYPE zc102mmt0017-stlno,     " 창고 번호
+         pequan         TYPE zc102mmt0017-pequan,    " 수량
+         meins          TYPE zc102mmt0017-meins,     " 단위
+         stprs          TYPE zc102mmt0017-stprs,     " 단가
+         waers          TYPE zc102mmt0017-waers,     " 통화키
+         partner        TYPE zc102mmt0017-partner,   " 비즈니스파트너 번호
+         depno          TYPE zc102mmt0017-depno,     " 구매요청부서 번호
+         state          TYPE zc102mmt0017-state,     " 구매요청 승인상태
+         status         TYPE icon-id,                " 승인여부 표시 아이콘
+         depno_name(10),
+         ebeln          TYPE zc102mmt0017-ebeln,
+       END OF gs_pr,
+       gt_pr LIKE TABLE OF gs_pr.
+
+<font color ="#0000FF">*-- 승인 탭</font>
+DATA : BEGIN OF gs_tab4,
+         depno_name(10),
+         status         TYPE icon-id.
+         include structure <a href ="zc102mmt0017/dictionary-zc102mmt0017.html">zc102mmt0017</a>.
+DATA : END OF gs_tab4,
+gt_tab4 LIKE TABLE OF gs_tab4.
+
+<font color ="#0000FF">*-- 대기 탭</font>
+DATA : BEGIN OF gs_tab2,
+         depno_name(10),
+         status         TYPE icon-id.
+         include structure <a href ="zc102mmt0017/dictionary-zc102mmt0017.html">zc102mmt0017</a>.
+DATA : END OF gs_tab2,
+gt_tab2 LIKE TABLE OF gs_tab2.
+
+<font color ="#0000FF">*-- 반려 탭</font>
+DATA : BEGIN OF gs_tab3,
+         depno_name(10),
+         status         TYPE icon-id.
+         include structure <a href ="zc102mmt0017/dictionary-zc102mmt0017.html">zc102mmt0017</a>.
+DATA : END OF gs_tab3,
+gt_tab3 LIKE TABLE OF gs_tab3.
+
+DATA : gs_layout_top TYPE lvc_s_layo,
+
+       gt_tab_fcat1  TYPE lvc_t_fcat,   " 탭 1 FCAT
+       gt_tab_fcat2  TYPE lvc_t_fcat,   " 탭 2 FCAT
+       gt_tab_fcat3  TYPE lvc_t_fcat,   " 탭 3 FCAT
+       gt_tab_fcat4  TYPE lvc_t_fcat,   " 탭 3 FCAT
+       gs_tab_fcat1  TYPE lvc_s_fcat,
+       gs_tab_fcat2  TYPE lvc_s_fcat,
+       gs_tab_fcat3  TYPE lvc_s_fcat,
+       gs_tab_fcat4  TYPE lvc_s_fcat.
+
+<font color ="#0000FF">*-- 구매오더</font>
+DATA : BEGIN OF gs_po,
+         ebeln   TYPE zc102mmt0011-ebeln,     " 구매오더 번호
+         prno    TYPE zc102mmt0011-prno,      " 구매요청 번호
+         podat   TYPE zc102mmt0011-podat,     " 구매오더 일자
+         partner TYPE zc102mmt0011-partner,   " 비즈니스파트너 번호
+         matnr   TYPE zc102mmt0011-matnr,     " 자재 번호
+         stprs   TYPE zc102mmt0011-stprs,     " 단가
+         waers   TYPE zc102mmt0011-waers,     " 통화키
+         menge   TYPE zc102mmt0011-menge,     " 수량
+         meins   TYPE zc102mmt0011-meins,     " 단위
+         stlno   TYPE zc102mmt0011-stlno,     " 창고 번호
+         dzeit   TYPE zc102mmt0011-dzeit,     " 배송리드타임
+         gredat  TYPE zc102mmt0011-gredat,    " 입고예정 일자
+         empno   TYPE zc102mmt0011-empno,
+       END OF gs_po,
+       gt_po LIKE TABLE OF gs_po.
+
+DATA : gt_fcat          TYPE lvc_t_fcat,
+       gs_fcat          TYPE lvc_s_fcat,
+       gs_layout_bottom TYPE lvc_s_layo,
+       gs_variant       TYPE disvariant,
+       gs_button        TYPE stb_button.
+
+<font color ="#0000FF">*-- For search help</font>
+DATA : BEGIN OF gs_empnam,
+         empno  TYPE zc102hrt0002-empno,
+         empnam TYPE zc102hrt0002-empnam,
+       END OF gs_empnam,
+       gt_empnam LIKE TABLE OF gs_empnam.
+
+DATA : BEGIN OF gs_prno,
+         prno TYPE zc102mmt0017-prno,
+       END OF gs_prno,
+       gt_prno LIKE TABLE OF gs_prno.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Global variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode        TYPE sy-ucomm,
+       gv_rowid         TYPE i,
+       gt_selected_rows TYPE lvc_t_roid.
+
+<font color ="#0000FF">*-- For cnt</font>
+DATA : gv_allpr_cnt TYPE i,
+       gv_apprv_cnt TYPE i,
+       gv_rtrn_cnt  TYPE i,
+       gv_rdy_cnt   TYPE i.
+
+RANGES : gr_prno FOR zc102mmt0017-prno.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

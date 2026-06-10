@@ -1,0 +1,44 @@
+*&---------------------------------------------------------------------*
+*& Report ZRMMT0014
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zrmmt0014top                            .    " Global Data
+
+INCLUDE zrmmt0014s01                            .  " Selection screen
+INCLUDE zrmmt0014o01                            .  " PBO-Modules
+INCLUDE zrmmt0014i01                            .  " PAI-Modules
+INCLUDE zrmmt0014f01                            .  " FORM-Routines
+
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+  PERFORM get_base_data.
+
+  CALL SCREEN 100.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> [C1] Ware house list
+
+*Text elements
+*----------------------------------------------------------
+* T01 Condition
+
+
+*Selection texts
+*----------------------------------------------------------
+* SO_WERKS D       .
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: K5
+*037   No data found
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

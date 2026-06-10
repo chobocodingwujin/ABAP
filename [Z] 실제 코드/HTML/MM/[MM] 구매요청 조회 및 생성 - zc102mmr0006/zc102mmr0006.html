@@ -1,0 +1,57 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102MMR0006</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102MMR0006</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [MM] 구매요청 조회 및 생성</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102MMR0006</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zc102mm0006top.html">zc102mm0006top</a>.    " Global Data
+
+include <a href ="zc102mm0006o01.html">zc102mm0006o01</a>.  " PBO-Modules
+include <a href ="zc102mm0006i01.html">zc102mm0006i01</a>.  " PAI-Modules
+include <a href ="zc102mm0006c01.html">zc102mm0006c01</a>.  " class
+include <a href ="zc102mm0006f01.html">zc102mm0006f01</a>.  " FORM-Routines
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+  PERFORM set_matmaster_value.
+  PERFORM set_screen.
+
+  CALL SCREEN 100.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* TITLE100 --&gt; 구매요청 생성</font>
+<font color ="#0000FF">* TITLE110 --&gt; 구매요청 ITEM</font>
+<font color ="#0000FF">* TITLE120 --&gt; 구매요청 생성</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* T01 해당 구매요청 번호가 존재하지 않습니다!</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZC102MSG</font>
+<font color ="#0000FF">*000   &</font>
+<font color ="#0000FF">*001   & &</font>
+<font color ="#0000FF">*002   & & &</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

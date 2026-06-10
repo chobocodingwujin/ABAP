@@ -1,0 +1,89 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102SDR0008C01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102SDR0008C01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102SDR0008C01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102SDR0008C01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Class LCL_EVENT_HANDLER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+CLASS lcl_event_handler DEFINITION FINAL.
+
+  PUBLIC SECTION.
+    CLASS-METHODS : edit_toolbar_tab1 FOR EVENT toolbar
+      OF        cl_gui_alv_grid
+      IMPORTING e_object e_interactive,
+      user_command      FOR EVENT user_command
+        OF        cl_gui_alv_grid
+        IMPORTING e_ucomm,
+      edit_toolbar_tab2 FOR EVENT toolbar
+        OF        cl_gui_alv_grid
+        IMPORTING e_object e_interactive,
+      handle_modify_value FOR EVENT data_changed_finished
+        OF cl_gui_alv_grid
+        IMPORTING e_modified et_good_cells,
+      handle_search_help FOR EVENT onf4         OF cl_gui_alv_grid
+        IMPORTING e_fieldname
+                  e_fieldvalue
+                  es_row_no
+                  er_event_data
+                  et_bad_cells
+                  e_display,
+     edit_toolbar       FOR EVENT toolbar
+                                        OF        cl_gui_alv_grid
+                                        IMPORTING e_object e_interactive sender.
+
+ENDCLASS.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Class (Implementation) LCL_EVENT_HANDLER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+CLASS lcl_event_handler IMPLEMENTATION.
+
+  METHOD handle_modify_value.
+    PERFORM handle_modify_value USING e_modified et_good_cells.
+  ENDMETHOD.
+
+  METHOD edit_toolbar_tab1.
+    PERFORM handle_edit_toolbar1 USING e_object e_interactive.
+  ENDMETHOD.
+
+  METHOD user_command.
+    PERFORM handle_user_command USING e_ucomm.
+  ENDMETHOD.
+
+  METHOD edit_toolbar_tab2.
+    PERFORM handle_edit_toolbar2 USING e_object e_interactive.
+  ENDMETHOD.
+
+  METHOD handle_search_help.
+    PERFORM onf4 USING e_fieldname
+                       e_fieldvalue
+                       es_row_no
+                       er_event_data
+                       et_bad_cells
+                       e_display.
+  ENDMETHOD.
+
+  METHOD edit_toolbar.
+    PERFORM handle_exclude_toolbar USING e_object e_interactive sender.
+  ENDMETHOD.
+
+ENDCLASS.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

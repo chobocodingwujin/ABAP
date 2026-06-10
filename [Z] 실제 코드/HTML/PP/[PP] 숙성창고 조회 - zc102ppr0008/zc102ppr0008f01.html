@@ -1,0 +1,954 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0008F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0008F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0008F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102PPR0008F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form dispaly_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM dispaly_screen .
+
+  IF go_plant_container IS NOT BOUND.
+
+    CLEAR: gt_plant_fcat, gs_plant_fcat.
+
+    PERFORM set_fcat USING : 'X' 'STLNO'     'ZC102MMT0014' 'C'  ' ',
+                             'X' 'STLTYPE'   'ZC102MMT0014'   'C'  ' ',
+                             'X' 'MATNR'     'ZC102MMT0014'   'C'  ' ',
+                             'X' 'DATBI'     'ZC102MMT0014'   'C'  ' ',
+                             ' ' 'MENGE'     'ZC102MMT0014'   'C'  ' ',
+                             ' ' 'MEINS'     'ZC102MMT0014'   'C'  ' ',
+                             ' ' 'TEMPE'     'ZC102MMT0014'   'C'  ' ',
+                             ' ' 'T_UNIT'    'ZC102MMT0014'   'C'  'X',
+                             ' ' 'HUMID'     'ZC102MMT0014'   'C'  ' ',
+                             ' ' 'H_UNIT'    'ZC102MMT0014'   'C'  'X',
+<font color ="#0000FF">*                             ' ' 'BATNO'     'ZC102MMT0014'   'C'  ' ',</font>
+                             ' ' 'DPOSE'     'ZC102MMT0014'   ' '  'X',
+                             ' ' 'TEMPTIME'  'ZC102MMT0014'   'C'  'X'.
+
+    PERFORM create_object.
+    PERFORM set_layout.
+    PERFORM register_tree_event.
+    PERFORM build_node.
+
+<font color ="#0000FF">**class 등록</font>
+<font color ="#0000FF">*    SET HANDLER lcl_event_handler=&gt;top_of_page FOR go_plant_grid.</font>
+
+<font color ="#0000FF">**set grid**</font>
+<font color ="#0000FF">*--tree--*</font>
+    CALL METHOD go_tree-&gt;add_nodes
+      EXPORTING
+        table_structure_name = 'MTREESNODE'
+        node_table           = node_table.
+
+    READ TABLE node_table INTO DATA(ls_node) INDEX 1.
+    CALL METHOD go_tree-&gt;expand_node
+      EXPORTING
+        node_key = ls_node-node_key.
+
+<font color ="#0000FF">*    CALL METHOD go_tree-&gt;expand_node</font>
+<font color ="#0000FF">*      EXPORTING</font>
+<font color ="#0000FF">*        node_key = 'ROOT'.</font>
+
+
+<font color ="#0000FF">**class 등록</font>
+    SET HANDLER lcl_event_handler=&gt;top_of_page FOR go_plant_grid.
+
+<font color ="#0000FF">*--right top--*</font>
+    CALL METHOD go_plant_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_plant_layout
+      CHANGING
+        it_outtab       = gt_ripen1
+        it_fieldcatalog = gt_plant_fcat.
+<font color ="#0000FF">*        it_sort         = gt_sort.</font>
+
+    PERFORM set_top_page.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_fcat  USING pv_key pv_field pv_table pv_just pv_emp.
+
+  gs_plant_fcat-key       = pv_key.
+  gs_plant_fcat-fieldname = pv_field.
+  gs_plant_fcat-ref_table = pv_table.
+  gs_plant_fcat-just      = pv_just.
+  gs_plant_fcat-emphasize = pv_emp.
+
+
+  CASE  pv_field.
+    WHEN 'DATBI'.
+      gs_plant_fcat-coltext = '유통기한'.
+    WHEN 'MENGE'.
+      gs_plant_fcat-coltext = '수량'.
+      gs_plant_fcat-qfieldname = 'MEINS'.
+    WHEN 'MEINS'.
+      gs_plant_fcat-coltext = '단위'.
+    WHEN 'TEMPTIME'.
+      gs_plant_fcat-coltext = '숙성기간'.
+    WHEN 'TEMPE'.
+      gs_plant_fcat-qfieldname = 'T_UNIT'.
+<font color ="#0000FF">*      gs_plant_fcat-decimals_o = 0.</font>
+
+  ENDCASE.
+
+  APPEND gs_plant_fcat TO gt_plant_fcat.
+  CLEAR gs_plant_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+<font color ="#0000FF">*-- TOP OF PAGE 컨테이너--*</font>
+  CREATE OBJECT go_page_cont
+    EXPORTING
+      repid     = sy-cprog
+      dynnr     = sy-dynnr
+      side      = go_page_cont-&gt;dock_at_top
+      extension = 105.
+
+<font color ="#0000FF">*--메인 컨테이너--*</font>
+  CREATE OBJECT go_container
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = cl_gui_docking_container=&gt;dock_at_left
+      extension = 5000.
+
+  CREATE OBJECT go_base_cont
+    EXPORTING
+      parent        = go_container
+      orientation   = 1 " 0 : Vertical, 1 : Horizontal
+<font color ="#0000FF">*      sash_position = 20</font>
+      sash_position = 15
+      with_border   = 1.
+
+<font color ="#0000FF">*-- Assign container</font>
+  go_left_cont   = go_base_cont-&gt;top_left_container.
+  go_plant_container  = go_base_cont-&gt;bottom_right_container.
+
+<font color ="#0000FF">**********************************우측 상하 Split************************************</font>
+  CREATE OBJECT go_split_right
+    EXPORTING
+      parent  = go_plant_container
+      rows    = 2
+      columns = 1.
+
+<font color ="#0000FF">*--상--*</font>
+  CALL METHOD go_split_right-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_plant_top.
+
+<font color ="#0000FF">*--하--*</font>
+  CALL METHOD go_split_right-&gt;get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_plant_bottom.
+
+<font color ="#0000FF">***ALV GRID***</font>
+<font color ="#0000FF">*--TREE--*</font>
+  CREATE OBJECT go_tree
+    EXPORTING
+      parent              = go_left_cont
+      node_selection_mode = cl_gui_simple_tree=&gt;node_sel_mode_single.
+
+<font color ="#0000FF">*--right top--*</font>
+  CREATE OBJECT go_plant_grid
+    EXPORTING
+      i_parent = go_plant_top.
+
+<font color ="#0000FF">*--right bottom--*</font>
+  CREATE OBJECT go_chart
+    EXPORTING
+      parent = go_plant_bottom.
+
+<font color ="#0000FF">*-- TOP-OF-PAGE</font>
+<font color ="#0000FF">*  CREATE OBJECT go_dyndoc_id " cl_dd_document</font>
+<font color ="#0000FF">*    EXPORTING</font>
+<font color ="#0000FF">*      style = 'ALV_GRID'.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form register_tree_event</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM register_tree_event .
+
+  event-eventid = cl_gui_simple_tree=&gt;eventid_node_double_click.
+  event-appl_event = 'X'.
+  APPEND event TO events.
+
+  CALL METHOD go_tree-&gt;set_registered_events
+    EXPORTING
+      events                    = events
+    EXCEPTIONS
+      cntl_error                = 1
+      cntl_system_error         = 2
+      illegal_event_combination = 3
+      OTHERS                    = 4.
+
+  IF sy-subrc &lt;&gt; 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  SET HANDLER lcl_event_handler=&gt;handle_node_double_click FOR go_tree.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form build_node</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM build_node .
+
+  DATA: node     TYPE mtreesnode,
+        lv_plant TYPE zc102mmt0014_1-werks,
+        lv_matnr TYPE zc102mmt0014_1-matnr,
+        lv_text  TYPE string,
+        lv_text2 TYPE string.
+
+<font color ="#0000FF">**-- 루트 노드</font>
+<font color ="#0000FF">*  node-node_key   = 'ROOT'.</font>
+<font color ="#0000FF">*  node-text       = '숙성창고'.</font>
+<font color ="#0000FF">*  node-isfolder   = 'X'.</font>
+<font color ="#0000FF">*  node-n_image    = '@04@'.    " 접은 이미지</font>
+<font color ="#0000FF">*  node-exp_image  = '@05@'.    " 펼친 이미지</font>
+<font color ="#0000FF">*  APPEND node TO node_table.</font>
+<font color ="#0000FF">*  CLEAR node.</font>
+
+<font color ="#0000FF">*-- gt_partner를 순회하면서 각 노드를 생성해서 붙여주는 듯!</font>
+  LOOP AT gt_ripen_tree INTO gs_ripen1.
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+    ON CHANGE OF gs_ripen1-werks.
+      MOVE gs_ripen1-werks TO lv_plant.
+
+      lv_text  = gs_ripen1-werks. "플랜트 이름 concat 추가 하기
+      lv_text2 = gs_ripen1-stlno. "창고
+
+      node-node_key  = gs_ripen1-werks.
+<font color ="#0000FF">*      node-relatkey  = 'ROOT'.</font>
+      node-isfolder  = 'X'.
+      node-n_image   = '@45@'. " 접은 이미지
+      node-exp_image = '@05@'. " 펼친 이미지
+      node-text = lv_text.
+      APPEND node TO node_table.
+      CLEAR node.
+    ENDON.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+  gs_plant_layout-zebra       = abap_true.
+  gs_plant_layout-cwidth_opt  = 'A'.
+  gs_plant_layout-sel_mode    = 'D'.
+
+  gs_variant-report  = sy-repid.
+  gs_variant-handle  = 'ALV1'.
+
+<font color ="#0000FF">*  CLEAR: gt_sort, gs_sort.</font>
+<font color ="#0000FF">*  gs_sort-spos = 1.</font>
+<font color ="#0000FF">*  gs_sort-fieldname = 'DATBI'.</font>
+<font color ="#0000FF">*  gs_sort-up = abap_true.</font>
+<font color ="#0000FF">*  gs_sort-subtot = abap_true.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  APPEND gs_sort TO gt_sort.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_chart</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_chart .
+
+  CLEAR : go_ixml,
+          go_ixml_sf,
+          go_ixml_docu,
+          go_ixml_ostream,
+          go_ixml_encoding,
+          go_chartdata,
+          go_categories,
+          go_category,
+          go_series,
+          go_point,
+          go_value.
+
+
+  CLEAR : gv_xstring.
+
+  go_ixml = cl_ixml=&gt;create(  ).
+  go_ixml_sf = go_ixml-&gt;create_stream_factory( ).
+
+  go_ixml_docu = go_ixml-&gt;create_document( ).
+
+  go_ixml_encoding = go_ixml-&gt;create_encoding(
+                       byte_order    = if_ixml_encoding=&gt;co_little_endian
+                       character_set = 'utf-8' ).
+
+  go_ixml_docu-&gt;set_encoding( encoding = go_ixml_encoding ).
+
+<font color ="#0000FF">*-- Now build a DOM, representing an XML document with chart data</font>
+  go_chartdata = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'ChartData'
+                                        parent = go_ixml_docu ).
+
+<font color ="#0000FF">*-- Categories (parent)</font>
+  go_categories = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'Categories'
+                                        parent = go_chartdata ).
+
+  PERFORM set_category_value.
+
+
+<font color ="#0000FF">*    PERFORM set_root_all_rate.</font>
+
+  PERFORM set_chart_value.
+
+
+<font color ="#0000FF">*  PERFORM set_design.</font>
+
+  go_chart-&gt;set_data( xdata = gv_xstring ).
+  go_chart-&gt;render( ).
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form search_clicked_node_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; NODE_KEY</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM search_clicked_node_info  USING pv_node_key.
+
+  PERFORM set_category_value.
+
+  PERFORM click_root_child USING pv_node_key. "루트와 노드 클릭하면 그 플랜트 뜸
+
+  gv_plant_name = pv_node_key.
+  CALL METHOD go_plant_grid-&gt;refresh_table_display.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_ripening</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_ripening .
+
+  SELECT stlno stltype werks matnr datbi
+         menge meins tempe t_unit humid
+         h_unit batno dpose temptime
+    INTO CORRESPONDING FIELDS OF TABLE gt_ripen_tree
+    FROM zc102mmt0014_1
+    WHERE werks IN so_werks
+    ORDER BY werks stlno ASCENDING.
+
+  IF so_werks-low IS NOT INITIAL AND
+     so_werks-high IS INITIAL.
+    MOVE-CORRESPONDING gt_ripen_tree TO gt_ripen1.
+    gv_plant_name = so_werks-low.
+    PERFORM click_root_child USING gv_plant_name.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_category_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_category_value .
+
+  DATA : lv_month TYPE zc102sdt0008-month_sd.
+
+  lv_month = 1.
+
+
+  DO 12 TIMES.
+
+    go_category = go_ixml_docu-&gt;create_simple_element(
+                                    name   = 'Category'
+                                    parent = go_categories ).
+    go_category-&gt;if_ixml_node~set_value( lv_month && '월' ).
+
+    lv_month += 1.
+
+  ENDDO.
+
+<font color ="#0000FF">*-- Categories (children)</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                        name   = 'Category'</font>
+<font color ="#0000FF">*                                        parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( 'Dpose' ). "폐기량</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_chart_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_chart_value .
+
+  DATA : lv_value TYPE string,
+         lv_label TYPE string,
+         lv_month TYPE bkpf-monat VALUE '01'.
+
+  FIELD-SYMBOLS &lt;ls_month&gt; TYPE any.
+
+  go_series = go_ixml_docu-&gt;create_simple_element(
+                                                name = 'Series'
+                                                parent = go_chartdata ).
+  go_series-&gt;set_attribute( name  = 'label'
+                            value = '월별 폐기율' ). "'Series1' ).
+
+
+  LOOP AT gt_dispo_month INTO gs_dispo_month WHERE werks = gv_plant_name.
+    lv_value = '월별 폐기율'.
+    lv_month = 1.
+
+
+<font color ="#0000FF">****</font>
+    DO 12 TIMES.
+      lv_value = 'TD' && lv_month.
+
+      ASSIGN COMPONENT lv_value OF STRUCTURE gs_dispo_month TO &lt;ls_month&gt;.
+
+      IF &lt;ls_month&gt; IS NOT ASSIGNED.
+        EXIT. " 혹은 EXIT. (필요 시)
+      ENDIF.
+
+      lv_value = &lt;ls_month&gt;.
+
+      go_point = go_ixml_docu-&gt;create_simple_element(
+                                                    name = 'Point'
+                                                    parent = go_series ).
+      go_point-&gt;set_attribute( name  = 'label'
+                               value = lv_value ).
+
+      go_value = go_ixml_docu-&gt;create_simple_element(
+                                                      name = 'Value'
+                                                      parent = go_point ).
+
+      go_value-&gt;if_ixml_node~set_value( lv_value ).
+      UNASSIGN &lt;ls_month&gt;.
+
+      lv_month += 1.
+    ENDDO.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*-- create ostream (into string variable) and render document into stream</font>
+  go_ixml_ostream = go_ixml_sf-&gt;create_ostream_xstring( gv_xstring ).
+  go_ixml_docu-&gt;render( go_ixml_ostream ). "here f_xstring is filled
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_design</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_design .
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Chart type : Only Columns and Lines</font>
+<font color ="#0000FF">**********************************************************************</font>
+  DATA: l_win_chart   TYPE REF TO cl_gui_chart_engine_win,
+        g_design_mode.
+
+  CATCH SYSTEM-EXCEPTIONS move_cast_error = 1.
+    l_win_chart ?= go_chart-&gt;get_control( ).
+  ENDCATCH.
+
+  IF sy-subrc IS INITIAL.
+
+    l_win_chart-&gt;set_design_mode( flag = g_design_mode event = 'X' ).
+    l_win_chart-&gt;restrict_chart_types( charttypes = 'Lines' ).
+    l_win_chart-&gt;restrict_property_events( events = 'ChartType' ).
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_ripening_rate</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_ripening_rate .
+
+  SELECT werks, perct, td01, td02, td03,
+         td04, td05, td06, td07, td08,
+         td09, td10, td11, td12
+    INTO CORRESPONDING FIELDS OF TABLE @gt_dispo_month
+    FROM zc102_pp_ripen_disrate
+    WHERE werks = @gv_plant_name.
+
+  IF gt_dispo_month IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+<font color ="#0000FF">*  gv_plant_name = gt_dispo_month[ 1 ]-werks.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form click_root_child</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM click_root_child USING pv_node_key.
+
+  gv_plant_name = pv_node_key.
+
+  IF pv_node_key = 'ROOT'. " 예: 숙성창고 노드 키가 'ROOT'라고 가정
+    " 전체 플랜트의 숙성창고 데이터 조회
+    SELECT stlno stltype werks matnr datbi
+           menge meins tempe t_unit humid
+           h_unit batno dpose temptime
+      INTO CORRESPONDING FIELDS OF TABLE gt_ripen1
+      FROM zc102mmt0014_1.
+
+  ELSE.
+    " 개별 플랜트 노드 클릭 시
+    SELECT stlno stltype werks matnr datbi
+           menge meins tempe t_unit humid
+           h_unit batno dpose temptime
+      INTO CORRESPONDING FIELDS OF TABLE gt_ripen1
+      FROM zc102mmt0014_1
+      WHERE werks = pv_node_key.
+
+    PERFORM get_ripening_rate.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form f4_btype</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM f4_btype .
+
+<font color ="#0000FF">*-- Screen 120 Data 추출</font>
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF ls_search,
+           werks TYPE zc102ppt0002-werks,
+         END OF ls_search,
+         lt_search LIKE TABLE OF ls_search.
+
+  SELECT werks
+    INTO CORRESPONDING FIELDS OF TABLE @lt_search
+    FROM zc102ppt0002
+    WHERE werks BETWEEN 'P2000' AND 'P4000'.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+<font color ="#0000FF">*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 추출)</font>
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'WERKS'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'SO_WERKS-LOW'
+      window_title = 'Plant 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = lt_search
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_top_page</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_top_page .
+
+<font color ="#0000FF">*-- TOP-OF-PAGE</font>
+  CREATE OBJECT go_dyndoc_id " cl_dd_document
+    EXPORTING
+      style = 'ALV_GRID'.
+
+<font color ="#0000FF">*-- 초기화</font>
+  CALL METHOD go_dyndoc_id-&gt;initialize_document
+    EXPORTING
+      background_color = cl_dd_area=&gt;col_textarea.
+
+<font color ="#0000FF">*-- TOP OF PAGE 이벤트 실행 -&gt; TOP OF PAGE 출력</font>
+  CALL METHOD go_plant_grid-&gt;list_processing_events
+    EXPORTING
+      i_event_name = 'TOP_OF_PAGE'
+      i_dyndoc_id  = go_dyndoc_id.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_value .
+
+  so_werks-sign = 'I'.
+  so_werks-option = 'EQ'.
+  so_werks-low = 'P2000'.
+  APPEND so_werks.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_top_of_page</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_DYNDOC_ID</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_top_of_page  USING    po_dyndoc_id TYPE REF TO cl_dd_document.
+
+  DATA : lv_id       TYPE sdydo_text_element,
+         lv_id2      TYPE sdydo_text_element,
+         lv_conid    TYPE sdydo_text_element,
+         lr_dd_table TYPE REF TO cl_dd_table_element,
+         col_field   TYPE REF TO cl_dd_area,
+         col_value   TYPE REF TO cl_dd_area,
+         col_icon1   TYPE REF TO cl_dd_area,
+
+         col_dummy   TYPE REF TO cl_dd_area,
+         col_dummy2  TYPE REF TO cl_dd_area,
+         col_dummy3  TYPE REF TO cl_dd_area,
+         col_dummy4  TYPE REF TO cl_dd_area,
+         col_dummy5  TYPE REF TO cl_dd_area,
+         col_dummy6  TYPE REF TO cl_dd_area,
+         col_dummy7  TYPE REF TO cl_dd_area,
+         col_dummy8  TYPE REF TO cl_dd_area,
+         col_dummy9  TYPE REF TO cl_dd_area,
+         col_dummy10 TYPE REF TO cl_dd_area,
+         col_dummy11 TYPE REF TO cl_dd_area,
+         col_dummy12 TYPE REF TO cl_dd_area,
+
+
+         col_pad     TYPE REF TO cl_dd_area,
+         col_left    TYPE REF TO cl_dd_area,
+         col_matnr   TYPE REF TO cl_dd_area,
+         col_right   TYPE REF TO cl_dd_area.
+
+<font color ="#0000FF">*-- 헤더 타이틀 설정</font>
+<font color ="#0000FF">*  CALL METHOD po_dyndoc_id-&gt;add_text</font>
+  CALL METHOD go_dyndoc_id-&gt;add_text
+    EXPORTING
+      text         = '숙성창고'
+      sap_style    = cl_dd_area=&gt;heading
+      sap_color    = cl_dd_area=&gt;list_heading_int
+      sap_fontsize = cl_dd_area=&gt;list_heading.
+
+<font color ="#0000FF">*-- 줄바꿈</font>
+  CALL METHOD go_dyndoc_id-&gt;new_line( ).
+  CALL METHOD go_dyndoc_id-&gt;new_line( ).
+
+<font color ="#0000FF">**--정렬 위한 테이블--**</font>
+  CALL METHOD go_dyndoc_id-&gt;add_table
+    EXPORTING
+      no_of_columns = 50
+      border        = '0'
+    IMPORTING
+      table         = lr_dd_table.
+
+<font color ="#0000FF">*******************아이콘*****************</font>
+
+<font color ="#0000FF">*--plnat와 아이콘 일자 정렬 위한 테이블 선언--*</font>
+  CALL METHOD go_dyndoc_id-&gt;add_text
+    EXPORTING
+      text         = lv_id
+<font color ="#0000FF">*     sap_style    = cl_dd_area=&gt;key</font>
+<font color ="#0000FF">*     sap_color    = cl_dd_area=&gt;list_negative_inv</font>
+      sap_fontsize = cl_dd_area=&gt;list_normal.
+
+  " 플랜트 범위 계산
+  IF so_werks-high IS INITIAL.
+    lv_id = so_werks-low.
+  ELSE.
+    lv_id = so_werks-low && ` ~ ` && so_werks-high.
+  ENDIF.
+
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_left.
+
+  "--- 첫 번째 줄: 왼쪽에 Plant 번호, 오른쪽에 아이콘 + 텍스트 1 ---
+  CALL METHOD col_left-&gt;add_text
+    EXPORTING
+      text         = |Plant 번호 : { lv_id }|
+<font color ="#0000FF">*     sap_style    = cl_dd_document=&gt;key</font>
+      sap_color    = cl_dd_document=&gt;list_negative_inv
+      sap_fontsize = cl_dd_document=&gt;list_normal.
+
+<font color ="#0000FF">*  "-- 두 번째 줄 : 왼쪽 자재번호--"</font>
+<font color ="#0000FF">*  " 두 번째 줄: 추가 설명 텍스트 출력</font>
+<font color ="#0000FF">*  CALL METHOD col_left-&gt;add_text</font>
+<font color ="#0000FF">*    EXPORTING</font>
+<font color ="#0000FF">*      text         = '자재번호 : M0002(LA갈비)'</font>
+<font color ="#0000FF">*      sap_emphasis = cl_dd_document=&gt;emphasis</font>
+<font color ="#0000FF">*      sap_color    = cl_dd_document=&gt;list_positive</font>
+<font color ="#0000FF">*      sap_fontsize = cl_dd_document=&gt;list_normal.</font>
+
+
+
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy.
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy2. " 더 빈칸
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy3. " 더 더 빈칸
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy4. " 여기까지는 공백용
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy5. " 여기까지는 공백용
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy6. " 여기까지는 공백용
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy7. " 여기까지는 공백용
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy8. " 여기까지는 공백용
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy9. " 여기까지는 공백용
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_dummy10. " 여기까지는 공백용
+
+
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_pad.
+  CALL METHOD lr_dd_table-&gt;add_column IMPORTING column = col_right.
+
+  PERFORM add_icon USING lr_dd_table col_dummy col_dummy2 col_dummy3 col_dummy4
+                         col_dummy5 col_dummy6 col_dummy7 col_dummy8
+                         col_dummy9 col_dummy10
+                         col_pad col_right col_left.
+
+  CALL METHOD go_dyndoc_id-&gt;new_line( ).
+  CALL METHOD go_dyndoc_id-&gt;new_line( ).
+
+
+<font color ="#0000FF">*-- TOP OF PAGE 붙이기</font>
+  IF go_html_cntrl IS NOT BOUND.
+    CREATE OBJECT go_html_cntrl
+      EXPORTING
+        parent = go_page_cont.
+<font color ="#0000FF">*        parent = go_container.</font>
+  ENDIF.
+
+  CALL METHOD go_dyndoc_id-&gt;merge_document.
+  go_dyndoc_id-&gt;html_control = go_html_cntrl.
+
+  CALL METHOD po_dyndoc_id-&gt;display_document
+    EXPORTING
+      reuse_control = 'X'
+      parent        = go_page_cont.
+<font color ="#0000FF">*      parent        = go_container.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form add_icon</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; LR_DD_TABLE</font>
+<font color ="#0000FF">*&      --&gt; COL_FIELD</font>
+<font color ="#0000FF">*&      --&gt; COL_VALUE</font>
+<font color ="#0000FF">*&      --&gt; COL_ICON1</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM add_icon  USING pr_dd_table  TYPE REF TO cl_dd_table_element
+
+                      pv_col_dummy TYPE REF TO cl_dd_area
+                      pv_col_dummy2 TYPE REF TO cl_dd_area
+                      pv_col_dummy3 TYPE REF TO cl_dd_area
+                      pv_col_dummy4 TYPE REF TO cl_dd_area
+                      pv_col_dummy5 TYPE REF TO cl_dd_area
+                      pv_col_dummy6 TYPE REF TO cl_dd_area
+                      pv_col_dummy7 TYPE REF TO cl_dd_area
+                      pv_col_dummy8 TYPE REF TO cl_dd_area
+                      pv_col_dummy9 TYPE REF TO cl_dd_area
+                      pv_col_dummy10 TYPE REF TO cl_dd_area
+
+                     pv_col_pad   TYPE REF TO cl_dd_area
+                     pv_col_right TYPE REF TO cl_dd_area
+                     pv_col_left TYPE REF TO cl_dd_area.
+
+  DATA: lv_text TYPE sdydo_text_element,
+        lv_id   TYPE sdydo_text_element,
+        lv_id2  TYPE sdydo_text_element.
+
+  CALL METHOD pv_col_dummy-&gt;add_gap EXPORTING width = 5.
+  CALL METHOD pv_col_dummy2-&gt;add_gap EXPORTING width = 5.
+  CALL METHOD pv_col_dummy3-&gt;add_gap EXPORTING width = 5.
+  CALL METHOD pv_col_dummy4-&gt;add_gap EXPORTING width = 5.
+  CALL METHOD pv_col_dummy5-&gt;add_gap EXPORTING width = 5.
+  CALL METHOD pv_col_dummy6-&gt;add_gap EXPORTING width = 5.
+  CALL METHOD pv_col_dummy7-&gt;add_gap EXPORTING width = 5.
+  CALL METHOD pv_col_dummy8-&gt;add_gap EXPORTING width = 5.
+  CALL METHOD pv_col_dummy9-&gt;add_gap EXPORTING width = 5.
+  CALL METHOD pv_col_dummy10-&gt;add_gap EXPORTING width = 5.
+
+  "--- 첫 번째 줄: 아이콘 + 텍스트 1 ---
+  CALL METHOD pv_col_right-&gt;add_icon
+    EXPORTING
+      sap_icon = 'ICON_INFORMATION'
+      sap_size = cl_dd_document=&gt;small.
+
+  CALL METHOD pv_col_right-&gt;add_gap
+    EXPORTING
+      width = 2.
+
+  lv_text = 'TREE를 클릭하여 각 Plant에 저장된 숙성창고를 조회합니다.'.
+
+  CALL METHOD pv_col_right-&gt;add_text
+    EXPORTING
+      text         = lv_text
+      sap_emphasis = cl_dd_document=&gt;heading
+<font color ="#0000FF">*      sap_color    = cl_dd_document=&gt;list_negative_inv</font>
+      sap_fontsize = cl_dd_document=&gt;small.
+
+<font color ="#0000FF">*--줄 바꿈--*</font>
+  CALL METHOD pr_dd_table-&gt;new_row.
+
+  " 두 번째 줄: 자재번호는 왼쪽 col_left에 표시
+  CALL METHOD pv_col_left-&gt;add_text
+    EXPORTING
+      text         = '자재번호 : M0002(LA갈비)'
+<font color ="#0000FF">*     sap_emphasis = cl_dd_document=&gt;emphasis</font>
+<font color ="#0000FF">*     sap_color    = cl_dd_document=&gt;list_positive</font>
+      sap_color    = cl_dd_document=&gt;list_negative_inv
+      sap_fontsize = cl_dd_document=&gt;list_normal.
+
+  "--- 두 번째 줄: 아이콘 + 텍스트 2 ---
+  CALL METHOD pv_col_right-&gt;add_icon
+    EXPORTING
+      sap_icon = 'ICON_INFORMATION'
+      sap_size = cl_dd_document=&gt;small.
+
+  CALL METHOD pv_col_right-&gt;add_gap
+    EXPORTING
+      width = 2.
+
+  lv_text = '아래 그래프는 해당 숙성창고의 폐기율 추이를 나타냅니다.'.
+
+  CALL METHOD pv_col_right-&gt;add_text
+    EXPORTING
+      text         = lv_text
+      sap_emphasis = cl_dd_document=&gt;heading
+<font color ="#0000FF">*      sap_color    = cl_dd_document=&gt;list_negative_inv</font>
+      sap_fontsize = cl_dd_document=&gt;small.
+
+<font color ="#0000FF">*--줄 바꿈--*</font>
+  CALL METHOD pr_dd_table-&gt;new_row.
+
+  " 두 번째 줄: 자재번호는 왼쪽 col_left에 표시
+  CALL METHOD pv_col_left-&gt;add_text
+    EXPORTING
+      text         = '담당자 :   김범준'
+      sap_color    = cl_dd_document=&gt;list_heading
+      sap_emphasis = cl_dd_document=&gt;STRONG
+      sap_fontsize = cl_dd_document=&gt;list_normal.
+
+  CALL METHOD pr_dd_table-&gt;new_row.
+  CALL METHOD pr_dd_table-&gt;new_row.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

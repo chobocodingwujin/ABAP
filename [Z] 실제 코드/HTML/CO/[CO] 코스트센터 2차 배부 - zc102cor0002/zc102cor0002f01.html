@@ -1,0 +1,1292 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102COR0002F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102COR0002F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102COR0002F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102COR0002F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_subscreen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_subscreen .
+  CASE gc_tab-activetab.
+    WHEN 'TAB1'.
+      gv_subscreen = '0101'.
+    WHEN OTHERS.
+      gv_subscreen = '0101'.
+      gc_tab-activetab = 'TAB1'.
+  ENDCASE.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form main_screen_ctrl</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM main_screen_ctrl .
+  IF go_base_cont IS NOT BOUND.
+    CLEAR : gt_cost_fcat, gs_cost_fcat,
+            gt_value_fcat, gs_value_fcat,
+            gt_res_fcat, gs_res_fcat.
+    PERFORM set_cost_fcat USING : 'X' 'KOKRS' 'C' ' ',
+                                  'X' 'KOSTL' 'C' ' ',
+                                  ' ' 'TXT20' ' ' 'X',
+                                  ' ' 'AWRBTR' ' ' ' ',
+                                  ' ' 'WAERS' 'C' ' '.
+    PERFORM set_value_fcat USING : 'X' 'KOKRS' 'C' ' ',
+                                   'X' 'PRCTR' 'C' ' ',
+                                   ' ' 'TOTAL' ' ' ' ',
+                                   ' ' 'SKFVALUE' ' ' ' ',
+                                   ' ' 'AUNIT' 'C' 'X',
+                                   ' ' 'PERCT' 'C' ' '.
+    PERFORM set_result_fcat USING : 'X' 'KOKRS' 'C' ' ',
+                                    'X' 'PRCTR' 'C' ' ',
+                                    ' ' 'KOSTL' 'C' ' ',
+                                    ' ' 'SAKNR' 'C' ' ',
+                                    ' ' 'TXT20' ' ' 'X',
+                                    ' ' 'SKFVALUE' ' ' ' ',
+                                    ' ' 'AUNIT' 'C' 'X',
+                                    ' ' 'PERCT' 'C' ' ',
+                                    ' ' 'WRBTR' ' ' ' ',
+                                    ' ' 'WAERS' 'C' ' '.
+    PERFORM create_obj.
+    PERFORM exclude_toolbar.
+    SET HANDLER : lcl_event_handler=&gt;modify_value FOR go_bleft_grid.
+    PERFORM display_screen.
+    PERFORM register_event.
+    PERFORM refresh_table.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_skf_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout USING pv_title.
+  gs_layout = VALUE #( zebra      = abap_true
+                       cwidth_opt = 'A'
+                       sel_mode   = 'D'
+                       stylefname = 'CELL_TAB'
+                       grid_title = pv_title
+                       totals_bef = abap_true ).
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_variant</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_variant USING pv_handle.
+  gs_variant = VALUE #( report  = sy-repid
+                        handle  = pv_handle ).
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_obj</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_obj .
+  CREATE OBJECT go_base_cont
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+<font color ="#0000FF">*-- Split screen</font>
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_base_cont
+      rows    = 1
+      columns = 2.
+
+<font color ="#0000FF">*-- Patch container</font>
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_left_cont.
+
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_right_cont.
+
+<font color ="#0000FF">*-- Left Split</font>
+  CREATE OBJECT go_left_split
+    EXPORTING
+      parent  = go_left_cont
+      rows    = 2
+      columns = 1.
+
+<font color ="#0000FF">*-- Patch container</font>
+  CALL METHOD go_left_split-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_tleft_cont.
+
+  CALL METHOD go_left_split-&gt;get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_bleft_cont.
+
+<font color ="#0000FF">*-- Left Split</font>
+  CREATE OBJECT go_right_split
+    EXPORTING
+      parent  = go_right_cont
+      rows    = 1
+      columns = 2.
+
+<font color ="#0000FF">*-- Patch container</font>
+  CALL METHOD go_right_split-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_lright_cont.
+
+  CALL METHOD go_right_split-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_rright_cont.
+
+<font color ="#0000FF">*-- Patch ALV</font>
+  CREATE OBJECT go_tleft_grid
+    EXPORTING
+      i_parent = go_tleft_cont.
+
+  CREATE OBJECT go_bleft_grid
+    EXPORTING
+      i_parent = go_bleft_cont.
+
+  CREATE OBJECT go_right_grid
+    EXPORTING
+      i_parent = go_lright_cont.
+
+<font color ="#0000FF">*-- Chart</font>
+  CREATE OBJECT go_chart
+    EXPORTING
+      parent = go_rright_cont.
+
+<font color ="#0000FF">*-- 사이즈 조절</font>
+  CALL METHOD go_split_cont-&gt;set_column_width
+    EXPORTING
+      id    = 2
+      width = 70.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+  PERFORM set_layout USING TEXT-t01.
+  PERFORM set_variant USING 'ALV1'.
+
+  CALL METHOD go_tleft_grid-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_layout
+    CHANGING
+      it_outtab       = gt_cost
+      it_fieldcatalog = gt_cost_fcat.
+
+  PERFORM set_layout USING TEXT-t02.
+  PERFORM set_variant USING 'ALV2'.
+
+  CALL METHOD go_bleft_grid-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_layout
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_value
+      it_fieldcatalog      = gt_value_fcat.
+
+  PERFORM set_layout USING TEXT-t03.
+  PERFORM set_variant USING 'ALV3'.
+
+  CALL METHOD go_right_grid-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_layout
+    CHANGING
+      it_outtab       = gt_result
+      it_fieldcatalog = gt_res_fcat.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_acctp</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_acctp .
+  CLEAR : gt_acttp.
+
+  SELECT acttp desct
+    INTO CORRESPONDING FIELDS OF TABLE gt_acttp
+    FROM zc102cot0012.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_profit_skf</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_value_data .
+  CLEAR gt_value.
+  IF zc102cot0006-aunit IS INITIAL.
+    SELECT kokrs aunit prctr total skfvalue
+      INTO CORRESPONDING FIELDS OF TABLE gt_value
+      FROM zvc102co0012
+      WHERE aunit = 'HR'
+      ORDER BY aunit ASCENDING prctr ASCENDING.
+  ELSE.
+    SELECT kokrs aunit prctr total skfvalue
+      INTO CORRESPONDING FIELDS OF TABLE gt_value
+      FROM zvc102co0012
+      WHERE aunit = zc102cot0006-aunit
+      ORDER BY aunit ASCENDING prctr ASCENDING.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form make_body</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM make_body .
+  DATA : lv_perct TYPE p DECIMALS 2.
+  CLEAR : gv_tabix, gs_value, lv_perct.
+
+  IF gv_check = abap_true.
+    LOOP AT gt_value INTO gs_value.
+      gv_tabix = sy-tabix.
+      CLEAR : gs_value-total, gs_value-skfvalue.
+      gs_value-aunit = '%'.
+      PERFORM edit_ctrl USING 'SKFVALUE'.
+      MODIFY gt_value FROM gs_value INDEX gv_tabix
+                                    TRANSPORTING total skfvalue
+                                                 aunit cell_tab.
+
+    ENDLOOP.
+
+  ELSE.
+    LOOP AT gt_value INTO gs_value.
+      gv_tabix = sy-tabix.
+      lv_perct = ( gs_value-skfvalue / gs_value-total ) * 100.
+      gs_value-perct = lv_perct && '%'.
+      MODIFY gt_value FROM gs_value INDEX gv_tabix
+                                    TRANSPORTING perct.
+
+    ENDLOOP.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_cost_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_cost_data .
+  CLEAR : gt_cost.
+  IF ( gv_date_fr IS INITIAL ) OR
+    ( gv_date_to IS INITIAL ).
+    MESSAGE s000 WITH TEXT-s05 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  PERFORM get_range.
+
+  CLEAR gt_cost.
+  SELECT DISTINCT kokrs, kostl, saknr, txt20, awrbtr, waers
+    INTO CORRESPONDING FIELDS OF TABLE @gt_cost
+    FROM zvc102co0002( pa_valid_fr = @gv_date_fr,
+                       pa_valid_to = @gv_date_to )
+    WHERE kostl = 'CCT700'
+      AND txt20 IN @gr_cel
+    ORDER BY kostl ASCENDING, txt20 ASCENDING.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_cost_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_cost_fcat  USING pv_key pv_field pv_just pv_emphasize.
+  gs_cost_fcat = VALUE #( key        = pv_key
+                          fieldname  = pv_field
+                          ref_table  = 'ZVC102CO0002'
+                          just       = pv_just
+                          emphasize  = pv_emphasize ).
+  CASE pv_field.
+    WHEN 'AWRBTR'.
+      gs_cost_fcat-coltext = '금액'.
+      gs_cost_fcat-cfieldname = 'WAERS'.
+  ENDCASE.
+
+  APPEND gs_cost_fcat TO gt_cost_fcat.
+  CLEAR gs_cost_fcat.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_value_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_value_fcat  USING pv_key pv_field pv_just pv_emphasize.
+  gs_value_fcat = VALUE #( key        = pv_key
+                           fieldname  = pv_field
+                           ref_table  = 'ZVC102CO0012'
+                           just       = pv_just
+                           emphasize  = pv_emphasize ).
+  CASE pv_field.
+    WHEN 'PRCTR'.
+      gs_value_fcat-ref_table = 'ZC102COT0004'.
+    WHEN 'SKFVALUE'.
+      gs_value_fcat-coltext = TEXT-w01.
+    WHEN 'TOTAL'.
+      gs_value_fcat-coltext = TEXT-w02.
+    WHEN 'PERCT'.
+      gs_value_fcat-coltext = TEXT-w03.
+    WHEN 'WRBTR'.
+      gs_value_fcat-ref_table = 'ZC102FIT0010'.
+      gs_value_fcat-currency = 'KRW'.
+  ENDCASE.
+
+  APPEND gs_value_fcat TO gt_value_fcat.
+  CLEAR gs_value_fcat.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_table .
+  CALL METHOD go_tleft_grid-&gt;refresh_table_display.
+
+  CALL METHOD go_bleft_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable      = VALUE lvc_s_stbl( row = 'X' col = 'X' )
+      i_soft_refresh = 'X'.
+
+  CALL METHOD go_right_grid-&gt;refresh_table_display.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_screen .
+  LOOP AT SCREEN.
+    CASE screen-group1.
+      WHEN 'GR1'.
+        screen-input = 0.
+    ENDCASE.
+    MODIFY SCREEN.
+  ENDLOOP.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_self</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form register_event</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM register_event .
+  CALL METHOD go_bleft_grid-&gt;set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 1.
+  CALL METHOD go_bleft_grid-&gt;register_edit_event
+    EXPORTING
+      i_event_id = cl_gui_alv_grid=&gt;mc_evt_modified.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form edit_ctrl</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM edit_ctrl  USING pv_field.
+  CLEAR : gs_style.
+  gs_style-fieldname = pv_field.
+  gs_style-style     = cl_gui_alv_grid=&gt;mc_style_enabled.
+  INSERT gs_style INTO TABLE gs_value-cell_tab.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_modify_values</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_MODIFIED</font>
+<font color ="#0000FF">*&      --&gt; ET_GOOD_CELLS</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_modify_values  USING pv_modified
+                                pt_good_cells TYPE lvc_t_modi.
+
+  DATA : ls_good_cells TYPE lvc_s_modi,
+         lv_value      TYPE i.
+
+  CLEAR lv_value.
+
+  CHECK pv_modified IS NOT INITIAL.
+
+  LOOP AT pt_good_cells INTO ls_good_cells.
+
+    CASE ls_good_cells-fieldname.
+      WHEN 'SKFVALUE'.
+        CLEAR gs_value.
+        READ TABLE gt_value INTO gs_value INDEX ls_good_cells-row_id.
+
+        IF gs_value-skfvalue &gt; 100.
+          MESSAGE s000 WITH TEXT-s02 DISPLAY LIKE 'E'.
+          CLEAR gs_value-skfvalue.
+          EXIT.
+        ENDIF.
+
+        gs_value-perct = gs_value-skfvalue && '%'.
+        MODIFY gt_value FROM gs_value INDEX ls_good_cells-row_id
+                                      TRANSPORTING perct.
+
+        lv_value = 100 - gs_value-skfvalue.
+
+        CLEAR gs_value.
+
+        READ TABLE gt_value INTO gs_value
+                            INDEX ( ls_good_cells-row_id + 2 ) MOD 2 + 1.
+        gs_value-perct = lv_value && '%'.
+        gs_value-skfvalue = lv_value.
+        MODIFY gt_value FROM gs_value
+                        INDEX ( ls_good_cells-row_id + 2 ) MOD 2 + 1
+                        TRANSPORTING skfvalue perct.
+
+    ENDCASE.
+  ENDLOOP.
+
+  PERFORM refresh_table.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form exclude_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM exclude_toolbar .
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_txt20</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_txt20 .
+  CLEAR : gt_txt20.
+
+  SELECT DISTINCT saknr, txt20
+    INTO CORRESPONDING FIELDS OF TABLE @gt_txt20
+    FROM zvc102co0002( pa_valid_fr = @gv_date_fr,
+                       pa_valid_to = @gv_date_to )
+    WHERE kostl = 'CCT700'
+    ORDER BY saknr ASCENDING.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_search_help_kostl</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_search_help_kostl .
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'TXT20'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_TXT20-TXT20'
+      window_title = '계정 설명'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_txt20
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_range</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_range .
+  DATA : lv_cel_fr TYPE zc102fit0002-saknr,
+         lv_cel_to TYPE zc102fit0002-saknr.
+
+  _clear gr_cel.
+  CLEAR : lv_cel_fr, lv_cel_to.
+
+  IF ( gv_cel_fr IS NOT INITIAL ) AND
+   ( gv_cel_to IS NOT INITIAL ).
+    SELECT SINGLE saknr
+      INTO lv_cel_fr
+      FROM zc102fit0002
+      WHERE txt20 = gv_cel_fr.
+
+    SELECT SINGLE saknr
+      INTO lv_cel_to
+      FROM zc102fit0002
+      WHERE txt20 = gv_cel_to.
+
+    PERFORM set_cel USING 'I' 'BT' lv_cel_fr lv_cel_to.
+
+  ELSEIF ( gv_cel_fr IS NOT INITIAL ).
+    SELECT SINGLE saknr
+      INTO lv_cel_fr
+      FROM zc102fit0002
+      WHERE txt20 = gv_cel_fr.
+
+    PERFORM set_cel USING 'I' 'EQ' lv_cel_fr lv_cel_to.
+
+  ELSEIF ( gv_cel_to IS NOT INITIAL ).
+    SELECT SINGLE saknr
+      INTO lv_cel_to
+      FROM zc102fit0002
+      WHERE txt20 = gv_cel_to.
+
+    PERFORM set_cel USING 'I' 'BT' lv_cel_fr lv_cel_to.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form allocation_exct</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM allocation_calculation.
+<font color ="#0000FF">*-- Text Data</font>
+  DATA : lt_txt20 TYPE TABLE OF zc102fit0002,
+         ls_txt20 TYPE zc102fit0002.
+
+<font color ="#0000FF">*-- Calculation</font>
+  DATA : lv_wrbtr TYPE zc102fit0010-wrbtr,
+         lv_waers TYPE zc102fit0010-waers,
+         lv_skf   TYPE i.
+
+  CLEAR : lv_wrbtr, gv_tabix, gs_cost, gs_value,
+          gs_result, lv_skf, lt_txt20, lv_waers.
+
+  lv_waers = 'KRW'.
+
+<font color ="#0000FF">*-- Text Data</font>
+  SELECT saknr txt20
+    INTO CORRESPONDING FIELDS OF TABLE lt_txt20
+    FROM zc102fit0002.
+
+  LOOP AT gt_cost INTO gs_cost.
+    lv_wrbtr += gs_cost-awrbtr.
+  ENDLOOP.
+  MOVE-CORRESPONDING gt_value TO gt_result.
+
+  LOOP AT gt_value INTO gs_value.
+    lv_skf += gs_value-skfvalue.
+  ENDLOOP.
+
+  LOOP AT gt_result INTO gs_result.
+    CLEAR ls_txt20.
+    gv_tabix = sy-tabix.
+    gs_result-kostl = gs_cost-kostl.
+    gs_result-saknr = '800000'.
+    gs_result-waers = lv_waers.
+
+    READ TABLE lt_txt20 INTO ls_txt20 WITH KEY saknr = gs_result-saknr.
+    IF sy-subrc = 0.
+      gs_result-txt20 = ls_txt20-txt20.
+    ENDIF.
+
+    gs_result-wrbtr = ( gs_result-skfvalue / lv_skf ) * lv_wrbtr.
+    MODIFY gt_result FROM gs_result INDEX gv_tabix
+                                    TRANSPORTING kostl saknr txt20
+                                                 wrbtr waers.
+  ENDLOOP.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_result_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_result_fcat  USING pv_key pv_field pv_just pv_emphasize.
+  gs_res_fcat = VALUE #( key        = pv_key
+                         fieldname  = pv_field
+                         ref_table  = 'ZVC102CO0012'
+                         just       = pv_just
+                         emphasize  = pv_emphasize ).
+  CASE pv_field.
+    WHEN 'PRCTR'.
+      gs_res_fcat-ref_table = 'ZC102COT0004'.
+      gs_res_fcat-coltext = TEXT-f01.
+    WHEN'KOSTL'.
+      gs_res_fcat-coltext = TEXT-f02.
+    WHEN 'SKFVALUE'.
+      gs_res_fcat-coltext = TEXT-w01.
+    WHEN 'PERCT'.
+      gs_res_fcat-coltext = TEXT-w03.
+    WHEN 'WRBTR'.
+      gs_res_fcat-ref_table = 'ZC102FIT0010'.
+      gs_res_fcat-cfieldname = 'WAERS'.
+    WHEN 'SAKNR' OR 'TXT20'.
+      gs_res_fcat-ref_table = 'ZC102FIT0002'.
+    WHEN 'WAERS'.
+      gs_res_fcat-ref_table = 'ZC102FIT0010'.
+  ENDCASE.
+
+  APPEND gs_res_fcat TO gt_res_fcat.
+  CLEAR gs_res_fcat.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_chart</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_chart .
+  CLEAR : go_ixml,
+          go_ixml_sf,
+          go_ixml_docu,
+          go_ixml_ostream,
+          go_ixml_encoding,
+          go_chartdata,
+          go_categories,
+          go_category,
+          go_series,
+          go_point,
+          go_value.
+
+  CLEAR : gv_xstring.
+
+  go_ixml = cl_ixml=&gt;create(  ).
+  go_ixml_sf = go_ixml-&gt;create_stream_factory( ).
+
+  go_ixml_docu = go_ixml-&gt;create_document( ).
+
+  go_ixml_encoding = go_ixml-&gt;create_encoding(
+                       byte_order    = if_ixml_encoding=&gt;co_little_endian
+                       character_set = 'utf-8' ).
+
+  go_ixml_docu-&gt;set_encoding( encoding = go_ixml_encoding ).
+
+<font color ="#0000FF">*-- Now build a DOM, representing an XML document with chart data</font>
+  go_chartdata = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'ChartData'
+                                        parent = go_ixml_docu ).
+<font color ="#0000FF">*  go_chartdata-&gt;set_attribute( name = 'chart_type' value = 'Line' ).</font>
+
+<font color ="#0000FF">*-- Categories (parent)</font>
+  go_categories = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'Categories'
+                                        parent = go_chartdata ).
+
+  PERFORM set_category_value.
+  PERFORM set_chart_value.
+
+  go_chart-&gt;set_data( xdata = gv_xstring ).
+  go_chart-&gt;render( ).
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_category_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_category_value .
+  DATA : lv_value TYPE string.
+
+<font color ="#0000FF">*-- Categories (children)</font>
+  go_category = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'Category'
+                                        parent = go_categories ).
+  go_category-&gt;if_ixml_node~set_value( 'PCT100' ).
+
+
+  go_category = go_ixml_docu-&gt;create_simple_element(
+                                      name   = 'Category'
+                                      parent = go_categories ).
+  go_category-&gt;if_ixml_node~set_value( 'PCT200' ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_chart_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_chart_value .
+  DATA : lv_value  TYPE string,
+         lv_target TYPE string.
+
+  FIELD-SYMBOLS &lt;ls_value&gt;.
+
+  " 1. Revenue - 매출,  2. Cost - 직접 재료비, 3. Revenue - Cost - 공헌 이익
+  " 4. sum - 비용 배부,  5. 3번 - 4번 - 영업이익 - 안씀
+  DO 4 TIMES.
+    CASE sy-index.
+      WHEN 1.
+        lv_value = '매출'.
+        lv_target = 'REVENUE'.
+      WHEN 2.
+        lv_value = '직접 재료비'.
+        lv_target = 'COST'.
+      WHEN 3.
+        lv_value = '재료처리량 공헌 이익'.
+        lv_target = 'CONTRIBUTIONMARGIN'.
+      WHEN 4.
+        lv_value = '배부 비용'.
+        lv_target = 'WRBTR'.
+    ENDCASE.
+
+    ASSIGN COMPONENT lv_target OF STRUCTURE gs_profit TO &lt;ls_value&gt;.
+
+    IF &lt;ls_value&gt; IS ASSIGNED.
+<font color ="#0000FF">*-- 라벨 달기</font>
+      go_series = go_ixml_docu-&gt;create_simple_element(
+                                                        name = 'Series'
+                                                        parent = go_chartdata ).
+      go_series-&gt;set_attribute( name  = 'label'
+                                value = lv_value ). "'Series1' ).
+      LOOP AT gt_profit INTO gs_profit.
+
+<font color ="#0000FF">*-- 값 계산</font>
+        lv_value = &lt;ls_value&gt;.
+
+        go_point = go_ixml_docu-&gt;create_simple_element(
+                                                        name = 'Point'
+                                                        parent = go_series ).
+        go_point-&gt;set_attribute( name  = 'label'
+                                 value = lv_value ).
+<font color ="#0000FF">*</font>
+        go_value = go_ixml_docu-&gt;create_simple_element(
+                                                        name = 'Value'
+                                                        parent = go_point ).
+
+        go_value-&gt;if_ixml_node~set_value( lv_value ).
+
+      ENDLOOP.
+      UNASSIGN &lt;ls_value&gt;.
+    ENDIF.
+  ENDDO.
+
+<font color ="#0000FF">*-- create ostream (into string variable) and render document into stream</font>
+  go_ixml_ostream = go_ixml_sf-&gt;create_ostream_xstring( gv_xstring ).
+  go_ixml_docu-&gt;render( go_ixml_ostream ). "here f_xstring is filled
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_profit_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_profit_data .
+  CLEAR : gt_profit, gs_profit.
+
+  SELECT prctr revenue cost
+         contributionmargin scost
+    INTO CORRESPONDING FIELDS OF TABLE gt_profit
+    FROM zvc102co0033.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_aunit</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_aunit .
+  CLEAR gt_aunit.
+
+  SELECT domvalue_l AS aunit ddtext AS value
+    INTO CORRESPONDING FIELDS OF TABLE gt_aunit
+    FROM dd07t
+    WHERE domname = 'ZC102D_CO_AUNIT'.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_aunit</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_aunit .
+  DATA: lt_values TYPE vrm_values,
+        ls_value  TYPE vrm_value.
+
+  CLEAR lt_values.
+
+  IF gv_acttp = '경영 지원'.
+    PERFORM set_aunit_value USING 'HR' ls_value lt_values.
+    PERFORM set_aunit_value USING 'TF' ls_value lt_values.
+    PERFORM set_aunit_value USING 'PC' ls_value lt_values.
+  ELSE.
+    LOOP AT gt_aunit INTO gs_aunit.
+
+      ls_value-key = gs_aunit-aunit.
+      ls_value-text = gs_aunit-value.
+      APPEND ls_value TO lt_values.
+
+    ENDLOOP.
+
+  ENDIF.
+
+  CALL FUNCTION 'VRM_SET_VALUES'
+    EXPORTING
+      id     = 'ZC102COT0006-AUNIT'
+      values = lt_values.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_aunit_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; LS_VALUE</font>
+<font color ="#0000FF">*&      --&gt; LT_VALUES</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_aunit_value USING pv_field
+                           ps_value TYPE vrm_value
+                           pt_values TYPE vrm_values.
+
+  CLEAR gs_aunit.
+  READ TABLE gt_aunit INTO gs_aunit WITH KEY pv_field.
+  ps_value-key = gs_aunit-aunit.
+  ps_value-text = gs_aunit-value.
+  APPEND ps_value TO pt_values.
+  CLEAR ps_value.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form screen_input_ctrl</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM screen_input_ctrl .
+  LOOP AT SCREEN.
+
+    IF gv_acttp = abap_true.
+      IF screen-name = 'GV_ACTTP'.
+        screen-input = abap_false.
+      ENDIF.
+    ENDIF.
+
+    IF screen-name = 'ZC102COT0006-AUNIT'.
+      IF gv_acttp IS INITIAL.
+        screen-input = abap_true.
+      ENDIF.
+    ENDIF.
+
+    MODIFY SCREEN.
+  ENDLOOP.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form popup_to_confirm</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      &lt;-- GV_ANSWER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM popup_to_confirm  CHANGING pv_answer.
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = ' '
+      text_question         = '전표를 생성하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '2'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_docu</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_docu .
+  DATA : lt_header TYPE TABLE OF zc102cot0009,
+         ls_header TYPE zc102cot0009,
+         lt_line   TYPE TABLE OF zc102cot0010,
+         ls_line   TYPE zc102cot0010,
+         lv_buzei  TYPE zc102fit0010-buzei,
+         lv_acttp  TYPE zc102cot0012-acttp.
+
+  CLEAR : lt_header, ls_header, gv_num, lv_acttp,
+          lt_line, ls_line, lv_buzei.
+
+  PERFORM popup_to_confirm CHANGING gv_answer.
+  CHECK gv_answer EQ '1'.
+
+<font color ="#0000FF">*-- Set Docu Number</font>
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      object      = 'ZC102CM_AU'  " SNRO 오브젝트 이름
+      nr_range_nr = '02'          " 인터벌 번호
+      subobject   = 'CO'          " Prefix (서브오브젝트)
+      quantity    = 1
+    IMPORTING
+      number      = gv_num
+    EXCEPTIONS
+      OTHERS      = 1.
+
+<font color ="#0000FF">*-- Set Header Data</font>
+  ls_header = VALUE #( kokrs = '1000'
+                       bukrs = '1000'
+                       belnr = gv_num
+                       gjahr = sy-datum(4)
+                       blart = 'KS'
+                       bldat = sy-datum
+                       budat = sy-datum
+                       bktxt = '비용 2차 배부'
+                       waers = 'KRW'
+                       valid_from = gv_date_fr
+                       valid_to = gv_date_to
+                       erdat = sy-datum
+                       ernam = sy-uname
+                       erzet = sy-uzeit ).
+
+  APPEND ls_header TO lt_header.
+
+<font color ="#0000FF">*-- Set Line Data</font>
+  CLEAR : gs_value, gs_acttp, lv_acttp.
+
+  READ TABLE gt_acttp INTO gs_acttp WITH KEY desct = gv_acttp.
+  IF sy-subrc = 0.
+    lv_acttp = gs_acttp-acttp.
+  ENDIF.
+
+  LOOP AT gt_result INTO gs_result.
+    CLEAR ls_line.
+    lv_buzei += 1.
+    ls_line = VALUE #( kokrs = ls_header-kokrs
+                       bukrs = ls_header-bukrs
+                       belnr = ls_header-belnr
+                       gjahr = ls_header-gjahr
+                       objno = gs_result-prctr
+                       buzei = lv_buzei
+                       benkz = 'R'
+                       saknr = gs_result-saknr
+                       sgtxt = '비용 2차 배부 수신'
+                       wrbtr = gs_result-wrbtr
+                       waers = gs_result-waers
+                       acttp = lv_acttp
+                       erdat = sy-datum
+                       ernam = sy-uname
+                       erzet = sy-uzeit ).
+    APPEND ls_line TO lt_line.
+
+  ENDLOOP.
+
+  CLEAR gs_cost.
+
+  LOOP AT gt_cost INTO gs_cost.
+    CLEAR ls_line.
+    lv_buzei += 1.
+    ls_line = VALUE #( kokrs = ls_header-kokrs
+                       bukrs = ls_header-bukrs
+                       belnr = ls_header-belnr
+                       gjahr = ls_header-gjahr
+                       objno = gs_cost-kostl
+                       buzei = lv_buzei
+                       benkz = 'S'
+                       saknr = gs_cost-saknr
+                       sgtxt = '비용 2차 배부 송신'
+                       wrbtr = gs_cost-awrbtr
+                       waers = gs_cost-waers
+                       acttp = lv_acttp
+                       erdat = sy-datum
+                       ernam = sy-uname
+                       erzet = sy-uzeit ).
+    APPEND ls_line TO lt_line.
+
+  ENDLOOP.
+
+  PERFORM set_docu_status.
+  MODIFY zc102cot0009 FROM TABLE lt_header.
+  MODIFY zc102cot0010 FROM TABLE lt_line.
+  CLEAR : gt_cost, gt_value, gt_result.
+  PERFORM refresh_table.
+
+  IF sy-subrc = 0.
+    MESSAGE s007 WITH gv_num.
+    COMMIT WORK.
+  ELSE.
+    MESSAGE s008 DISPLAY LIKE 'E'.
+    ROLLBACK WORK.
+
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form allocation_exct</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM allocation_exct .
+  IF gv_rb2 = abap_true.
+    IF gt_result IS INITIAL.
+      MESSAGE s000 WITH TEXT-s03 DISPLAY LIKE 'E'.
+      EXIT.
+    ELSE.
+      PERFORM create_docu.
+      EXIT.
+    ENDIF.
+  ENDIF.
+
+  PERFORM allocation_calculation.
+  PERFORM make_profit_data.
+  PERFORM refresh_table.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_data .
+  CLEAR gt_result.
+  IF ( zc102cot0006-aunit IS INITIAL ) OR
+     ( gv_acttp IS INITIAL ).
+    MESSAGE s001 WITH TEXT-s01 DISPLAY LIKE 'E'.
+    EXIT.
+  ELSE.
+    PERFORM get_value_data.
+    PERFORM make_body.
+    PERFORM refresh_table.
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_docu_status</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_docu_status .
+  DATA : lt_document TYPE TABLE OF zc102codocument.
+
+  CLEAR lt_document.
+  SELECT bukrs, gjahr, belnr
+    INTO CORRESPONDING FIELDS OF TABLE @lt_document
+    FROM zc102codocument( pa_valid_fr = @gv_date_fr,
+                          pa_valid_to = @gv_date_to ).
+
+
+  LOOP AT lt_document INTO DATA(ls_document).
+
+    UPDATE zc102fit0010 SET status = 'X'
+                            aedat = sy-datum
+                            aenam = sy-uname
+                            aezet = sy-uzeit
+                        WHERE bukrs = ls_document-bukrs
+                          AND belnr = ls_document-belnr
+                          AND gjahr = ls_document-gjahr.
+
+  ENDLOOP.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_saknr</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; LV_SAKNR_FR</font>
+<font color ="#0000FF">*&      --&gt; LV_SAKNR_TO</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_cel  USING pv_sign pv_option pv_low pv_high.
+  gr_cel-sign = pv_sign.
+  gr_cel-option = pv_option.
+  gr_cel-low = pv_low.
+  gr_cel-high = pv_high.
+  APPEND gr_cel.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_value .
+  zvc102co0001-kokrs = '1000'.
+  gv_gjahr = sy-datum(4).
+  gv_date_fr = '20250101'.
+  gv_date_to = sy-datum.
+  gv_kostl = 'CCT700'.
+  gv_pct_fr = 'PCT100'.
+  gv_pct_to = 'PCT200'.
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

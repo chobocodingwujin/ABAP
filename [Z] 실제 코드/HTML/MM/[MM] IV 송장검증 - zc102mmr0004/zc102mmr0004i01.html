@@ -1,0 +1,75 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102MMR0004I01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102MMR0004I01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102MMR0004I01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102MMR0004I01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  EXIT  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE exit INPUT.
+
+<font color ="#0000FF">*  IF gv_save_flag IS NOT INITIAL.</font>
+<font color ="#0000FF">*    PERFORM popup_to_confirm_back CHANGING gv_answer.</font>
+<font color ="#0000FF">*    IF gv_answer &lt;&gt; '1'.</font>
+<font color ="#0000FF">*      EXIT.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*  ENDIF.</font>
+
+  CALL METHOD : go_left_grid-&gt;free,
+                go_right_grid-&gt;free,
+                go_bottom_grid-&gt;free,
+                go_left_cont-&gt;free,
+                go_right_cont-&gt;free,
+                go_bottom_cont-&gt;free,
+                go_split_cont-&gt;free,
+                go_container-&gt;free.
+
+
+  FREE : go_left_grid, go_right_grid,  go_left_cont, go_right_cont,
+         go_bottom_grid, go_bottom_cont, go_split_cont , go_container.
+
+  LEAVE TO SCREEN 0.
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  USER_COMMAND_0100  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE user_command_0100 INPUT.
+  CASE gv_okcode.
+    WHEN 'UPLOAD'.
+      PERFORM upload_logic.
+      CLEAR gv_okcode.
+
+    WHEN 'USAVE'.
+<font color ="#0000FF">*-- 업로드 데이터 존재 여부 확인</font>
+      IF gt_excel_save IS INITIAL.
+        MESSAGE '업로드된 송장 목록이 없습니다.' TYPE 'I'.
+        CLEAR gv_okcode.
+        RETURN.
+      ENDIF.
+      PERFORM usave_data.              "업로드 된 송장 확정(저장) --&gt; DB에 넘겨줌
+      CLEAR gv_okcode.
+
+    WHEN 'DOWNLOAD'.
+      PERFORM download_logic.
+      CLEAR gv_okcode.
+  ENDCASE.
+ENDMODULE.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

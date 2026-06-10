@@ -1,0 +1,96 @@
+*&---------------------------------------------------------------------*
+*& Include ZC102PPR0014TOP                          - Report ZC102PPR0014
+*&---------------------------------------------------------------------*
+REPORT zc102ppr0014 MESSAGE-ID zc102msg.
+
+**********************************************************************
+* TABLES
+**********************************************************************
+TABLES : zc102ppt0007.
+
+**********************************************************************
+* Class instance
+**********************************************************************
+DATA : go_container TYPE REF TO cl_gui_custom_container,
+       go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_random    TYPE REF TO cl_abap_random_packed_dec1.
+
+**********************************************************************
+* Internal table and Work area
+************************************ **********************************
+
+DATA : BEGIN OF gs_check.
+         INCLUDE STRUCTURE zc102ppt0007.
+DATA :   rate TYPE p DECIMALS 1,
+       END OF gs_check,
+       gt_check LIKE TABLE OF gs_check.
+
+*-- For ALV
+DATA : gt_fcat    TYPE lvc_t_fcat,
+       gs_fcat    TYPE lvc_s_fcat,
+       gs_layout  TYPE lvc_s_layo,
+       gs_variant TYPE disvariant.
+
+DATA : gt_ui_functions TYPE ui_functions,
+       gs_button       TYPE stb_button.
+
+*-- For Search Help
+DATA : BEGIN OF gs_pdonum, "PDONUM
+         pdono TYPE zc102e_pp_pdono,
+       END OF gs_pdonum,
+       gt_pdonum LIKE TABLE OF gs_pdonum.
+
+DATA : BEGIN OF gs_matnr, "자재명
+         matnr TYPE zc102mmt0004-matnr,
+         maktx TYPE zc102mmt0004-maktx,
+       END OF gs_matnr,
+       gt_matnr LIKE TABLE OF gs_matnr.
+
+DATA : BEGIN OF gs_plant, "Plant
+         werks TYPE zc102e_pp_werks,
+       END OF gs_plant,
+       gt_plant LIKE TABLE OF gs_plant.
+
+*-- For Insert
+DATA : gv_batno TYPE zc102ppt0005-batno,    " 배치번호
+       gs_batch TYPE zc102ppt0005,          " 배치 WA
+       gt_batch TYPE TABLE OF zc102ppt0005. " 배치 IT
+
+**********************************************************************
+* Common variable
+**********************************************************************
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_rate   TYPE p.
+
+DATA : gv_retno TYPE zc102mmt0018-disno. "폐기 번호
+
+
+*-- For Screen
+DATA : gv_pdonum TYPE zc102e_pp_pdono,
+       gv_plant  TYPE zc102e_pp_werks,
+       gv_matnr  TYPE zc102e_mm_matnr.
+
+DATA : gv_rqty TYPE zc102e_mm_menge,
+       gv_eqty TYPE zc102e_mm_menge.
+
+DATA : gv_wc100 TYPE P DECIMALS 2,
+       gv_wc200 TYPE P DECIMALS 2,
+       gv_wc300 TYPE P DECIMALS 2,
+       gv_wc400 TYPE P DECIMALS 2.
+
+*-- 배치 채번
+       data:        gv_number    TYPE n LENGTH 10,     " 도메인의 길이에 맞게
+       gv_prefix(3),  " PPO, PD0 등
+       gv_full_code TYPE string,
+       gv_range_nr  TYPE inri-nrrangenr,
+       gv_quantity  TYPE inri-quantity.
+
+DATA: ls_nriv TYPE nriv.
+
+gv_prefix = 'B'.  " 원하는 prefix 사용
+gv_range_nr = '02'. " 원하는 번호 - 도메인 정의서에 있음!!!
+gv_quantity = 1.    " 원하는 증가량 사용
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

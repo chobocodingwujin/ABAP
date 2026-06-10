@@ -1,0 +1,10 @@
+*&---------------------------------------------------------------------*
+*& Include          ZALV_TREES01
+*&---------------------------------------------------------------------*
+SELECTION-SCREEN BEGIN OF BLOCK pa1 WITH FRAME TITLE TEXT-t01.
+  SELECT-OPTIONS so_bp  FOR zbut000-partner.
+SELECTION-SCREEN END OF BLOCK pa1.
+PARAMETERS pa_check AS CHECKBOX.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

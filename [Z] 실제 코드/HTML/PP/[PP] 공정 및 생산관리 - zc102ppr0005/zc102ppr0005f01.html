@@ -1,0 +1,1052 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0005F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0005F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0005F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102PPR0005F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+
+  IF go_container IS INITIAL.
+
+    PERFORM set_left_catalog USING: 'X'   'PDONO'   'ZC102PPT0012'  'C'   ' ',
+                                    'X'   'MATNR'   'ZC102PPT0012'  'C'   ' ',
+                                    'X'   'WKCNO'   'ZC102PPT0012'  'C'   ' ',
+                                    'X'   'WERKS'   'ZC102PPT0012'  'C'   ' ',
+                                    'X'   'ROUNO'   'ZC102PPT0010'  'C'   ' ',
+<font color ="#0000FF">*                                    'X'   'PLONO'   'ZC102PPT0012'  ' '   ' ',</font>
+<font color ="#0000FF">*                                    'X'   'MRPNO'  'ZC102PPT0012'  ' '   'X',</font>
+<font color ="#0000FF">*                                    'X'   'BOMNO'  'ZC102PPT0012'  'C'   ' ',</font>
+                                    ' '   'MENGE'   'ZC102PPT0012'  ' '   ' ',
+                                    ' '   'MEINS'   'ZC102PPT0012'  'C'   ' ',
+                                    ' '   'PDSTT'   'ZC102PPT0012'  'C'   ' ',
+                                    ' '   'PDFNS'   'ZC102PPT0012'  'C'   ' ',
+                                    ' '   'PROG'    'ZC102PPT0012'  ' '   ' ',
+                                    ' '   'P_UNIT'  'ZC102PPT0012'  'C'   ' ',
+<font color ="#0000FF">*                                    ' '   'MKSTA'   'ZC102PPT0012'  'C'   ' '.</font>
+                                    ' '   'DDTEXT'     ' '           'C'   ' '.
+
+    PERFORM set_right_catalog USING:
+                                       'X'   'ICON'     ' '  'C'   ' ',
+                                       'X'   'ROUNO'    'ZC102PPT0010'  'C'   ' ',
+                                       'X'   'PDONO'    'ZC102PPT0010'  'C'   ' ',
+                                       'X'   'WCTNO'    'ZC102PPT0010'  'C'   ' ',
+                                       'X'   'WERKS'    'ZC102PPT0010'  'C'   ' ',
+                                       ' '   'MENGE'    'ZC102PPT0012'   ' '   ' ',
+                                       ' '   'MEINS'    'ZC102PPT0012'   'C'   ' ',
+                                       ' '   'RSTDA'    'ZC102PPT0010'  'C'   ' ',
+                                       ' '   'RENDA'    'ZC102PPT0010'  'C'   'X',
+<font color ="#0000FF">*                                       ' '   'REMAN'    'ZC102PPT0010'  ' '   ' ',</font>
+                                       ' '   'REMAC'    'ZC102PPT0010'  ' '   ' '.
+<font color ="#0000FF">*                                       ' '   'PROG'     'ZC102PPT0010'  'C'   ' ',</font>
+<font color ="#0000FF">*                                       ' '   'P_UNIT'   'ZC102PPT0010'  'C'   ' '.</font>
+
+
+    PERFORM set_layout.
+    PERFORM set_layout_right.
+    PERFORM exclude_toolbar.
+
+    PERFORM create_object.
+
+<font color ="#0000FF">*-- left alv</font>
+    gs_variant-handle = 'ALV1'.
+
+    CALL METHOD go_alv_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_pdo
+        it_fieldcatalog      = gt_left_fcat.
+
+<font color ="#0000FF">*-- tbstip alv</font>
+    gs_variant-handle = 'ALV2'.
+
+    "tab1
+    CALL METHOD go_alv_grid1-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_right_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_route
+        it_fieldcatalog      = gt_right_fcat.
+    "tab2
+    CALL METHOD go_alv_grid2-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_right_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_route2
+        it_fieldcatalog      = gt_right_fcat.
+
+    "tab3
+    CALL METHOD go_alv_grid3-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_right_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_route3
+        it_fieldcatalog      = gt_right_fcat.
+    "tab4
+    CALL METHOD go_alv_grid4-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_right_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_route4
+        it_fieldcatalog      = gt_right_fcat.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_left_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_left_catalog  USING pv_key pv_field pv_table pv_just pv_emp.
+
+  gs_left_fcat-key       = pv_key.
+  gs_left_fcat-fieldname = pv_field.
+  gs_left_fcat-ref_table = pv_table.
+  gs_left_fcat-just      = pv_just.
+  gs_left_fcat-emphasize = pv_emp.
+
+  CASE pv_field.
+    WHEN 'MENGE'.
+      gs_left_fcat-coltext = '수량'.
+      gs_left_fcat-qfieldname = 'MEINS'.
+    WHEN 'MEINS'.
+      gs_left_fcat-coltext = '단위'.
+    WHEN 'PROG'.
+      gs_left_fcat-coltext = '총 진행률'.
+    WHEN 'DDTEXT'.
+      gs_left_fcat-coltext = '생산 진행 상태'.
+      gs_left_fcat-emphasize = 'C710'.
+  ENDCASE.
+
+  APPEND gs_left_fcat TO gt_left_fcat.
+  CLEAR gs_left_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_right_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_right_catalog  USING pv_key pv_field pv_table pv_just pv_emp.
+
+  gs_right_fcat-key       = pv_key.
+  gs_right_fcat-fieldname = pv_field.
+  gs_right_fcat-ref_table = pv_table.
+  gs_right_fcat-just      = pv_just.
+  gs_right_fcat-emphasize = pv_emp.
+
+  CASE pv_field.
+    WHEN 'WCTNO'.
+      gs_right_fcat-coltext = 'WC번호'.
+    WHEN 'MENGE'.
+      gs_right_fcat-coltext = '수량'.
+      gs_right_fcat-qfieldname = 'MEINS'.
+    WHEN 'MEINS'.
+      gs_right_fcat-coltext = '단위'.
+    WHEN 'ICON'.
+      gs_right_fcat-coltext = '상태'.
+<font color ="#0000FF">*    WHEN 'PROG'.</font>
+<font color ="#0000FF">*      gs_right_fcat-coltext = '진행률'.</font>
+  ENDCASE.
+
+  APPEND gs_right_fcat TO gt_right_fcat.
+  CLEAR gs_right_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+  gs_layout-zebra  = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = 'D'.
+
+  gs_layout-stylefname  = 'CELL_TAB'.
+  gs_layout-grid_title = '생산오더 현황'.
+
+  gs_variant-report  = sy-repid.
+  gs_variant-handle  = 'ALV1'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout_right</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout_right .
+
+  gs_right_layout-zebra  = abap_true.
+  gs_right_layout-cwidth_opt = 'A'.
+  gs_right_layout-sel_mode   = 'D'.
+
+  gs_right_layout-stylefname  = 'CELL_TAB'.
+  gs_right_layout-grid_title = '라우팅현황 조회'.
+
+  gs_variant-report  = sy-repid.
+  gs_variant-handle  = 'ALV2'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+<font color ="#0000FF">*-- TAB1 (101)</font>
+  CREATE OBJECT go_container1
+    EXPORTING
+      container_name = 'CONT1'.
+
+  CREATE OBJECT go_alv_grid1
+    EXPORTING
+      i_parent = go_container1.
+
+<font color ="#0000FF">*-- TAB2 (102)</font>
+  CREATE OBJECT go_container2
+    EXPORTING
+      container_name = 'CONT2'.
+
+  CREATE OBJECT go_alv_grid2
+    EXPORTING
+      i_parent = go_container2.
+
+<font color ="#0000FF">*-- TAB3 (103)</font>
+  CREATE OBJECT go_container3
+    EXPORTING
+      container_name = 'CONT3'.
+
+  CREATE OBJECT go_alv_grid3
+    EXPORTING
+      i_parent = go_container3.
+
+<font color ="#0000FF">*-- TAB4 (104)</font>
+  CREATE OBJECT go_container4
+    EXPORTING
+      container_name = 'CONT4'.
+
+  CREATE OBJECT go_alv_grid4
+    EXPORTING
+      i_parent = go_container4.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form exclude_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM exclude_toolbar .
+
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_subscreen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_subscreen .
+
+<font color ="#0000FF">*--서브스크린 번호</font>
+  CASE gc_tab-activetab.
+    WHEN 'TAB1'.
+      gv_subscreen = '0101'.
+    WHEN 'TAB2'.
+      gv_subscreen = '0102'.
+    WHEN 'TAB3'.
+      gv_subscreen = '0103'.
+    WHEN 'TAB4'.
+      gv_subscreen = '0104'.
+    WHEN OTHERS.
+      gc_tab-activetab = 'TAB1'.
+      gv_subscreen     = '0101'.
+  ENDCASE.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_plant_num</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_plant_num .
+
+  CLEAR: gt_pdo.
+
+<font color ="#0000FF">*--생산오더 테이블 가져오기</font>
+  PERFORM get_pdo_list.
+  PERFORM set_process_domain.
+
+  IF gt_pdo IS INITIAL.
+    MESSAGE s001 WITH TEXT-t01 DISPLAY LIKE 'E'.
+  ENDIF.
+
+  CALL METHOD go_alv_grid-&gt;refresh_table_display.
+  CALL METHOD go_alv_grid1-&gt;refresh_table_display.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_pdo_list</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_pdo_list .
+
+  DATA: lv_dbcnt TYPE sy-dbcnt.
+
+  IF gs_pdo-werks IS NOT INITIAL.
+
+    "생산오더번호 입력했을 때
+    SELECT pdono wkcno werks plono rouno matnr
+           pdstt pdfns mksta menge meins prog
+           p_unit
+      INTO CORRESPONDING FIELDS OF TABLE gt_pdo
+      FROM zc102ppt0012
+     WHERE werks = gs_pdo-werks.
+
+      lv_dbcnt = sy-dbcnt.
+
+      MESSAGE s002 WITH lv_dbcnt '건이 조회되었습니다.'.
+
+  ELSE.
+
+    "생산오더번호 입력하지 않았을 때
+    SELECT pdono wkcno werks plono rouno matnr
+           pdstt pdfns mksta menge meins prog
+           p_unit
+      INTO CORRESPONDING FIELDS OF TABLE gt_pdo
+      FROM zc102ppt0012.
+
+      lv_dbcnt = sy-dbcnt.
+
+      MESSAGE s002 WITH lv_dbcnt '건이 조회되었습니다.'.
+
+<font color ="#0000FF">*      mrpno bomno</font>
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_search_help_werks</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_search_help_werks .
+
+  CLEAR: gt_search.
+
+<font color ="#0000FF">*-- Screen 120 DATA 추출</font>
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+<font color ="#0000FF">**-- 소스 코드 구현 위한 Function 호출 (도메인으로 관리 되는 텍스트까지 불러옴)</font>
+
+  CALL FUNCTION 'DD_DOMVALUES_GET'
+    EXPORTING
+      domname   = 'ZC102D_PP_WERKS'   "도메인 명 입력해야 함
+      text      = 'X'
+      langu     = sy-langu
+    TABLES
+      dd07v_tab = gt_domval
+    EXCEPTIONS
+      OTHERS    = 1.
+
+  PERFORM set_domain_info. "텍스트 gt_search에 담아주기
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'WERKS'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GS_PDO-WERKS'
+      window_title = 'Plant 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_search
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_domain_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_domain_info .
+
+  "플랜트 번호 중복 떠서 중복제거
+  SORT gt_domval BY domvalue_l.
+  DELETE ADJACENT DUPLICATES FROM gt_domval COMPARING domvalue_l.
+
+  LOOP AT gt_domval INTO gs_domval WHERE domvalue_l &lt; 'P5000'.
+    CLEAR gs_search.
+    gs_search-werks = gs_domval-domvalue_l.
+    gs_search-text  = gs_domval-ddtext.
+    APPEND gs_search TO gt_search.
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_route_1</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_route_1 .
+
+  PERFORM get_route USING 'R10'. "라우팅 테이블 가져오기
+
+  PERFORM set_status_icon.
+
+  CALL METHOD go_alv_grid1-&gt;refresh_table_display.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_route</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_route USING pv_rouno TYPE zc102ppt0010-rouno.
+  CLEAR: gt_route.
+
+  SELECT a~rouno a~wctno a~werks rstda a~pdono a~prog a~p_unit
+         renda reman remac status a~matnr a~menge a~meins
+    INTO CORRESPONDING FIELDS OF TABLE gt_route
+    FROM zc102ppt0010 AS a INNER JOIN zc102ppt0012 AS b
+      ON a~pdono = b~pdono
+    WHERE a~werks = gs_pdo-werks
+      AND a~rouno = pv_rouno.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_route_2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_route_2 .
+
+  PERFORM get_route2 USING 'R20'. "라우팅 테이블 가져오기
+
+  PERFORM set_status_icon2.
+
+  CALL METHOD go_alv_grid2-&gt;refresh_table_display.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_route_3</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_route_3 .
+
+  PERFORM get_route3 USING 'R30'. "라우팅 테이블 가져오기
+
+  PERFORM set_status_icon3.
+
+  CALL METHOD go_alv_grid3-&gt;refresh_table_display.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_route_4</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_route_4 .
+
+  PERFORM get_route4 USING 'R40'. "라우팅 테이블 가져오기
+
+  PERFORM set_status_icon4.
+
+  CALL METHOD go_alv_grid4-&gt;refresh_table_display.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_route_rstda</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_route_rstda .
+
+  DATA: lv_yesterday TYPE sy-datum.
+
+  lv_yesterday = sy-datum - 1.
+
+  SELECT rouno, wctno, werks, rstda,
+     renda, reman, remac, status, pdono
+    INTO CORRESPONDING FIELDS OF TABLE @gt_route
+    FROM zc102ppt0010
+    WHERE rstda &lt; @lv_yesterday
+      AND rouno IN ( 'R10', 'R20', 'R30', 'R40' ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_plus_routeno</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_plus_routeno .
+
+  DATA: lv_yesterday TYPE sy-datum.
+
+  lv_yesterday = sy-datum - 1.
+
+  LOOP AT gt_route INTO gs_route.
+
+    CLEAR gv_bcno.
+
+    CASE gs_route-matnr.
+
+      WHEN 'M0002'.  "LA 갈비 라우팅 순서
+        CASE gs_route-rouno.
+          WHEN 'R10'.
+            gs_route-rouno = 'R20'.
+            gs_route-rstda = sy-datum.
+            gs_route-renda = sy-datum + 1.
+            gs_pdo-mksta = 'I'.
+
+          WHEN 'R20'.
+            gs_route-rouno = 'R30'.
+            gs_route-rstda = sy-datum.
+            gs_route-renda = sy-datum + 1.
+
+            PERFORM create_bcno CHANGING gv_bcno.
+            PERFORM append_ripen USING gv_bcno.
+
+          WHEN 'R30'.
+            gs_route-rouno = 'R40'.
+            gs_route-rstda = sy-datum.
+            gs_route-renda = sy-datum + 1.
+
+          WHEN 'R40'.
+            IF gs_route-rstda &lt;= lv_yesterday.
+              gs_pdo-mksta = 'F'.  " 생산 완료
+            ENDIF.
+          WHEN OTHERS.
+            CONTINUE.
+        ENDCASE.
+
+      WHEN OTHERS.   "나머지 완제품들
+        CASE gs_route-rouno.
+          WHEN 'R10'.
+            gs_route-rouno = 'R20'.
+            gs_route-rstda = sy-datum.
+            gs_route-renda = sy-datum + 1.
+          WHEN 'R20'.
+            gs_route-rouno = 'R40'.
+            gs_route-rstda = sy-datum.
+            gs_route-renda = sy-datum + 1.
+          WHEN 'R40'.
+            IF gs_route-rstda &lt;= lv_yesterday.
+              gs_pdo-mksta = 'F'.  " 생산 완료
+            ENDIF.
+          WHEN OTHERS.
+            CONTINUE.
+        ENDCASE.
+
+    ENDCASE.
+
+    "공정마다 진행률 띄워주기
+    IF gs_route-matnr &lt;&gt; 'M0002'.
+
+      IF gs_route-matnr = 'M0004'.
+        CASE gs_route-rouno.
+          WHEN 'R10'.
+            gs_pdo-prog = 25.
+            gs_pdo-p_unit = '%'.
+          WHEN 'R20'.
+            gs_pdo-prog = 50.
+            gs_pdo-p_unit = '%'.
+          WHEN 'R30'.
+            gs_pdo-prog = 75.
+            gs_pdo-p_unit = '%'.
+        ENDCASE.
+
+      ELSE.
+
+        CASE gs_route-rouno.
+          WHEN 'R10'.
+            gs_pdo-prog = 33.
+            gs_pdo-p_unit = '%'.
+          WHEN 'R20'.
+            gs_pdo-prog = 66.
+            gs_pdo-p_unit = '%'.
+        ENDCASE.
+
+      ENDIF.
+
+    ENDIF.
+
+    IF gs_route-rouno = 'R40' AND gs_route-rstda &lt;= lv_yesterday.
+      gs_pdo-mksta = 'F'.
+      gs_pdo-prog  = 100.
+      gs_pdo-p_unit = '%'.
+      gs_route-status = 'O'.
+    ENDIF.
+
+    " 생산오더 번호 복사
+    gs_pdo-pdono = gs_route-pdono.
+
+    " 상태나 진행률이 변경된 경우만 APPEND
+    IF gs_pdo-mksta IS NOT INITIAL OR gs_pdo-prog IS NOT INITIAL.
+      APPEND gs_pdo TO gt_pdo.
+    ENDIF.
+
+    UPDATE zc102ppt0010
+       SET rouno = @gs_route-rouno,
+           rstda = @gs_route-rstda,
+           renda = @gs_route-renda,
+           status = @gs_route-status,
+           prog  = @gs_pdo-prog,
+           p_unit = @gs_pdo-p_unit
+     WHERE pdono = @gs_route-pdono.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_bcno</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_bcno CHANGING pv_bcno.
+
+  DATA: lv_range_nr TYPE inri-nrrangenr,
+        lv_prefix   TYPE char3,
+        lv_quantity TYPE inri-quantity.
+
+
+  lv_prefix = 'B'. "숙성 배치번호 prefix
+  lv_range_nr = '01'. "번호 범위
+  lv_quantity = 3.
+
+<font color ="#0000FF">**순번 호출</font>
+
+  CALL METHOD zclc102cm_auto_sequence=&gt;get_next_value
+    EXPORTING
+      pv_range_nr = lv_range_nr
+      pv_prefix   = lv_prefix
+      pv_quantity = lv_quantity
+    IMPORTING
+      pv_result   = pv_bcno.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form append_ripen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM append_ripen USING pv_bcno.
+
+  gs_ripen-werks = gs_route-werks.
+  gs_ripen-matnr = gs_route-matnr.
+  gs_ripen-pdono = gs_route-pdono.
+  gs_ripen-datbi = sy-datum + 15.
+  gs_ripen-batno = pv_bcno.
+  gs_ripen-menge = gs_route-menge.
+  gs_ripen-meins = gs_route-meins.
+<font color ="#0000FF">*  gs_ripen-stlno = 'RIPEN001'.</font>
+  gs_ripen-erdat = sy-datum.
+  gs_ripen-ernam = sy-uname.
+
+  " 창고 코드 설정
+  CASE gs_route-werks.
+    WHEN 'P1000'.
+      gs_ripen-stlno = '100'.
+    WHEN 'P2000'.
+      gs_ripen-stlno = '200'.
+    WHEN 'P3000'.
+      gs_ripen-stlno = '300'.
+    WHEN 'P4000'.
+      gs_ripen-stlno = '400'.
+  ENDCASE.
+
+  APPEND gs_ripen TO gt_ripen.
+
+  "숙성창고 테이블 INSERT
+<font color ="#0000FF">*  INSERT zc102mmt0014 FROM gs_ripen.</font>
+  MODIFY zc102mmt0014 FROM gs_ripen.
+
+  IF sy-subrc = 0.
+    MESSAGE s001 WITH '성공적으로 숙성창고에 보관되었습니다!'.
+  ELSE.
+    MESSAGE s001 WITH '숙성창고 보관에 실패했습니다!' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form count_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM count_data .
+
+  DATA : lv_cnt TYPE i.
+<font color ="#0000FF">*  lv_cnt = lines( gt_route ).</font>
+  gv_cnt1 = lines( gt_route ).
+  gv_cnt2 = lines( gt_route2 ).
+  gv_cnt3 = lines( gt_route3 ).
+  gv_cnt4 = lines( gt_route4 ).
+
+  CONCATENATE `절단 라우팅 (` gv_cnt1 `)건` INTO gv_title1 SEPARATED BY space.  "탭스트립에 데이터 건수 띄움
+  CONCATENATE `가공 라우팅 (` gv_cnt2 `)건` INTO gv_title2 SEPARATED BY space.
+  CONCATENATE `숙성 라우팅 (` gv_cnt3 `)건` INTO gv_title3 SEPARATED BY space.
+  CONCATENATE `포장 라우팅 (` gv_cnt4 `)건` INTO gv_title4 SEPARATED BY space.
+
+  CONDENSE : gv_title1, gv_title2, gv_title3.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_route2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_route2  USING  pv_rouno TYPE zc102ppt0010-rouno.
+
+  CLEAR: gt_route2.
+
+  SELECT a~rouno a~wctno a~werks rstda a~pdono a~prog a~p_unit
+         renda reman remac status a~matnr a~menge a~meins
+    INTO CORRESPONDING FIELDS OF TABLE gt_route2
+    FROM zc102ppt0010 AS a INNER JOIN zc102ppt0012 AS b
+      ON a~pdono = b~pdono
+    WHERE a~werks = gs_pdo-werks
+      AND a~rouno = pv_rouno.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_route3</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_route3  USING pv_rouno TYPE zc102ppt0010-rouno.
+
+  CLEAR: gt_route3.
+
+  SELECT a~rouno a~wctno a~werks rstda a~pdono a~prog a~p_unit
+         renda reman remac status a~matnr a~menge a~meins
+    INTO CORRESPONDING FIELDS OF TABLE gt_route3
+    FROM zc102ppt0010 AS a INNER JOIN zc102ppt0012 AS b
+      ON a~pdono = b~pdono
+    WHERE a~werks = gs_pdo-werks
+      AND a~rouno = pv_rouno.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_route4</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_route4  USING pv_rouno TYPE zc102ppt0010-rouno.
+
+  CLEAR: gt_route4.
+
+  SELECT a~rouno a~wctno a~werks rstda a~pdono a~prog a~p_unit
+         renda reman remac status a~matnr a~menge a~meins
+    INTO CORRESPONDING FIELDS OF TABLE gt_route4
+    FROM zc102ppt0010 AS a INNER JOIN zc102ppt0012 AS b
+      ON a~pdono = b~pdono
+    WHERE a~werks = gs_pdo-werks
+      AND a~rouno = pv_rouno
+      AND status &lt;&gt; 'O'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_process_domain</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_process_domain .
+
+  DATA lv_tabix TYPE sy-tabix.
+
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = 'ZC102D_PP_MKSTA'    " Domain 값을 넣으면 된다. "
+      text            = 'X'
+    TABLES
+      values_tab      = gt_list    " Function Module Table에서 선언된 타입으로 선언 "
+    EXCEPTIONS
+      value_not_found = 1
+      OTHERS          = 2.
+
+<font color ="#0000FF">**세팅**</font>
+  LOOP AT gt_pdo INTO gs_pdo.
+    lv_tabix = sy-tabix.
+    READ TABLE gt_list INTO gs_list WITH KEY domvalue_l = gs_pdo-mksta.
+
+    gs_pdo-ddtext = gs_list-ddtext.
+
+    MODIFY gt_pdo FROM gs_pdo INDEX lv_tabix TRANSPORTING ddtext.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_status_icon</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_status_icon .
+
+  LOOP AT gt_route INTO gs_route.
+    CASE gs_route-status.
+      WHEN 'O'.
+        gs_route-icon = icon_led_green.
+      WHEN 'X'.
+        gs_route-icon = icon_led_red.
+      WHEN '△'.
+        gs_route-icon = icon_led_yellow.
+    ENDCASE.
+
+    MODIFY gt_route FROM gs_route.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_status_icon2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_status_icon2 .
+
+  LOOP AT gt_route2 INTO gs_route2.
+    CASE gs_route2-status.
+      WHEN 'O'.
+        gs_route2-icon = icon_led_green.
+      WHEN 'X'.
+        gs_route2-icon = icon_led_red.
+      WHEN '△'.
+        gs_route2-icon = icon_led_yellow.
+    ENDCASE.
+
+    MODIFY gt_route2 FROM gs_route2.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_status_icon3</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_status_icon3 .
+
+  LOOP AT gt_route3 INTO gs_route3.
+    CASE gs_route3-status.
+      WHEN 'O'.
+        gs_route3-icon = icon_led_green.
+      WHEN 'X'.
+        gs_route3-icon = icon_led_red.
+      WHEN '△'.
+        gs_route3-icon = icon_led_yellow.
+    ENDCASE.
+
+    MODIFY gt_route3 FROM gs_route3.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_status_icon4</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_status_icon4 .
+
+  LOOP AT gt_route4 INTO gs_route4.
+    CASE gs_route4-status.
+      WHEN 'O'.
+        gs_route4-icon = icon_led_green.
+      WHEN 'X'.
+        gs_route4-icon = icon_led_red.
+      WHEN '△'.
+        gs_route4-icon = icon_led_yellow.
+    ENDCASE.
+
+    MODIFY gt_route4 FROM gs_route4.
+
+  ENDLOOP.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

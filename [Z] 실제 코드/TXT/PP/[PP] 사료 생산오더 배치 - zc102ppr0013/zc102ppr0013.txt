@@ -1,0 +1,23 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102PPR0013
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102ppr0013top                         .    " Global Data
+
+INCLUDE zc102ppr0013o01                         .  " PBO-Modules
+INCLUDE zc102ppr0013i01                         .  " PAI-Modules
+INCLUDE zc102ppr0013f01                         .  " FORM-Routines
+
+
+**********************************************************************
+*START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+
+  PERFORM get_fo_route_data.
+  PERFORM set_plus_routeno.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

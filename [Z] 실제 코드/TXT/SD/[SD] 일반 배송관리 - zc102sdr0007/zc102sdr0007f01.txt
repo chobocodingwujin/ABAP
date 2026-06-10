@@ -1,0 +1,843 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102SDR0007F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form display_main_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_main_screen .
+
+  IF go_main_cont IS NOT BOUND.
+
+*-- LEFT
+    CLEAR : gt_fcat_left, gs_fcat_left.
+    PERFORM set_fcat_left USING : 'X' 'VBELN_DEL'  'ZC102SDT0004' ' ' ' ',  " 납품오더 번호
+                                  'X' 'PARTNER'    'ZC102SDT0004' 'C' ' ',  " 비즈니스 파트너
+                                  ' ' 'VSBED_NAME' ' '            'C' ' ',  " 배송방법 (공백)
+                                  ' ' 'ADRNR'      'ZC102SDT0011' ' ' ' ',  " 배송지 (공백)
+                                  ' ' 'DEL_CHAR'   'ZC102SDT0011' 'C' ' ',  " 배송 담당 (공백)
+                                  ' ' 'GBSTK_NAME' ' '            ' ' ' ',  " 배송 상태
+                                  ' ' 'VDATU'      'ZC102SDT0004' 'C' ' '.  " 납품 예정일
+
+*-- RIGHT
+    CLEAR : gt_fcat_right, gs_fcat_right.
+    PERFORM set_fcat_right USING : 'X' 'VBELN_DEL'  'ZC102SDT0004' ' ' ' ',
+                                   'X' 'PARTNER'    'ZC102SDT0004' 'C' ' ',
+                                   ' ' 'VSBED_NAME' ' '            'C' ' ',
+                                   ' ' 'ADRNR'      'ZC102SDT0011' ' ' 'X',
+                                   ' ' 'TELF1'      'ZC102SDT0011' ' ' ' ',
+                                   ' ' 'GBSTK_NAME' ' '            ' ' ' ',
+                                   ' ' 'DEL_CHAR'   'ZC102SDT0011' ' ' ' ',
+                                   ' ' 'WADAT_IST'  'ZC102SDT0004' 'C' ' '.  " 배송 시작예정일
+
+    PERFORM set_layout.
+    PERFORM create_object.
+
+    SET HANDLER : lcl_event_handler=>edit_toolbar  FOR go_left_grid,
+                  lcl_event_handler=>user_command  FOR go_left_grid,
+                  lcl_event_handler=>edit_toolbar  FOR go_right_grid,
+                  lcl_event_handler=>user_command  FOR go_right_grid,
+                  lcl_event_handler=>handle_search_help FOR go_right_grid.
+
+*-- Display Main ALV
+    CALL METHOD go_left_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_left
+      CHANGING
+        it_outtab       = gt_left
+        it_fieldcatalog = gt_fcat_left.
+
+    CALL METHOD go_right_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_right
+      CHANGING
+        it_outtab       = gt_right
+        it_fieldcatalog = gt_fcat_right.
+
+    PERFORM register_event.
+    PERFORM register_f4_event.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat_left
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat_left  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_left-key       = pv_key.
+  gs_fcat_left-fieldname = pv_field.
+  gs_fcat_left-ref_table = pv_table.
+  gs_fcat_left-just      = pv_just.
+  gs_fcat_left-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'GBSTK_NAME'.
+      gs_fcat_left-coltext = '배송 상태'.
+    WHEN 'VSBED_NAME'.
+      gs_fcat_left-coltext = '배송 방법'.
+  ENDCASE.
+
+  APPEND gs_fcat_left TO gt_fcat_left.
+  CLEAR gs_fcat_left.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout .
+
+  gs_layout_left-zebra      = abap_true.          "	행 줄무늬 지정
+  gs_layout_left-cwidth_opt = 'A'.                " 컬럼 폭 자동 조정
+  gs_layout_left-sel_mode   = 'A'.                " 행 단일 선택
+  gs_layout_left-grid_title = '배송정보 미입력 건'.     " 제목 지정
+
+  gs_layout_right-zebra      = abap_true.
+  gs_layout_right-cwidth_opt = 'A'.
+  gs_layout_right-sel_mode   = 'A'.
+  gs_layout_right-grid_title = '배송정보 입력완료 건'.
+
+  gs_variant-report = sy-repid.
+  gs_variant-handle = 'ALV1'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+*-- Main
+  CREATE OBJECT go_main_cont
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+*-- Splitter (좌우)
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_main_cont
+      rows    = 1
+      columns = 2.
+
+  go_split_cont->get_container( EXPORTING row = 1 column = 1
+                                RECEIVING container = go_left_cont ).
+  go_split_cont->get_container( EXPORTING row = 1 column = 2
+                                RECEIVING container = go_right_cont ).
+
+  CALL METHOD go_split_cont->set_column_width
+    EXPORTING
+      id    = 1
+      width = 45.
+
+
+*-- Patch ALV
+  CREATE OBJECT go_left_grid
+    EXPORTING
+      i_parent = go_left_cont.
+
+  CREATE OBJECT go_right_grid
+    EXPORTING
+      i_parent = go_right_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat_right
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat_right  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_right-key       = pv_key.
+  gs_fcat_right-fieldname = pv_field.
+  gs_fcat_right-ref_table = pv_table.
+  gs_fcat_right-just      = pv_just.
+  gs_fcat_right-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'VSBED_NAME'.
+      gs_fcat_right-coltext = '배송 방법'.
+      gs_fcat_right-f4availabl = abap_true.
+    WHEN 'ADRNR'.
+      gs_fcat_right-edit = abap_true.
+    WHEN 'TELF1'.
+      gs_fcat_right-edit = abap_true.
+    WHEN 'GBSTK_NAME'.
+      gs_fcat_right-coltext = '배송 상태'.
+    WHEN ''.
+  ENDCASE.
+
+  APPEND gs_fcat_right TO gt_fcat_right.
+  CLEAR gs_fcat_right.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_vbeln_del
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_vbeln_del .
+
+  _init gr_vbeln_del.
+
+  IF zc102sdt0004-vbeln_del IS NOT INITIAL.
+
+    gr_vbeln_del-sign = 'I'.
+    gr_vbeln_del-option = 'EQ'.
+    gr_vbeln_del-low = zc102sdt0004-vbeln_del.
+    APPEND gr_vbeln_del.
+
+  ENDIF.
+
+*-- 배송정보 미입력 건
+  CLEAR gt_left.
+  SELECT DISTINCT a~vbeln_del vbeln_so cusno finalsp waers iseme a~partner
+                  vsbed adrnr telf1 del_char vdatu gbstk cusno finalsp waers
+                  c~ddtext AS gbstk_name d~ddtext AS vsbed_name
+                  a~erdat a~ernam a~erzet a~aedat a~aenam a~aezet
+    INTO CORRESPONDING FIELDS OF TABLE gt_left
+    FROM zc102sdt0004 AS a
+
+    INNER JOIN zc102sdt0011 AS b
+    ON a~vbeln_del = b~vbeln_del
+
+    INNER JOIN dd07t AS c
+    ON a~gbstk = c~domvalue_l
+    AND c~domname = 'ZC102D_SD_GBSTK'
+
+    LEFT OUTER JOIN dd07t AS d
+    ON b~vsbed = d~domvalue_l
+    AND d~domname = 'ZC102D_SD_VSBED'
+
+    WHERE a~vbeln_del IN gr_vbeln_del
+      AND iseme = 'G'
+      AND ( ( b~adrnr EQ space ) OR ( b~vsbed EQ space ) OR ( b~del_char EQ space ) ).
+
+*-- 베송정보 입력완료 건
+  CLEAR gt_right.
+  SELECT DISTINCT a~vbeln_del vbeln_so iseme a~partner vsbed
+                  del_char wadat_ist adrnr telf1 gbstk
+                  b~ddtext AS vsbed_name c~ddtext AS gbstk_name
+                  a~erdat a~ernam a~erzet a~aedat a~aenam a~aezet
+    INTO CORRESPONDING FIELDS OF TABLE gt_right
+    FROM zc102sdt0004 AS a
+
+    INNER JOIN zc102sdt0011 AS d
+    ON a~vbeln_del = d~vbeln_del
+
+    INNER JOIN dd07t AS b
+    ON d~vsbed = b~domvalue_l
+    AND b~domname = 'ZC102D_SD_VSBED'
+
+    INNER JOIN dd07t AS c
+    ON a~gbstk = c~domvalue_l
+    AND c~domname = 'ZC102D_SD_GBSTK'
+
+    WHERE a~vbeln_del IN gr_vbeln_del
+      AND dreal EQ '00000000'
+      AND iseme = 'G'
+      AND ( ( d~adrnr NE space ) AND ( d~vsbed NE space ) AND ( d~del_char NE space ) ).
+
+  IF gt_left IS INITIAL AND gt_right IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_alv_grid
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_alv_grid .
+
+  DATA: ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-col = abap_true.
+  ls_stable-row = abap_true.
+
+  IF go_left_grid IS BOUND.
+    CALL METHOD go_left_grid->refresh_table_display
+      EXPORTING
+        is_stable = ls_stable.
+  ENDIF.
+
+  IF go_right_grid IS BOUND.
+    CALL METHOD go_right_grid->refresh_table_display
+      EXPORTING
+        is_stable = ls_stable.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_f4_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_f4_data.
+
+  CLEAR gt_vbeln.
+  SELECT vbeln_del
+    INTO CORRESPONDING FIELDS OF TABLE gt_vbeln
+    FROM zc102sdt0004
+    ORDER BY vbeln_del.
+
+  CLEAR gt_sh_vsbed.
+  SELECT DISTINCT vsbed b~ddtext AS vsbed_name
+    INTO CORRESPONDING FIELDS OF TABLE gt_sh_vsbed
+    FROM zc102sdt0011 AS a
+    INNER JOIN dd07t AS b
+    ON a~vsbed = b~domvalue_l
+    AND b~domname = 'ZC102D_SD_VSBED'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_vbeln_del
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_vbeln_del .
+
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'VBELN_DEL'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_VBELN-VBELN_DEL'
+      window_title = '납풉오더 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_vbeln
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_edit_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_OBJECT
+*&      --> E_INTERACTIVE
+*&      --> SENDER
+*&---------------------------------------------------------------------*
+FORM handle_edit_toolbar  USING po_object TYPE REF TO cl_alv_event_toolbar_set
+                                pv_interactive
+                                po_sender TYPE REF TO cl_gui_alv_grid.
+
+  CASE po_sender.
+
+    WHEN go_left_grid.
+      CLEAR gs_button.
+      gs_button-butn_type = '3'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+      CLEAR gs_button.
+      gs_button-function  = 'INPT'.
+      gs_button-icon      = icon_change.
+      gs_button-text      = TEXT-t01.
+      gs_button-quickinfo = '배송정보 입력'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+      CLEAR gs_button.
+      gs_button-function  = 'SOS'.
+      gs_button-icon      = icon_transport.
+      gs_button-text      = TEXT-t02.
+      gs_button-quickinfo = '긴급 배송으로 전환'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+    WHEN go_right_grid.
+      CLEAR gs_button.
+      gs_button-butn_type = '3'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+      CLEAR gs_button.
+      gs_button-function  = 'EDIT'.
+      gs_button-icon      = icon_change.
+      gs_button-text      = '수정'.
+      gs_button-quickinfo = '판매오더 수정'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+      CLEAR gs_button.
+      gs_button-function  = 'SAVE'.
+      gs_button-icon      = icon_system_save.
+      gs_button-text      = '저장'.
+      gs_button-quickinfo = '수정사항 저장'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_user_command
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_UCOMM
+*&---------------------------------------------------------------------*
+FORM handle_user_command  USING pv_ucomm.
+
+  CASE pv_ucomm.
+    WHEN 'INPT'.
+      PERFORM input_delivery_info.
+    WHEN 'SOS'.
+      PERFORM change_to_sos.
+    WHEN 'EDIT'.
+      PERFORM edit_delivery_info.
+    WHEN 'SAVE'.
+      PERFORM save_edit_info.
+  ENDCASE.
+
+  PERFORM refresh_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form input_delivery_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM input_delivery_info .
+
+  DATA : lt_roid TYPE lvc_t_roid,
+         ls_roid TYPE lvc_s_roid.
+
+  CALL METHOD go_left_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid.
+
+  IF lt_roid IS INITIAL.
+    MESSAGE s009 DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  READ TABLE lt_roid INTO ls_roid INDEX 1.
+  IF sy-subrc = 0.
+    READ TABLE gt_left INTO gs_left INDEX ls_roid-row_id.
+  ENDIF.
+
+  CALL SCREEN 110 STARTING AT 05 10.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_init_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_init_value .
+
+  zc102sdt0011-del_char = '(주)부릉부릉'.
+
+  CLEAR gs_deliv.
+  SELECT SINGLE a~name1 land1 stras telf1
+    FROM zc102bpt0001 AS a
+    INNER JOIN zc102sdt0001 AS b
+    ON a~partner = b~partner
+    INTO CORRESPONDING FIELDS OF gs_deliv
+    WHERE a~partner = gs_left-partner.
+
+  gv_name1 = gs_deliv-name1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_delivery_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_delivery_info .
+
+  gv_stras = gs_deliv-stras.
+  gv_telf1 = gs_deliv-telf1.
+
+  IF gs_deliv-land1 = 'KR'.
+    zc102sdt0011-vsbed = 'I'.
+    gs_left-leati = 3.
+  ELSE.
+    zc102sdt0011-vsbed = 'S'.
+    gs_left-leati = 20.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_delivery_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_delivery_info .
+
+  DATA : ls_save TYPE zc102sdt0011.
+
+  gs_left-adrnr = gv_stras.
+  gs_left-vsbed = zc102sdt0011-vsbed.
+  gs_left-del_char = zc102sdt0011-del_char.
+  gs_left-telf1 = gv_telf1.
+  gs_left-wadat_ist = gs_left-vdatu - gs_left-leati.
+
+  UPDATE zc102sdt0011
+  SET adrnr = gs_left-adrnr
+      vsbed = gs_left-vsbed
+      del_char = gs_left-del_char
+      telf1 = gs_left-telf1
+      WHERE vbeln_del = gs_left-vbeln_del
+        AND partner = gs_left-partner.
+
+  UPDATE zc102sdt0004
+  SET wadat_ist = gs_left-wadat_ist
+      gbstk = 'R'
+    WHERE vbeln_del = gs_left-vbeln_del
+     AND vbeln_so  = gs_left-vbeln_so
+     AND partner   = gs_left-partner.
+
+  IF sy-subrc = 0.
+    MESSAGE s089.                " 배송정보 입력이 완료되었습니다.
+    PERFORM display_vbeln_del.
+    PERFORM refresh_alv_grid.
+    PERFORM exit_pop.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form exit_pop
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM exit_pop .
+
+  CLEAR : gs_deliv, gv_name1, gv_stras, gv_telf1, gv_land1, zc102sdt0011-vsbed.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form change_to_sos
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM change_to_sos .
+
+  DATA : lt_roid   TYPE lvc_t_roid,
+         ls_roid   TYPE lvc_s_roid,
+         lv_answer,
+         ls_save   TYPE zc102sdt0004.
+
+  CALL METHOD go_left_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid.
+
+  IF lt_roid IS INITIAL.
+    MESSAGE s009 DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  READ TABLE lt_roid INTO ls_roid INDEX 1.
+  IF sy-subrc = 0.
+    READ TABLE gt_left INTO gs_left INDEX ls_roid-row_id.
+  ENDIF.
+
+*-- 긴급 배송 전환 확인 팝업
+  CALL FUNCTION 'ZFM_CL102_CM_POP_UP'
+    EXPORTING
+      iv_titlebar = '긴급 배송 전환'
+      iv_question = '긴급 배송으로 전환하시겠습니까?'
+    IMPORTING
+      ev_answer   = lv_answer.
+
+  CHECK lv_answer EQ 1.
+
+  gs_left-iseme = 'E'.
+  ls_save = CORRESPONDING #( gs_left ).
+
+  UPDATE zc102sdt0004 FROM ls_save.
+  IF sy-subrc = 0.
+    MESSAGE s000. " 긴급 배송 건으로 전환되었습니다.
+  ENDIF.
+  PERFORM display_vbeln_del.
+  PERFORM refresh_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form edit_delivery_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM edit_delivery_info .
+
+  IF gv_mode = 'E'.
+    MESSAGE s088 DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  gv_mode = 'E'.
+
+  CALL METHOD go_right_grid->set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_event
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_event .
+
+  CALL METHOD go_right_grid->set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_edit_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_edit_info .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         lt_save  TYPE TABLE OF zc102sdt0011.
+
+  IF gv_mode EQ 'D'.
+    MESSAGE s071 DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+  CALL METHOD go_right_grid->check_changed_data.
+
+  MOVE-CORRESPONDING gt_right TO lt_save.
+
+  MODIFY zc102sdt0011 FROM TABLE lt_save.
+
+  IF sy-subrc = 0.
+    gv_mode = 'D'.
+    CALL METHOD go_right_grid->set_ready_for_input
+      EXPORTING
+        i_ready_for_input = 0.
+    MESSAGE s029. " 수정되었습니다.
+    COMMIT WORK AND WAIT.
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_modify_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_MODIFIED
+*&      --> ET_GOOD_CELLS
+*&---------------------------------------------------------------------*
+FORM handle_modify_value USING pv_modified
+                               pt_good_cells TYPE lvc_t_modi.
+
+  CHECK pv_modified IS NOT INITIAL.
+
+  LOOP AT pt_good_cells INTO DATA(ps_good_cells).
+
+    READ TABLE gt_right INTO gs_right INDEX ps_good_cells-row_id.
+
+    gs_right-modi_yn = abap_true.
+
+    MODIFY gt_right FROM gs_right INDEX ps_good_cells-row_id
+                                  TRANSPORTING modi_yn.
+
+  ENDLOOP.
+
+  PERFORM refresh_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form onf4
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_FIELDNAME
+*&      --> E_FIELDVALUE
+*&      --> ES_ROW_NO
+*&      --> ER_EVENT_DATA
+*&      --> ET_BAD_CELLS
+*&      --> E_DISPLAY
+*&---------------------------------------------------------------------*
+FORM onf4  USING p_fieldname   TYPE  lvc_fname
+                 p_fieldvalue  TYPE  lvc_value
+                 ps_row_no     TYPE  lvc_s_roid
+                 pi_event_data TYPE REF TO cl_alv_event_data
+                 pt_bad_cells  TYPE  lvc_t_modi
+                 p_display     TYPE  char01.
+
+  PERFORM get_f4_data.
+
+  FIELD-SYMBOLS <fs_tab> TYPE STANDARD TABLE.
+
+  DATA: dynprog          LIKE sy-repid,
+        dynnr            LIKE sy-dynnr,
+        window_title(30) TYPE c,
+        l_row            TYPE p.
+
+  DATA : ls_right LIKE gs_right,
+         lv_field TYPE dfies-fieldname,
+         lv_text  TYPE help_info-dynprofld,
+         lv_flag.
+
+  READ TABLE gt_right INTO ls_right INDEX ps_row_no-row_id.
+
+  DATA : lt_return LIKE TABLE OF ddshretval WITH HEADER LINE.
+  CLEAR : dynprog, dynnr, window_title.", ls_itab.
+
+  dynprog = sy-repid.
+  dynnr   = sy-dynnr.
+
+  CASE p_fieldname.
+    WHEN 'VSBED_NAME'.
+      window_title = '배송 방법'.
+      lv_field     = 'VSBED'.
+      lv_text      = 'VSBED_NAME'.
+      ASSIGN gt_sh_vsbed TO <fs_tab>.
+  ENDCASE.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = lv_field " ALV 에 박히는 값
+      dynpprog        = dynprog
+      dynpnr          = dynnr
+      dynprofield     = lv_text
+      window_title    = window_title
+      value_org       = 'S'
+    TABLES
+      value_tab       = <fs_tab>
+      return_tab      = lt_return
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+  pi_event_data->m_event_handled = 'X'.
+
+  FIELD-SYMBOLS:  <fs> TYPE lvc_t_modi.
+
+  DATA: ls_modi TYPE lvc_s_modi.
+
+  ASSIGN pi_event_data->m_data->* TO <fs>.
+
+  READ TABLE lt_return INDEX 1.
+  IF sy-subrc = 0.
+    ls_modi-row_id    = ps_row_no-row_id.
+    ls_modi-fieldname = p_fieldname.
+    READ TABLE gt_sh_vsbed INTO DATA(ls_sh) WITH KEY vsbed = lt_return-fieldval.
+    IF sy-subrc = 0.
+      ls_modi-value = ls_sh-vsbed_name.  " 설명값 세팅
+      APPEND ls_modi TO <fs>.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_f4_event
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_f4_event .
+
+  DATA : lt_f4 TYPE lvc_t_f4 WITH HEADER LINE.
+  DATA : lt_f4_data TYPE lvc_s_f4.
+
+  lt_f4_data-fieldname = 'VSBED_NAME'.
+  lt_f4_data-register = 'X' .
+  lt_f4_data-getbefore = 'X' .
+  lt_f4_data-chngeafter  ='X'.
+  INSERT lt_f4_data INTO TABLE lt_f4.
+
+  CALL METHOD go_right_grid->register_f4_for_fields
+    EXPORTING
+      it_f4 = lt_f4[].
+
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

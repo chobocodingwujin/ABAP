@@ -1,0 +1,86 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102MMR0002_1</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102MMR0002_1</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [MM] 자재 관리</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102MMR0002</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zc102mmr0002_1top.html">zc102mmr0002_1top</a>.
+<font color ="#0000FF">*INCLUDE zc102mmr0002top                         .    " Global Data</font>
+
+include <a href ="zc102mmr0002_1c01.html">zc102mmr0002_1c01</a>.
+<font color ="#0000FF">*INCLUDE zc102mmr0002c01                         .  " Local class</font>
+include <a href ="zc102mmr0002_1o01.html">zc102mmr0002_1o01</a>.
+<font color ="#0000FF">*INCLUDE zc102mmr0002o01                         .  " PBO-Modules</font>
+include <a href ="zc102mmr0002_1i01.html">zc102mmr0002_1i01</a>.
+<font color ="#0000FF">*INCLUDE zc102mmr0002i01                         .  " PAI-Modules</font>
+include <a href ="zc102mmr0002_1f01.html">zc102mmr0002_1f01</a>.
+<font color ="#0000FF">*INCLUDE zc102mmr0002f01                         .  " FORM-Routines</font>
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+  CALL SCREEN 100.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* TITLE100 --&gt; 자재 관리</font>
+<font color ="#0000FF">* TITLE110 --&gt; 폐기 대상 리스트</font>
+<font color ="#0000FF">* TITLE120 --&gt; 재고 실사</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* B01    폐기리스트</font>
+<font color ="#0000FF">* B02    폐기리스트 해제</font>
+<font color ="#0000FF">* C01 원자재 목록</font>
+<font color ="#0000FF">* C02 완제품 목록</font>
+<font color ="#0000FF">* E01 재고 실사를 진행할 항목을 선택해주세요.</font>
+<font color ="#0000FF">* E02 실제 수량과 현재 수량이 일치합니다.</font>
+<font color ="#0000FF">* E03 다시 한 번 시도해주십시오.</font>
+<font color ="#0000FF">* E04 반품 사유 입력시 반품 수량을 반드시 입력해주세요.</font>
+<font color ="#0000FF">* E05 폐기할 항목을 선택해주세요.</font>
+<font color ="#0000FF">* E06 반품 수량을 먼저 입력해주십시오.</font>
+<font color ="#0000FF">* S01 재고 실사 처리가 완료되었습니다.</font>
+<font color ="#0000FF">* T01 플랜트(창고) 선택</font>
+<font color ="#0000FF">* T02 자재 유형</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_PTYPE         원자재창고</font>
+<font color ="#0000FF">* PA_RTYPE         완제품 창고</font>
+<font color ="#0000FF">* PA_STLNO D       .</font>
+<font color ="#0000FF">* PA_WERKS         Plant 번호</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: Hard coded</font>
+<font color ="#0000FF">*   입고일은 미래 날짜일 수 없습니다.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZC102MSG</font>
+<font color ="#0000FF">*000   &</font>
+<font color ="#0000FF">*004   데이터가 존재하지 않습니다</font>
+<font color ="#0000FF">*010   & 건이 조회되었습니다.</font>
+<font color ="#0000FF">*034   반품 수량은 주문 수량보다 적어야 합니다.</font>
+<font color ="#0000FF">*049   유통기한 폐기는 전량폐기가 원칙입니다. 전체 수량으로 설정됩니다.</font>
+<font color ="#0000FF">*050   재고 실사는 다건 입력이 불가하며 개별 항목 단위로 처리됩니다.</font>
+<font color ="#0000FF">*079   플랜트 번호를 먼저 입력하세요.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

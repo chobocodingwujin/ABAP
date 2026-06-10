@@ -1,0 +1,54 @@
+<mvc:View controllerName="bpcontrol.bpcontrol.controller.BP_Detail"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m"
+    xmlns:f="sap.f"
+    xmlns:table="sap.ui.table"
+    xmlns:u="sap.ui.unified"
+    xmlns:c="sap.ui.core"
+    xmlns:sfb="sap.ui.comp.smartfilterbar"
+    xmlns:smartTable="sap.ui.comp.smarttable"
+    xmlns:sv="sap.ui.comp.smartvariants">
+    <!-- <VBox> -->
+    <!-- <Button id="toggleUpdateMode" text="Change to 'LiveMode'" press="toggleUpdateMode"/> -->
+    <f:DynamicPage id="dynamicPage3" fitContent="true">
+        <f:header>
+            <f:DynamicPageHeader>
+                <f:dependents>
+                    <c:CommandExecution command="Enter" enabled="true" />
+                </f:dependents>
+                <sfb:SmartFilterBar search="cmd:Enter" id="smartFilterBar_acc2" entitySet="BankSet" filterBarExpanded="true" enableBasicSearch="false" basicSearchFieldName="Partner" persistencyKey="BP_Display" visible="true">
+                    <sfb:customData>
+                        <c:CustomData key="defaultFilterBarExpanded" value='{"Partner": "true"}'/>
+                        <c:CustomData key="defaultShowAllFilters" value='{"Partner": "true"}'/>
+                        <!-- <c:CustomData key="defaultFilterBarExpanded" value='{"Name1": "true"}'/>
+                        <c:CustomData key="defaultShowAllFilters" value='{"Name1": "true"}'/> -->
+                    </sfb:customData>
+                </sfb:SmartFilterBar>
+            </f:DynamicPageHeader>
+        </f:header>
+        <f:content>
+            <smartTable:SmartTable id="accTable2" header="계좌" entitySet="BankSet" smartFilterId="smartFilterBar_acc" tableType="ResponsiveTable" enableExport="true" beforeExport="onBeforeExport" showFullScreenButton="true" useVariantManagement="false" enableAutoColumnWidth="false" useTablePersonalisation="true" showRowCount="true">
+                <smartTable:layoutData>
+                    <FlexItemData growFactor="1" baseSize="0%"/>
+                </smartTable:layoutData>
+                <smartTable:customData>
+                    <!-- <c:CustomData key="defaultShowAllFilters" value='{"Partner": "true"}'/>
+                    <c:CustomData key="defaultFilterBarExpanded" value='{"Partner": "true"}'/>
+                    <c:CustomData key="defaultShowAllFilters" value='{"Name1": "true"}'/>
+                    <c:CustomData key="defaultFilterBarExpanded" value='{"Name1": "true"}'/> -->
+                    <!-- <c:CustomData key="columnWidth" value='{"RoleText"}:"120px"'/> -->
+                </smartTable:customData>
+                <smartTable:customToolbar>
+                    <OverflowToolbar design="Transparent">
+                        <ToolbarSpacer/>
+                        <!-- <OverflowToolbarButton icon="sap-icon://activate" tooltip="Apply UI state changes" press="applyUiState"/>
+                            <OverflowToolbarButton icon="sap-icon://sort" tooltip="Sort" text="Sort" press="onSort"/>
+                            <OverflowToolbarButton icon="sap-icon://filter" tooltip="Filter" text="Filter" press="onFilter"/>
+                            <OverflowToolbarButton icon="sap-icon://group-2" tooltip="Group" text="Group" press="onGroup"/> -->
+                        <!-- <OverflowToolbarButton icon="sap-icon://action-settings" tooltip="Column Settings" text="Column Settings" press="onColumns"/> -->
+                    </OverflowToolbar>
+                </smartTable:customToolbar>
+            </smartTable:SmartTable>
+        </f:content>
+    </f:DynamicPage>
+</mvc:View>

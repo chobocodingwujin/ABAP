@@ -1,0 +1,1184 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0021F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0021F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0021F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102FIR0021F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_base_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_base_data .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+<font color ="#0000FF">*-- BP 데이터</font>
+  SELECT a~partner,
+         a~name1,
+         SUM( coalesce( b~wrbtr, 0 ) ) AS wrbtr,
+         waers
+    FROM zc102bpt0001 AS a
+    LEFT JOIN zc102fit0010 AS b
+      ON a~partner = b~partner
+       AND b~shkzg = 'S' " 필요 시 여기에 조건 걸기
+    INTO CORRESPONDING FIELDS OF TABLE @gt_partner
+    WHERE a~partner IN @so_bpart
+      AND gjahr = @pa_gjahr
+    GROUP BY a~partner, a~name1, waers
+    ORDER BY a~partner.
+
+<font color ="#0000FF">*-- 미결 전표 헤더</font>
+  SELECT a~belnr, partner, a~waers, SUM( wrbtr ) AS wrbtr,
+         bktxt, bldat, budat
+    FROM zc102fit0010 AS a INNER JOIN zc102fit0009 AS b
+      ON a~bukrs = b~bukrs
+     AND a~belnr = b~belnr
+     AND a~gjahr = b~gjahr
+    INTO CORRESPONDING FIELDS OF TABLE @gt_open_h
+    WHERE "partner IN @so_bpart
+          a~belnr IN ( SELECT belnr
+                         FROM zc102fit0010 WHERE partner IN @so_bpart )
+      AND a~gjahr = @pa_gjahr
+      AND shkzg = 'S'
+    GROUP BY a~belnr, partner, a~waers, bktxt, bldat, budat, shkzg
+    ORDER BY a~belnr.
+<font color ="#0000FF">*  SELECT a~belnr, partner, a~waers, SUM( wrbtr ) AS wrbtr,</font>
+<font color ="#0000FF">*         bktxt, bldat, budat</font>
+<font color ="#0000FF">*    FROM zc102fit0010 AS a INNER JOIN zc102fit0009 AS b</font>
+<font color ="#0000FF">*      ON a~bukrs = b~bukrs</font>
+<font color ="#0000FF">*     AND a~belnr = b~belnr</font>
+<font color ="#0000FF">*     AND a~gjahr = b~gjahr</font>
+<font color ="#0000FF">*    INTO CORRESPONDING FIELDS OF TABLE @gt_open_h</font>
+<font color ="#0000FF">*    WHERE "partner IN @so_bpart</font>
+<font color ="#0000FF">*          a~belnr IN ( SELECT belnr</font>
+<font color ="#0000FF">*                         FROM zc102fit0010 WHERE partner IN @so_bpart )</font>
+<font color ="#0000FF">*      AND shkzg = 'S'</font>
+<font color ="#0000FF">*    GROUP BY a~belnr, partner, a~waers, bktxt, bldat, budat, shkzg</font>
+<font color ="#0000FF">*    ORDER BY a~belnr.</font>
+
+<font color ="#0000FF">*-- 미결 전표 아이템</font>
+  SELECT belnr, buzei, shkzg, saknr, partner, wrbtr,
+         waers, sgtxt
+    FROM zc102fit0010
+    INTO CORRESPONDING FIELDS OF TABLE @gt_open
+    WHERE "partner IN @so_bpart
+          belnr IN ( SELECT belnr
+                       FROM zc102fit0010 WHERE partner IN @so_bpart )
+      AND gjahr = @pa_gjahr
+    ORDER BY belnr, shkzg DESCENDING.
+
+<font color ="#0000FF">*-- 미결 전표 아이템 대변 금액 음수</font>
+  LOOP AT gt_open INTO gs_open WHERE shkzg = 'H'.
+    lv_tabix = sy-tabix.
+    gs_open-wrbtr *= -1.
+    MODIFY gt_open FROM gs_open INDEX lv_tabix TRANSPORTING wrbtr.
+  ENDLOOP.
+
+<font color ="#0000FF">*-- 반제 전표 헤더</font>
+  SELECT a~belnr, partner, rebzg, a~waers, SUM( wrbtr ) AS wrbtr,
+         bktxt, bldat, budat
+    FROM zc102fit0016 AS a INNER JOIN zc102fit0009 AS b
+      ON a~bukrs = b~bukrs
+     AND a~belnr = b~belnr
+     AND a~gjahr = b~gjahr
+    INTO CORRESPONDING FIELDS OF TABLE @gt_clear_h
+    WHERE " partner IN @so_bpart
+          a~belnr IN ( SELECT belnr
+                         FROM zc102fit0016 WHERE partner IN @so_bpart )
+      AND a~gjahr = @pa_gjahr
+      AND shkzg = 'S'
+    GROUP BY a~belnr, partner, a~waers, rebzg, bktxt, bldat, budat
+    ORDER BY a~belnr.
+
+<font color ="#0000FF">*-- 반제 전표 아이템</font>
+  SELECT belnr, buzei, shkzg, saknr, wrbtr, waers, sgtxt
+    FROM zc102fit0016
+    INTO CORRESPONDING FIELDS OF TABLE @gt_clear
+    WHERE "partner IN @so_bpart
+          belnr IN ( SELECT belnr
+                       FROM zc102fit0016 WHERE partner IN @so_bpart )
+      AND gjahr = @pa_gjahr
+    ORDER BY belnr, shkzg DESCENDING.
+
+<font color ="#0000FF">*-- 미결 전표 아이템 대변 금액 음수</font>
+  LOOP AT gt_clear INTO gs_clear WHERE shkzg = 'H'.
+    lv_tabix = sy-tabix.
+    gs_clear-wrbtr *= -1.
+    MODIFY gt_clear FROM gs_clear INDEX lv_tabix TRANSPORTING wrbtr.
+  ENDLOOP.
+
+
+  IF gt_partner IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen_0100</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen_0100 .
+
+  IF go_tree IS NOT BOUND.
+
+    PERFORM init_tree.
+    PERFORM define_hierarchy_header CHANGING gs_hierhdr.
+    PERFORM build_comment USING gt_list_commentary gv_logo.
+    PERFORM define_field_catalog.
+    PERFORM create_hierarchy.
+    PERFORM fill_column_tree.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form init_tree</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM init_tree .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = go_container-&gt;dock_at_left
+      extension = 3000.
+
+  CREATE OBJECT go_tree
+    EXPORTING
+      parent              = go_container
+      node_selection_mode = cl_gui_column_tree=&gt;node_sel_mode_multiple
+      item_selection      = 'X'
+      no_html_header      = pa_check.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form define_hierarchy_header</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      &lt;-- GS_HIERHDR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM define_hierarchy_header CHANGING ps_hierhdr TYPE treev_hhdr.
+
+  ps_hierhdr-heading = 'Business Partner'.
+  ps_hierhdr-tooltip = 'Business Partner'.
+  ps_hierhdr-width = 35.
+  ps_hierhdr-width_pix = space.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form build_comment</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GT_LIST_COMMENTARY</font>
+<font color ="#0000FF">*&      --&gt; GV_LOGO</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM build_comment USING pt_list_commentary TYPE slis_t_listheader
+                         pv_logo            TYPE sdydo_value.
+  DATA: ls_line TYPE slis_listheader.
+
+  CLEAR ls_line.
+  ls_line-typ = 'H'. " High font
+  ls_line-info = '비즈니스 파트너 거래내역'.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " Small font
+  ls_line-key = 'Current date : '.
+  ls_line-info = sy-datum.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'.
+  ls_line-key = 'Current time : '.
+  ls_line-info = sy-uzeit.
+  APPEND ls_line TO pt_list_commentary.
+
+<font color ="#0000FF">*  CLEAR ls_line.</font>
+<font color ="#0000FF">*  ls_line-typ = 'A'. " Italic font</font>
+<font color ="#0000FF">*  ls_line-info = 'SYNC-6 Seoul'.</font>
+<font color ="#0000FF">*  APPEND ls_line TO pt_list_commentary.</font>
+<font color ="#0000FF">*</font>
+  pv_logo = 'ENJOYSAP_LOGO'.
+  gs_variant-report = sy-repid.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form define_field_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM define_field_catalog .
+<font color ="#0000FF">*gt_tr_partner.</font>
+  CLEAR : gt_fcat, gs_fcat.
+  PERFORM set_field_catalog USING :
+                                    'BUZEI'  '개별항목'       'X' 'C',
+                                    'SHKZG'  '차/대 구분'     'X' 'C',
+                                    'SAKNR'  'G/L Account' 'X' 'C',
+                                    'WRBTR'  '금액'          ' ' 'R',
+                                    'WAERS'  '통화키'         ' ' 'C',
+                                    'SGTXT'  '아이템 상세'      ' ' ' ',
+                                    'BLDAT'  '증빙 일자'       ' ' 'C',
+                                    'BUDAT'  '전기 일자'       ' ' 'C'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_field_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_field_catalog USING pv_field pv_text pv_noout pv_just.
+
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-coltext   = pv_text.
+  gs_fcat-no_out    = pv_noout.
+  gs_fcat-just      = pv_just.
+  gs_fcat-outputlen = 36.
+
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_fcat-cfieldname = 'WAERS'.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_hierarchy</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_hierarchy .
+
+<font color ="#0000FF">*-- 트리 오른쪽 데이터 출력</font>
+  CALL METHOD go_tree-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant          = gs_variant
+      i_save              = 'A'
+      i_default           = 'X'
+      is_hierarchy_header = gs_hierhdr
+      it_list_commentary  = gt_list_commentary
+<font color ="#0000FF">*     i_logo              = gv_logo</font>
+      i_background_id     = 'SIWB_WALLPAPER'  " 'TRVPICTURE18'
+    CHANGING
+      it_outtab           = gt_tree
+      it_fieldcatalog     = gt_fcat.
+
+<font color ="#0000FF">*--register item_cxt_menu_request------------------------------------*.</font>
+  SET HANDLER : lcl_event_handler=&gt;on_item_cxt_menu_request  FOR go_tree,
+                lcl_event_handler=&gt;on_item_cxt_menu_selected FOR go_tree,
+                lcl_event_handler=&gt;on_checkbox_change        FOR go_tree.
+
+  CALL METHOD go_tree-&gt;get_registered_events
+    IMPORTING
+      events = gt_events.
+
+  gs_event-eventid = cl_gui_column_tree=&gt;eventid_checkbox_change.
+  APPEND gs_event TO gt_events.
+<font color ="#0000FF">*  gs_event-eventid = cl_gui_column_tree=&gt;eventid_item_context_menu_req.</font>
+<font color ="#0000FF">*  APPEND gs_event TO gt_events.</font>
+
+  CALL METHOD go_tree-&gt;set_registered_events
+    EXPORTING
+      events = gt_events.
+
+<font color ="#0000FF">*--add new functions to toolbar--------------------------------------*</font>
+<font color ="#0000FF">*  PERFORM add_function_to_toolbar.</font>
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_column_tree</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_column_tree .
+
+  DATA: lv_node_text    TYPE lvc_value,
+        lv_bu_group_key TYPE lvc_nkey,
+        lv_root_key     TYPE lvc_nkey,
+        lv_open_key     TYPE lvc_nkey,
+        lv_last_key     TYPE lvc_nkey,
+        lv_clear_key    TYPE lvc_nkey,
+        lt_layout_item  TYPE lvc_t_layi,
+        ls_layout       TYPE lvc_s_layn.
+
+<font color ="#0000FF">*-- Layout 세팅</font>
+  ls_layout-isfolder = 'X'.
+  ls_layout-n_image  = '@06@'.
+  ls_layout-exp_image = '@07@'.
+
+<font color ="#0000FF">*-- BP 노드 생성</font>
+  LOOP AT gt_partner INTO gs_partner.
+    CLEAR gs_tree.
+<font color ="#0000FF">*    gs_tree-partner = gs_partner-partner.</font>
+    gs_tree-name1 = gs_partner-name1.
+    gs_tree-sgtxt = gs_partner-name1.
+    gs_tree-wrbtr = gs_partner-wrbtr.
+    gs_tree-waers = gs_partner-waers.
+<font color ="#0000FF">*    APPEND gs_tree TO gt_tree.</font>
+
+    PERFORM create_item_layouts USING abap_false CHANGING lt_layout_item.
+
+    lv_node_text = gs_partner-name1.
+
+    CALL METHOD go_tree-&gt;add_node
+      EXPORTING
+        i_relat_node_key = lv_root_key           " 상위 노드 키
+        i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+        i_node_text      = lv_node_text
+        is_node_layout   = ls_layout
+        it_item_layout   = lt_layout_item
+        is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+      IMPORTING
+        e_new_node_key   = lv_bu_group_key.
+
+<font color ="#0000FF">*-- 미결 헤더 노드</font>
+    LOOP AT gt_open_h INTO gs_open_h WHERE partner = gs_partner-partner
+                                       AND waers = gs_partner-waers.
+      CLEAR gs_tree.
+      gs_tree-belnr = gs_open_h-belnr.
+<font color ="#0000FF">*      gs_tree-wrbtr = gs_open_h-wrbtr.</font>
+<font color ="#0000FF">*      gs_tree-waers = gs_open_h-waers.</font>
+<font color ="#0000FF">*      gs_tree-bktxt = gs_open_h-bktxt.</font>
+      gs_tree-sgtxt = gs_open_h-bktxt.
+<font color ="#0000FF">*-- 날짜를 문자열로 변환 (예: 20250423 -&gt; '2025-04-23')</font>
+      gs_tree-bldat = gs_open_h-bldat+0(4) && '-' &&
+                      gs_open_h-bldat+4(2) && '-' &&
+                      gs_open_h-bldat+6(2).
+
+      gs_tree-budat = gs_open_h-budat+0(4) && '-' &&
+                      gs_open_h-budat+4(2) && '-' &&
+                      gs_open_h-budat+6(2).
+
+      PERFORM create_item_layouts USING abap_false CHANGING lt_layout_item.
+
+      lv_node_text = gs_open_h-belnr.
+      CALL METHOD go_tree-&gt;add_node
+        EXPORTING
+          i_relat_node_key = lv_bu_group_key           " 상위 노드 키
+          i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+          i_node_text      = lv_node_text
+          is_node_layout   = ls_layout
+          it_item_layout   = lt_layout_item
+          is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+        IMPORTING
+          e_new_node_key   = lv_open_key.
+
+<font color ="#0000FF">*-- 미결 아이템 노드</font>
+      LOOP AT gt_open INTO gs_open WHERE belnr = gs_open_h-belnr
+                                     AND waers = gs_open_h-waers.
+        " 데이터 설치
+        CLEAR gs_tree.
+<font color ="#0000FF">*        gs_tree-belnr = gs_open-belnr.</font>
+        gs_tree-wrbtr = gs_open-wrbtr.
+        gs_tree-waers = gs_open-waers.
+        gs_tree-sgtxt = gs_open-sgtxt.
+        gs_tree-saknr = gs_open-saknr.
+        gs_tree-buzei = gs_open-buzei.
+        gs_tree-shkzg = gs_open-shkzg.
+<font color ="#0000FF">*        APPEND gs_tree TO gt_tree.</font>
+
+        PERFORM create_item_layouts USING abap_false CHANGING lt_layout_item.
+
+        IF gs_open-shkzg = 'S'.
+          lv_node_text = '차변'.
+        ELSE.
+          lv_node_text = '대변'.
+        ENDIF.
+        CALL METHOD go_tree-&gt;add_node
+          EXPORTING
+            i_relat_node_key = lv_open_key           " 상위 노드 키
+            i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+            i_node_text      = lv_node_text
+            it_item_layout   = lt_layout_item
+            is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+          IMPORTING
+            e_new_node_key   = lv_last_key.
+      ENDLOOP.
+
+<font color ="#0000FF">*-- 반제 헤더 노드</font>
+      LOOP AT gt_clear_h INTO gs_clear_h WHERE rebzg = gs_open_h-belnr.
+        ON CHANGE OF gs_clear_h-belnr.
+
+          CLEAR gs_tree.
+          gs_tree-belnr = gs_clear_h-belnr.
+<font color ="#0000FF">*          gs_tree-wrbtr = gs_clear_h-wrbtr.</font>
+<font color ="#0000FF">*          gs_tree-waers = gs_clear_h-waers.</font>
+<font color ="#0000FF">*          gs_tree-bktxt = gs_clear_h-bktxt.</font>
+          gs_tree-sgtxt = gs_clear_h-bktxt.
+          gs_tree-bldat = gs_clear_h-bldat+0(4) && '-' &&
+                          gs_clear_h-bldat+4(2) && '-' &&
+                          gs_clear_h-bldat+6(2).
+
+          gs_tree-budat = gs_clear_h-budat+0(4) && '-' &&
+                          gs_clear_h-budat+4(2) && '-' &&
+                          gs_clear_h-budat+6(2).
+<font color ="#0000FF">*          APPEND gs_tree TO gt_tree.</font>
+
+          PERFORM create_item_layouts USING abap_false CHANGING lt_layout_item.
+
+          lv_node_text = gs_clear_h-belnr.
+          CALL METHOD go_tree-&gt;add_node
+            EXPORTING
+              i_relat_node_key = lv_open_key           " 상위 노드 키
+              i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+              i_node_text      = lv_node_text
+              is_node_layout   = ls_layout
+              it_item_layout   = lt_layout_item
+              is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+            IMPORTING
+              e_new_node_key   = lv_clear_key.
+        ENDON.
+
+<font color ="#0000FF">*-- 반제 아이템 노드</font>
+        LOOP AT gt_clear INTO gs_clear WHERE belnr = gs_clear_h-belnr
+                                         AND waers = gs_clear_h-waers.
+          CLEAR gs_tree.
+<font color ="#0000FF">*          gs_tree-belnr = gs_clear-belnr.</font>
+          gs_tree-wrbtr = gs_clear-wrbtr.
+          gs_tree-waers = gs_clear-waers.
+          gs_tree-sgtxt = gs_clear-sgtxt.
+          gs_tree-saknr = gs_clear-saknr.
+          gs_tree-buzei = gs_clear-buzei.
+          gs_tree-shkzg = gs_clear-shkzg.
+<font color ="#0000FF">*          APPEND gs_tree TO gt_tree.</font>
+
+          PERFORM create_item_layouts USING abap_false CHANGING lt_layout_item.
+
+          IF gs_clear-shkzg = 'S'.
+            lv_node_text = '차변'.
+          ELSE.
+            lv_node_text = '대변'.
+          ENDIF.
+          CALL METHOD go_tree-&gt;add_node
+            EXPORTING
+              i_relat_node_key = lv_clear_key           " 상위 노드 키
+              i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+              i_node_text      = lv_node_text
+              it_item_layout   = lt_layout_item
+              is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+            IMPORTING
+              e_new_node_key   = lv_last_key.
+        ENDLOOP.
+      ENDLOOP.
+    ENDLOOP.
+  ENDLOOP.
+
+  CALL METHOD : go_tree-&gt;update_calculations,
+                go_tree-&gt;frontend_update,
+                cl_gui_cfw=&gt;flush.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form change</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_1</font>
+<font color ="#0000FF">*&      --&gt; CL_GUI_COLUMN_TREE=&gt;ITEM_FONT_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM change USING type  TYPE i
+                   value TYPE i.
+
+  DATA: lt_selected_nodes   TYPE lvc_t_nkey,
+        ls_selected_node    TYPE lvc_nkey,
+        lt_item_layout      TYPE lvc_t_layi,
+        ls_item_layout_wa   TYPE lvc_s_layi,
+        lt_change_layout    TYPE lvc_t_laci,
+        ls_change_layout_wa TYPE lvc_s_laci,
+        l_fieldname         TYPE lvc_fname,
+        ls_outtab           TYPE sflight.
+
+  CALL METHOD go_tree-&gt;get_selected_nodes
+    CHANGING
+      ct_selected_nodes = lt_selected_nodes.
+
+  IF lt_selected_nodes IS INITIAL.
+    CALL METHOD go_tree-&gt;get_selected_item
+      IMPORTING
+        e_selected_node = ls_selected_node
+        e_fieldname     = l_fieldname.
+    APPEND ls_selected_node TO lt_selected_nodes.
+  ENDIF.
+
+  LOOP AT lt_selected_nodes INTO ls_selected_node.
+    CALL METHOD go_tree-&gt;get_outtab_line
+      EXPORTING
+        i_node_key     = ls_selected_node
+      IMPORTING
+        e_outtab_line  = ls_outtab
+        et_item_layout = lt_item_layout.
+
+    CLEAR lt_change_layout.
+    LOOP AT lt_item_layout INTO ls_item_layout_wa.
+      IF l_fieldname IS INITIAL OR
+         ls_item_layout_wa-fieldname EQ l_fieldname.
+
+        MOVE-CORRESPONDING ls_item_layout_wa TO ls_change_layout_wa.
+
+        CASE type.
+          WHEN 0.
+            ls_change_layout_wa-class = value.
+            ls_change_layout_wa-u_class = 'X'.
+            IF value EQ cl_gui_column_tree=&gt;item_class_checkbox.
+              ls_change_layout_wa-editable = 'X'.
+            ELSE.
+              ls_change_layout_wa-editable = space.
+            ENDIF.
+            ls_change_layout_wa-u_editable = 'X'.
+          WHEN 1.
+            ls_change_layout_wa-font = value.
+            ls_change_layout_wa-u_font = 'X'.
+          WHEN 2.
+            ls_change_layout_wa-style = value.
+            ls_change_layout_wa-u_style = 'X'.
+          WHEN 3.
+            IF value EQ 0.
+              ls_change_layout_wa-t_image = icon_okay.
+            ELSE.
+              ls_change_layout_wa-t_image = space.
+            ENDIF.
+
+            ls_change_layout_wa-u_t_image = 'X'.
+        ENDCASE.
+        APPEND ls_change_layout_wa TO lt_change_layout.
+      ENDIF.
+    ENDLOOP.
+
+    CALL METHOD go_tree-&gt;change_node
+      EXPORTING
+        i_node_key     = ls_selected_node
+        i_outtab_line  = ls_outtab
+        it_item_layout = lt_change_layout.
+
+  ENDLOOP.
+
+  CALL METHOD go_tree-&gt;frontend_update.
+  CALL METHOD cl_gui_cfw=&gt;flush.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_item_layouts</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      &lt;-- LT_LAYOUT_ITEM</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_item_layouts USING pv_mode
+                         CHANGING pt_item_layout TYPE lvc_t_layi.
+
+  DATA: ls_item_layout TYPE lvc_s_layi.
+
+  CLEAR pt_item_layout.
+<font color ="#0000FF">*  LOOP AT gt_fcat INTO gs_fcat.</font>
+<font color ="#0000FF">*    CLEAR ls_item_layout.</font>
+<font color ="#0000FF">*    IF gs_fcat-no_out EQ space.</font>
+<font color ="#0000FF">*      ls_item_layout-fieldname = gs_fcat-fieldname.</font>
+<font color ="#0000FF">*      APPEND ls_item_layout TO pt_item_layout.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+
+  CLEAR ls_item_layout.
+  ls_item_layout-fieldname = go_tree-&gt;c_hierarchy_column_name.
+  ls_item_layout-class = cl_gui_column_tree=&gt;item_class_checkbox.
+  ls_item_layout-editable = 'X'.
+  ls_item_layout-chosen = pv_mode.
+  APPEND ls_item_layout TO pt_item_layout.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_checkbox_change</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; CHECKED</font>
+<font color ="#0000FF">*&      --&gt; FIELDNAME</font>
+<font color ="#0000FF">*&      --&gt; NODE_KEY</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_checkbox_change USING pv_checked pv_fieldname pv_node_key.
+
+  DATA : lt_children      TYPE lvc_t_nkey,
+         lt_item_layout   TYPE lvc_t_layi,
+         lt_item_layout_c TYPE lvc_t_laci,
+         ls_layout        TYPE lvc_s_layn,
+         ls_layout_c      TYPE lvc_s_lacn,
+         ls_tree          LIKE gs_tree,
+         lv_mode          TYPE abap_bool.
+
+<font color ="#0000FF">*-- 선택한 노드 하위 노드 가져오기</font>
+  CALL METHOD go_tree-&gt;get_subtree
+    EXPORTING
+      i_node_key       = pv_node_key
+    IMPORTING
+      et_subtree_nodes = lt_children.
+
+
+  LOOP AT lt_children INTO DATA(ls_children).
+
+<font color ="#0000FF">*-- 서브트리 노드 가져오기</font>
+    CLEAR : lt_item_layout.
+    CALL METHOD go_tree-&gt;get_outtab_line
+      EXPORTING
+        i_node_key     = ls_children
+      IMPORTING
+        e_outtab_line  = ls_tree
+        et_item_layout = lt_item_layout
+        es_node_layout = ls_layout.
+
+    CLEAR : lt_item_layout_c.
+<font color ="#0000FF">*    MOVE-CORRESPONDING ls_layout TO ls_layout_c.</font>
+    MOVE-CORRESPONDING lt_item_layout TO lt_item_layout_c.
+
+<font color ="#0000FF">*-- 체크 여부 Layout 세팅</font>
+    PERFORM create_item_layouts_laci USING pv_checked
+                                           lt_item_layout
+                                     CHANGING lt_item_layout_c.
+
+<font color ="#0000FF">*-- 노드 체크 or 해제로 변경</font>
+    CALL METHOD go_tree-&gt;change_node
+      EXPORTING
+        i_node_key     = ls_children
+        i_outtab_line  = ls_tree
+<font color ="#0000FF">*       is_node_layout = ls_layout_c</font>
+        it_item_layout = lt_item_layout_c.
+
+  ENDLOOP.
+
+  CALL METHOD go_tree-&gt;frontend_update.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form add_function_to_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM add_function_to_toolbar .
+
+  DATA: lo_toolbar     TYPE REF TO cl_gui_toolbar,
+        lo_style_menu  TYPE REF TO cl_ctmenu,
+        lo_image_menu  TYPE REF TO cl_ctmenu,
+        lo_change_menu TYPE REF TO cl_ctmenu.
+
+  CALL METHOD go_tree-&gt;get_toolbar_object
+    IMPORTING
+      er_toolbar = lo_toolbar.
+
+  CHECK NOT lo_toolbar IS INITIAL.
+
+<font color ="#0000FF">*-- Submenu for fonts</font>
+  DATA lo_font_menu TYPE REF TO cl_ctmenu.
+  CREATE OBJECT lo_font_menu.
+
+  CALL METHOD lo_font_menu-&gt;add_function
+    EXPORTING
+      fcode = 'FONT_DEFAULT'
+      text  = 'Default'.
+
+  CALL METHOD lo_font_menu-&gt;add_function
+    EXPORTING
+      fcode = 'PROP'
+      text  = 'Prop'.
+
+  CALL METHOD lo_font_menu-&gt;add_function
+    EXPORTING
+      fcode = 'FIXED'
+      text  = 'Fixed'.
+
+<font color ="#0000FF">*-- Submenu for style</font>
+  CREATE OBJECT lo_style_menu.
+
+  CALL METHOD lo_style_menu-&gt;add_function
+    EXPORTING
+      fcode = 'STYLE_DEFAULT'
+      text  = 'Default'.
+
+  CALL METHOD lo_style_menu-&gt;add_function
+    EXPORTING
+      fcode = 'INHERITED'
+      text  = 'Inherited'.
+
+  CALL METHOD lo_style_menu-&gt;add_function
+    EXPORTING
+      fcode = 'INTENSIFIED'
+      text  = 'Intensified'.
+
+  CALL METHOD lo_style_menu-&gt;add_function
+    EXPORTING
+      fcode = 'INACTIVE'
+      text  = 'Inactive'.
+
+  CALL METHOD lo_style_menu-&gt;add_function
+    EXPORTING
+      fcode = 'CRITICAL'
+      text  = 'Critical'.
+
+  CALL METHOD lo_style_menu-&gt;add_function
+    EXPORTING
+      fcode = 'NEGATIVE'
+      text  = 'Negative'.
+
+  CALL METHOD lo_style_menu-&gt;add_function
+    EXPORTING
+      fcode = 'POSITIVE'
+      text  = 'Positive'.
+
+  CALL METHOD lo_style_menu-&gt;add_function
+    EXPORTING
+      fcode = 'EMPHASIZED'
+      text  = 'Emphasized'.
+
+<font color ="#0000FF">*-- Submenu for class</font>
+  DATA lo_class_menu TYPE REF TO cl_ctmenu.
+  CREATE OBJECT lo_class_menu.
+
+  CALL METHOD lo_class_menu-&gt;add_function
+    EXPORTING
+      fcode = 'TEXT'
+      text  = 'Text'.
+
+  CALL METHOD lo_class_menu-&gt;add_function
+    EXPORTING
+      fcode = 'CHECKBOX'
+      text  = 'Checkbox'.
+
+  CALL METHOD lo_class_menu-&gt;add_function
+    EXPORTING
+      fcode = 'BUTTON'
+      text  = 'Button'.
+
+  CALL METHOD lo_class_menu-&gt;add_function
+    EXPORTING
+      fcode = 'LINK'
+      text  = 'Link'.
+
+<font color ="#0000FF">*-- Submenu for image/no image</font>
+  CREATE OBJECT lo_image_menu.
+
+  CALL METHOD lo_image_menu-&gt;add_function
+    EXPORTING
+      fcode = 'IMAGE'
+      text  = 'Image'.
+
+  CALL METHOD lo_image_menu-&gt;add_function
+    EXPORTING
+      fcode = 'NOIMAGE'
+      text  = 'No Image'.
+
+<font color ="#0000FF">*-- Change menu</font>
+  CREATE OBJECT lo_change_menu.
+
+  CALL METHOD lo_change_menu-&gt;add_submenu
+    EXPORTING
+      menu = lo_font_menu
+      text = 'Font'.
+
+  CALL METHOD lo_change_menu-&gt;add_submenu
+    EXPORTING
+      menu = lo_style_menu
+      text = 'Style'.
+
+  CALL METHOD lo_change_menu-&gt;add_submenu
+    EXPORTING
+      menu = lo_class_menu
+      text = 'Class'.
+
+  CALL METHOD lo_change_menu-&gt;add_submenu
+    EXPORTING
+      menu = lo_image_menu
+      text = 'Image'.
+
+<font color ="#0000FF">*-- Add separator to toolbar</font>
+  CALL METHOD lo_toolbar-&gt;add_button
+    EXPORTING
+      fcode     = ''
+      icon      = ''
+      butn_type = cntb_btype_sep.
+
+<font color ="#0000FF">*-- Add change menu to toolbar</font>
+  CALL METHOD lo_toolbar-&gt;add_button
+    EXPORTING
+      fcode     = 'CHANGE'
+      icon      = ''
+      text      = 'Change'
+      butn_type = cntb_btype_dropdown
+      quickinfo = 'Change selected items'.
+
+  CALL METHOD lo_toolbar-&gt;set_static_ctxmenu
+    EXPORTING
+      fcode   = 'CHANGE'
+      ctxmenu = lo_change_menu.
+
+<font color ="#0000FF">*-- Set handler</font>
+  SET HANDLER lcl_event_handler=&gt;on_function_selected FOR lo_toolbar.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_item_layouts_laci</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; PV_MODE</font>
+<font color ="#0000FF">*&      &lt;-- PT_ITEM_LAYOUT</font>
+<font color ="#0000FF">*&      &lt;-- TYPE</font>
+<font color ="#0000FF">*&      &lt;-- LVC_T_LACI</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_item_layouts_laci  USING pv_mode
+                                     pt_item_layout TYPE lvc_t_layi
+                               CHANGING pt_item_layout_c TYPE lvc_t_laci.
+
+  DATA: ls_item_layout_c TYPE lvc_s_laci.
+
+  LOOP AT pt_item_layout INTO DATA(ls_item_layout).
+    MOVE-CORRESPONDING ls_item_layout TO ls_item_layout_c.
+    ls_item_layout_c-chosen = pv_mode.
+    ls_item_layout_c-u_chosen = abap_true.
+    APPEND ls_item_layout_c TO pt_item_layout_c.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form excel_job</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM excel_job .
+
+  DATA : lt_nkey   TYPE lvc_t_chit,
+         lv_line   TYPE i,
+         lv_answer.
+
+<font color ="#0000FF">*-- 체크박스 선택 노드 가져오기 (키, 필드)</font>
+  CALL METHOD go_tree-&gt;get_checked_items
+    IMPORTING
+      et_checked_items = lt_nkey.
+
+  IF lt_nkey IS INITIAL.
+    MESSAGE i015 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  PERFORM pop_to_confirm USING TEXT-q02 TEXT-q01 lv_answer.
+  CHECK lv_answer = '1'.
+
+<font color ="#0000FF">*-- 체크박스 선택 아이템 세팅</font>
+  CLEAR gt_tree_download.
+  LOOP AT lt_nkey INTO DATA(ls_nkey).
+
+    APPEND gt_tree[ ls_nkey-nodekey ] TO gt_tree_download.
+
+  ENDLOOP.
+
+  IF objfile IS INITIAL.
+    TRY.
+        CREATE OBJECT objfile.
+      CATCH cx_root.
+    ENDTRY.
+  ENDIF.
+
+<font color ="#0000FF">*-- 윈도우 저장 창 생성</font>
+  IF pfolder IS NOT INITIAL.
+    initialfolder = pfolder.
+  ELSE.
+    objfile-&gt;get_temp_directory( CHANGING temp_dir = initialfolder
+                                 EXCEPTIONS cntl_error = 1
+                                            error_no_gui = 2
+                                            not_supported_by_gui = 3 ).
+  ENDIF.
+
+  objfile-&gt;directory_browse( EXPORTING initial_folder = initialfolder
+                             CHANGING selected_folder = pickedfolder
+                             EXCEPTIONS cntl_error = 1
+                                        error_no_gui = 2
+                                        not_supported_by_gui = 3 ).
+
+  IF sy-subrc = 0.
+    pfolder = pickedfolder.
+  ELSE.
+    MESSAGE i053 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  IF pfolder IS INITIAL.
+    EXIT.
+  ENDIF.
+
+  CALL METHOD objfile-&gt;free.
+  FREE objfile.
+
+  PERFORM download_excel.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form pop_to_confirm</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; TEXT_Q01</font>
+<font color ="#0000FF">*&      --&gt; LV_ANSWER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM pop_to_confirm USING pv_title pv_question pv_answer.
+
+  call function <a href ="zfm_cl102_cm_pop_up/zfm_cl102_cm_pop_up.html">'ZFM_CL102_CM_POP_UP'</a>
+    EXPORTING
+      iv_titlebar = pv_title
+      iv_question = pv_question
+    IMPORTING
+      ev_answer   = pv_answer.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form download_excel</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM download_excel .
+
+  DATA : lv_rc TYPE i.
+
+<font color ="#0000FF">*-- File name</font>
+  CLEAR gv_temp_filename.
+  CONCATENATE pfolder '\' TEXT-t01 '_' sy-datum '.xlsx'
+         INTO gv_temp_filename.
+
+  gv_form = 'ZEXCEL_PRINT_CL102_FI01'.
+  PERFORM download_template   USING gv_form gv_temp_filename.
+  PERFORM open_excel_template USING gv_form.
+  PERFORM fill_excel_line.
+
+<font color ="#0000FF">*-- 기본 Sheet 1 세팅</font>
+  CALL METHOD OF excel 'SHEETS' = sheet EXPORTING #1 = 1.
+  CALL METHOD OF sheet 'SELECT' NO FLUSH.
+
+<font color ="#0000FF">*-- 모두 출력 후 맨 위로 커서 이동</font>
+  CALL METHOD OF excel 'Cells' = cell EXPORTING #1 = 1 #2 = 2.
+
+  CALL METHOD OF cell 'Select'.
+
+  SET PROPERTY OF excel 'VISIBLE' = 1. " 엑셀 데이터 출력
+
+<font color ="#0000FF">*-- PDF 변환</font>
+  PERFORM convert_to_pdf.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form download_template</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GV_FORM</font>
+<font color ="#0000FF">*&      --&gt; GV_TEMP_FILENAME</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM download_template USING pv_zform pv_filename.
+
+  DATA : wwwdata_item TYPE wwwdatatab,
+         rc           TYPE i.
+
+  gv_file = pv_filename.
+
+  CALL FUNCTION 'WS_FILE_DELETE'
+    EXPORTING
+      file   = pv_filename
+    IMPORTING
+      return = rc.
+
+  IF ( rc NE 0 ) AND ( rc NE 1 ).
+    MESSAGE s000 WITH '임시파일 초기화 실패.' '이전에 Excel에서 자료를 Open하였는지 확인.'
+                 DISPLAY LIKE 'E'.
+  ENDIF.
+
+  SELECT SINGLE *
+    INTO CORRESPONDING FIELDS OF wwwdata_item
+    FROM wwwdata
+    WHERE objid = pv_zform.
+
+  CALL FUNCTION 'DOWNLOAD_WEB_OBJECT'
+    EXPORTING
+      key         = wwwdata_item
+      destination = gv_file.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form open_excel_template</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GV_FORM</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM open_excel_template USING pv_form.
+
+  IF excel IS INITIAL.
+    CREATE OBJECT excel 'EXCEL.APPLICATION'.
+  ENDIF.
+
+  IF sy-subrc NE 0.
+    MESSAGE i001 WITH sy-msgli.
+  ENDIF.
+
+  CALL METHOD OF excel 'WORKBOOKS' = workbook.
+  SET PROPERTY OF excel 'VISIBLE' = 0.
+
+  CALL METHOD OF workbook 'OPEN' EXPORTING #1 = gv_file.
+
+<font color ="#0000FF">*-- Sheet 설정</font>
+  GET PROPERTY OF : workbook    'Application' = application,
+                    application 'ActiveSheet' = activesheet.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_excel_line</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_excel_line .
+
+  DATA : lv_row TYPE i VALUE 2,
+         lv_col TYPE i VALUE 1.
+  FIELD-SYMBOLS : &lt;fs_field&gt; TYPE any.
+
+  LOOP AT gt_tree_download INTO DATA(ls_tree).
+
+    DO.
+      ASSIGN COMPONENT sy-index OF STRUCTURE ls_tree TO &lt;fs_field&gt;.
+      IF &lt;fs_field&gt; IS NOT ASSIGNED.
+        EXIT.
+      ENDIF.
+      PERFORM fill_cells USING lv_row sy-index &lt;fs_field&gt;.
+      UNASSIGN &lt;fs_field&gt;.
+    ENDDO.
+
+    lv_row += 1.
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_cells</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_10</font>
+<font color ="#0000FF">*&      --&gt; P_3</font>
+<font color ="#0000FF">*&      --&gt; GS_TREE_PARTNER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_cells  USING i j val.
+
+  CALL METHOD OF excel 'CELLS' = cell
+    EXPORTING
+      #1 = i  " 행
+      #2 = j. " 열
+
+  SET PROPERTY OF cell 'VALUE' = val.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form convert_to_pdf</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM convert_to_pdf .
+
+  DATA lv_rc TYPE i.
+
+  CLEAR gv_temp_filename_pdf.
+  CONCATENATE pfolder '\' TEXT-t01 '_' sy-datum '.pdf'
+              INTO gv_temp_filename_pdf.
+
+  GET PROPERTY OF excel 'Workbooks' = workbook
+    EXPORTING #1 = 1.
+
+  CALL METHOD OF workbook 'ExportAsFixedFormat'
+    EXPORTING
+      #1 = '0'
+      #2 = gv_temp_filename_pdf.
+
+  CALL METHOD OF workbook 'Close'
+    EXPORTING
+      #1 = 0.
+
+  CALL METHOD OF excel 'Quit'.
+
+  CALL METHOD cl_gui_frontend_services=&gt;file_delete
+    EXPORTING
+      filename = CONV #( gv_temp_filename )
+    CHANGING
+      rc       = lv_rc.
+
+<font color ="#0000FF">*-- PDF 가로로 조정 및 Excel 파일 사이즈에 맞게 조절</font>
+  SET PROPERTY OF pagesetup 'Orientation' = 2.  " 2 = Landscape, 1 = Portrait
+  GET PROPERTY OF excel 'Workbooks' = workbook EXPORTING #1 = 1.
+  GET PROPERTY OF workbook 'Worksheets' = worksheet EXPORTING #1 = 1.
+  " 열 너비 자동 조정
+  GET PROPERTY OF worksheet 'Columns' = columns.
+  CALL METHOD OF columns 'AutoFit'.
+  GET PROPERTY OF worksheet 'PageSetup' = pagesetup.
+
+  " 인쇄 비율을 한 페이지에 맞추기
+  SET PROPERTY OF pagesetup 'Zoom' = 0.
+  SET PROPERTY OF pagesetup 'FitToPagesWide' = 1.
+  SET PROPERTY OF pagesetup 'FitToPagesTall' = 1.
+
+  CALL METHOD OF workbook 'ExportAsFixedFormat'
+    EXPORTING
+      #1 = 0
+      #2 = gv_temp_filename_pdf.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

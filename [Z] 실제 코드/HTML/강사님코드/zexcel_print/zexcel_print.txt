@@ -1,0 +1,69 @@
+*&---------------------------------------------------------------------*
+*& Report ZEXCEL_PRINT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zexcel_printtop                         .    " Global Data
+
+INCLUDE zexcel_prints01                         .  " Selection scren
+INCLUDE zexcel_printc01                         .  " ALV Events
+INCLUDE zexcel_printo01                         .  " PBO-Modules
+INCLUDE zexcel_printi01                         .  " PAI-Modules
+INCLUDE zexcel_printf01                         .  " FORM-Routines
+
+
+**********************************************************************
+* INITIALIZATION
+**********************************************************************
+INITIALIZATION.
+  PERFORM set_init_value.
+
+**********************************************************************
+* AT SELECTION-SCREEN
+**********************************************************************
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM modify_screen.
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+  PERFORM get_document_data.
+
+  CALL SCREEN 100.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> [C1] Data print to Excel or PDF
+* TITLE100 --> [C1] Data print to Excel or PDF
+
+*Text elements
+*----------------------------------------------------------
+* E01 Top of page event error
+* E02 출력할 행을 선택 하세요.
+* E03 한건만 선택 하세요.
+* Q01 Excel로 출력 하시겠습니까?
+* S01 작업을 완료 하였습니다.
+* T01 Condition
+
+
+*Selection texts
+*----------------------------------------------------------
+* P_BUKRS D       .
+* P_PDF         Converto to PDF
+* SO_BUDAT D       .
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: Hard coded
+*   An error has occured picking a folder
+*
+* Message class: K5
+*001   & & & &
+*037   No data found
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

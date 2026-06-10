@@ -1,0 +1,1031 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0008F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0008F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0008F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102FIR0008F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_base_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_base_data .
+
+  CLEAR gt_header.
+  SELECT belnr gjahr blart bldat budat bktxt stblg stodt stgrd
+    INTO CORRESPONDING FIELDS OF TABLE gt_header
+    FROM zc102fit0009
+    WHERE bukrs = gv_bukrs.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen_0100</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen_0100 .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_fcat_header, gs_fcat_header.
+    PERFORM set_fcat_header USING : 'X' 'ICON'  ' '            'C' ' ',
+                                    'X' 'BELNR' 'ZC102FIT0009' 'C' ' ',
+                                    'X' 'GJAHR' 'ZC102FIT0009' 'C' ' ',
+                                    ' ' 'BLART' 'ZC102FIT0009' 'C' ' ',
+                                    ' ' 'BLDAT' 'ZC102FIT0009' 'C' ' ',
+                                    ' ' 'BUDAT' 'ZC102FIT0009' 'C' ' ',
+                                    ' ' 'BKTXT' 'ZC102FIT0009' ' ' 'X'.
+<font color ="#0000FF">*                                    ' ' 'STBLG' 'ZC102FIT0009' 'C' ' ',</font>
+<font color ="#0000FF">*                                    ' ' 'STODT' 'ZC102FIT0009' 'C' ' ',</font>
+<font color ="#0000FF">*                                    ' ' 'STGRD' 'ZC102FIT0009' 'C' ' '.</font>
+<font color ="#0000FF">*                                    ' ' 'WAERS' 'ZC102FIT0009' 'C' ' '.</font>
+
+    CLEAR : gt_fcat_line, gs_fcat_line.
+    PERFORM set_fcat_line USING : 'X' 'BELNR'       'ZC102FIT0010' 'C' ' ',
+                                  'X' 'GJAHR'       'ZC102FIT0010' 'C' ' ',
+                                  'X' 'BUZEI'       'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'SAKNR'       'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'TXT20'       'ZC102FIT0002' ' ' 'X',
+                                  ' ' 'AUGDT'       'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'AUGBL'       'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'BSCHL'       'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'SHKZG'       'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'KOART'       'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'PARTNER'     'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'SGTXT'       'ZC102FIT0010' ' ' 'X',
+                                  ' ' 'EBELN'       'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'VBELN'       'ZC102FIT0010' 'C' ' ',
+                                  ' ' 'WRBTR'       'ZC102FIT0010' ' ' ' ',
+                                  ' ' 'WAERS'       'ZC102FIT0010' 'C' 'X',
+                                  ' ' 'DUEDT'       'ZC102FIT0010' 'C' ' '.
+    PERFORM set_layout.
+    PERFORM set_layout_line.
+    PERFORM create_object.
+
+    SET HANDLER : lcl_event_handler=&gt;hotspot_click FOR go_top_grid,
+<font color ="#0000FF">*                  lcl_event_handler=&gt;double_main   FOR go_top_grid,</font>
+                  lcl_event_handler=&gt;edit_toolbar  FOR go_top_grid,
+                  lcl_event_handler=&gt;user_command  FOR go_top_grid.
+
+    CALL METHOD go_top_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_header
+        it_fieldcatalog = gt_fcat_header
+        it_sort         = gt_sort_header
+        it_filter       = gt_filter_header.
+
+    CALL METHOD go_bottom_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_line
+      CHANGING
+        it_outtab       = gt_line
+        it_fieldcatalog = gt_fcat_line
+        it_sort         = gt_sort_line.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_fcat_header</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_fcat_header USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_header-key       = pv_key.
+  gs_fcat_header-fieldname = pv_field.
+  gs_fcat_header-ref_table = pv_table.
+  gs_fcat_header-just      = pv_just.
+  gs_fcat_header-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'BELNR'.
+      gs_fcat_header-hotspot = abap_true.
+    WHEN 'ICON'.
+      gs_fcat_header-coltext = '반제 상태'.
+      gs_fcat_header-col_pos = 0.
+  ENDCASE.
+
+  APPEND gs_fcat_header TO gt_fcat_header.
+  CLEAR gs_fcat_header.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+  gs_layout-zebra      = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = 'B'.
+  gs_layout-grid_title = '전표 헤더'.
+
+  gs_variant-report = sy-repid.
+  gs_variant-handle = 'ALV1'.
+
+<font color ="#0000FF">*-- SET SORT</font>
+  CLEAR : gt_sort_header, gs_sort_header.
+  gs_sort_header-spos      = 1.
+  gs_sort_header-fieldname = 'BELNR'.
+  gs_sort_header-up        = abap_true.
+  gs_sort_header-subtot    = abap_true.
+  APPEND gs_sort_header TO gt_sort_header.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_container
+      rows    = 2
+      columns = 1.
+
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_top_cont.
+
+  CALL METHOD go_split_cont-&gt;set_row_height
+    EXPORTING
+      id     = 1     " 첫 번째 행 (상단)
+      height = 60.   " 퍼센트 기준
+
+  CALL METHOD go_split_cont-&gt;set_row_height
+    EXPORTING
+      id     = 2     " 두 번째 행 (하단)
+      height = 40.   " 퍼센트 기준
+
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_bottom_cont.
+
+  CREATE OBJECT go_top_grid
+    EXPORTING
+      i_parent = go_top_cont.
+
+  CREATE OBJECT go_bottom_grid
+    EXPORTING
+      i_parent = go_bottom_cont.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_all_data .
+
+<font color ="#0000FF">*-- 미결 전표 전부 조회</font>
+  CLEAR gt_header.
+  SELECT DISTINCT a~bukrs, a~belnr, a~gjahr, a~blart, a~bldat, a~budat,
+                  a~bktxt, a~stblg, a~stodt, a~stgrd, a~waers, c~rebzg
+    INTO CORRESPONDING FIELDS OF TABLE @gt_header
+    FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b
+                                   ON a~bukrs = b~bukrs
+                                  AND a~belnr = b~belnr
+                                  AND a~gjahr = b~gjahr
+                            LEFT JOIN zc102fit0016 AS c
+                                   ON a~bukrs = c~bukrs
+                                  AND a~belnr = c~rebzg
+                                  AND a~gjahr = c~gjahr
+   WHERE a~bukrs = @gv_bukrs
+     AND a~stblg = ''                         " 역분개 안된거
+     AND b~augbl = ''                       " 반제 안된거
+     AND a~blart IN ( 'DR', 'KR' )
+     AND b~partner &lt;&gt; ''
+     AND a~belnr NOT IN
+                      ( SELECT a~rebzg
+                          FROM zc102fit0016 AS a
+                            INNER JOIN zc102fit0009 AS b
+                                    ON a~bukrs = b~bukrs
+                                   AND a~belnr = b~belnr
+                                   AND a~gjahr = b~gjahr
+                           WHERE b~stblg &lt;&gt; '' )
+     AND a~budat IN @gr_budat                  " 날짜 검색조건
+     AND a~belnr IN @gr_belnr.               " 전표 번호 검색조건
+
+  IF sy-dbcnt IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ELSE.
+    MESSAGE s010 WITH sy-dbcnt.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_kr_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_ac_data .
+
+<font color ="#0000FF">*-- 매입채무</font>
+  CLEAR gt_header.
+  SELECT DISTINCT a~bukrs, a~belnr, a~gjahr, a~blart, a~bldat, a~budat,
+                  a~bktxt, a~stblg, a~stodt, a~stgrd, a~waers, c~rebzg
+    INTO CORRESPONDING FIELDS OF TABLE @gt_header
+    FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b
+                                   ON a~bukrs = b~bukrs
+                                  AND a~belnr = b~belnr
+                                  AND a~gjahr = b~gjahr
+                            LEFT JOIN zc102fit0016 AS c
+                                   ON a~bukrs = c~bukrs
+                                  AND a~belnr = c~rebzg
+                                  AND a~gjahr = c~gjahr
+   WHERE a~bukrs = @gv_bukrs
+     AND a~stblg = ''                         " 역분개 안된거
+     AND b~augbl = ''                       " 반제 안된거
+     AND a~blart IN ( 'KR' )
+     AND b~partner &lt;&gt; ''
+     AND a~belnr NOT IN
+                      ( SELECT a~rebzg
+                          FROM zc102fit0016 AS a
+                            INNER JOIN zc102fit0009 AS b
+                                    ON a~bukrs = b~bukrs
+                                   AND a~belnr = b~belnr
+                                   AND a~gjahr = b~gjahr
+                           WHERE b~stblg &lt;&gt; '' )
+     AND a~budat IN @gr_budat                  " 날짜 검색조건
+     AND a~belnr IN @gr_belnr.               " 전표 번호 검색조건
+
+<font color ="#0000FF">*  CLEAR gt_header.</font>
+<font color ="#0000FF">*  SELECT DISTINCT a~bukrs a~belnr a~gjahr blart bldat budat</font>
+<font color ="#0000FF">*                  bktxt stblg stodt stgrd a~waers c~rebzg</font>
+<font color ="#0000FF">*    INTO CORRESPONDING FIELDS OF TABLE gt_header</font>
+<font color ="#0000FF">*    FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b</font>
+<font color ="#0000FF">*                                   ON a~bukrs = b~bukrs</font>
+<font color ="#0000FF">*                                  AND a~belnr = b~belnr</font>
+<font color ="#0000FF">*                                  AND a~gjahr = b~gjahr</font>
+<font color ="#0000FF">*                            LEFT JOIN zc102fit0016 AS c</font>
+<font color ="#0000FF">*                                   ON a~bukrs = c~bukrs</font>
+<font color ="#0000FF">*                                  AND a~belnr = c~rebzg</font>
+<font color ="#0000FF">*                                  AND a~gjahr = c~gjahr</font>
+<font color ="#0000FF">*   WHERE a~bukrs = gv_bukrs</font>
+<font color ="#0000FF">*     AND stgrd = ''                         " 역분개 안된거</font>
+<font color ="#0000FF">*     AND b~augbl = ''                       " 반제 안된거</font>
+<font color ="#0000FF">*     AND blart IN ( 'KR' )</font>
+<font color ="#0000FF">*     AND b~partner &lt;&gt; ''</font>
+<font color ="#0000FF">*     AND budat IN gr_budat                  " 날짜 검색조건</font>
+<font color ="#0000FF">*     AND a~belnr IN gr_belnr.               " 전표 번호 검색조건</font>
+
+  IF sy-dbcnt IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ELSE.
+    MESSAGE s010 WITH sy-dbcnt.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_ap_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_ap_data .
+
+<font color ="#0000FF">*-- 매출채권</font>
+  CLEAR gt_header.
+  SELECT DISTINCT a~bukrs, a~belnr, a~gjahr, a~blart, a~bldat, a~budat,
+                  a~bktxt, a~stblg, a~stodt, a~stgrd, a~waers, c~rebzg
+    INTO CORRESPONDING FIELDS OF TABLE @gt_header
+    FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b
+                                   ON a~bukrs = b~bukrs
+                                  AND a~belnr = b~belnr
+                                  AND a~gjahr = b~gjahr
+                            LEFT JOIN zc102fit0016 AS c
+                                   ON a~bukrs = c~bukrs
+                                  AND a~belnr = c~rebzg
+                                  AND a~gjahr = c~gjahr
+   WHERE a~bukrs = @gv_bukrs
+     AND a~stblg = ''                         " 역분개 안된거
+     AND b~augbl = ''                       " 반제 안된거
+     AND a~blart IN ( 'DR' )
+     AND b~partner &lt;&gt; ''
+     AND a~belnr NOT IN
+                      ( SELECT a~rebzg
+                          FROM zc102fit0016 AS a
+                            INNER JOIN zc102fit0009 AS b
+                                    ON a~bukrs = b~bukrs
+                                   AND a~belnr = b~belnr
+                                   AND a~gjahr = b~gjahr
+                           WHERE b~stblg &lt;&gt; '' )
+     AND a~budat IN @gr_budat                  " 날짜 검색조건
+     AND a~belnr IN @gr_belnr.               " 전표 번호 검색조건
+
+<font color ="#0000FF">*  CLEAR gt_header.</font>
+<font color ="#0000FF">*  SELECT DISTINCT a~bukrs a~belnr a~gjahr blart bldat budat</font>
+<font color ="#0000FF">*                  bktxt stblg stodt stgrd a~waers c~rebzg</font>
+<font color ="#0000FF">*    INTO CORRESPONDING FIELDS OF TABLE gt_header</font>
+<font color ="#0000FF">*    FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b</font>
+<font color ="#0000FF">*                                   ON a~bukrs = b~bukrs</font>
+<font color ="#0000FF">*                                  AND a~belnr = b~belnr</font>
+<font color ="#0000FF">*                                  AND a~gjahr = b~gjahr</font>
+<font color ="#0000FF">*                            LEFT JOIN zc102fit0016 AS c</font>
+<font color ="#0000FF">*                                   ON a~bukrs = c~bukrs</font>
+<font color ="#0000FF">*                                  AND a~belnr = c~rebzg</font>
+<font color ="#0000FF">*                                  AND a~gjahr = c~gjahr</font>
+<font color ="#0000FF">*   WHERE a~bukrs = gv_bukrs</font>
+<font color ="#0000FF">*     AND stgrd = ''                         " 역분개 안된거</font>
+<font color ="#0000FF">*     AND b~augbl = ''                       " 반제 안된거</font>
+<font color ="#0000FF">*     AND blart IN ( 'DR' )</font>
+<font color ="#0000FF">*     AND b~partner &lt;&gt; ''</font>
+<font color ="#0000FF">*     AND budat IN gr_budat                  " 날짜 검색조건</font>
+<font color ="#0000FF">*     AND a~belnr IN gr_belnr.               " 전표 번호 검색조건</font>
+
+  IF sy-dbcnt IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ELSE.
+    MESSAGE s010 WITH sy-dbcnt.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_alv_grid</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_alv_grid .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-col = abap_true.
+  ls_stable-row = abap_true.
+
+  CALL METHOD go_top_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_date_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_data_condition .
+
+  _init gr_budat.
+  _init gr_belnr.
+
+  IF ( gv_budat_fr IS NOT INITIAL ) AND
+     ( gv_budat_to IS NOT INITIAL ).
+    PERFORM set_date_value USING 'I' 'BT' gv_budat_fr gv_budat_to.
+  ELSEIF ( gv_budat_fr IS NOT INITIAL ).
+    PERFORM set_date_value USING 'I' 'EQ' gv_budat_fr gv_budat_to.
+  ELSEIF ( gv_budat_to IS NOT INITIAL ).
+    PERFORM set_date_value USING 'I' 'BT' gv_budat_fr gv_budat_to.
+  ENDIF.
+
+  IF ( gv_belnr_fr IS NOT INITIAL ) AND
+     ( gv_belnr_to IS NOT INITIAL ).
+    PERFORM set_belnr_value USING 'I' 'BT' gv_belnr_fr gv_belnr_to.
+  ELSEIF ( gv_belnr_fr IS NOT INITIAL ).
+    PERFORM set_belnr_value USING 'I' 'EQ' gv_belnr_fr gv_belnr_to.
+  ELSEIF ( gv_belnr_to IS NOT INITIAL ).
+    PERFORM set_belnr_value USING 'I' 'BT' gv_belnr_fr gv_belnr_to.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_date_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; GV_BUDAT_FR</font>
+<font color ="#0000FF">*&      --&gt; GV_BUDAT_TO</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_date_value USING pv_sign pv_option pv_from pv_to.
+
+  gr_budat-sign   = pv_sign.
+  gr_budat-option = pv_option.
+  gr_budat-low    = pv_from.
+  gr_budat-high   = pv_to.
+  APPEND gr_budat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_belnr_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; GV_BELNR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_belnr_value USING pv_sign pv_option pv_from pv_to.
+
+  gr_belnr-sign   = pv_sign.
+  gr_belnr-option = pv_option.
+  gr_belnr-low    = pv_from.
+  gr_belnr-high   = pv_to.
+  APPEND gr_belnr.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_hotspot_click</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_COLUMN_ID</font>
+<font color ="#0000FF">*&      --&gt; E_ROW_ID</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_hotspot_click USING pv_column_id pv_row_id.
+
+  READ TABLE gt_header INTO gs_header INDEX pv_row_id.
+
+  IF sy-subrc = 0.
+
+    CASE pv_column_id.
+
+      WHEN 'BELNR'.
+        PERFORM get_line_data.
+        PERFORM refresh_alv_grid.
+        PERFORM refresh_bot_grid.
+    ENDCASE.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_fcat_line</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_fcat_line USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_line-key       = pv_key.
+  gs_fcat_line-fieldname = pv_field.
+  gs_fcat_line-ref_table = pv_table.
+  gs_fcat_line-just      = pv_just.
+  gs_fcat_line-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_fcat_line-cfieldname = 'WAERS'.
+      gs_fcat_line-do_sum     = abap_true.
+  ENDCASE.
+
+  APPEND gs_fcat_line TO gt_fcat_line.
+  CLEAR gs_fcat_line.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_line_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_line_data .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  CLEAR gt_line.
+  SELECT belnr gjahr buzei a~saknr b~txt20 bpact augdt augbl bschl
+         shkzg koart partner sgtxt ebeln vbeln wrbtr waers duedt
+    INTO CORRESPONDING FIELDS OF TABLE gt_line
+    FROM zc102fit0010 AS a INNER JOIN zc102fit0002 AS b
+      ON a~saknr = b~saknr
+    WHERE bukrs = gs_header-bukrs
+      AND belnr = gs_header-belnr
+      AND gjahr = gs_header-gjahr.
+
+<font color ="#0000FF">*-- 대변 금액 음수로 변경</font>
+  LOOP AT gt_line INTO gs_line.
+
+    lv_tabix = sy-tabix.
+
+    IF gs_line-bpact IS NOT INITIAL.
+      gs_line-saknr = gs_line-bpact.
+
+    ENDIF.
+
+    IF gs_line-shkzg = 'H'.
+      gs_line-wrbtr *= -1.
+    ENDIF.
+
+    MODIFY gt_line FROM gs_line INDEX lv_tabix TRANSPORTING wrbtr saknr.
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout_line</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout_line .
+
+  gs_layout_line-zebra      = abap_true.
+  gs_layout_line-cwidth_opt = 'A'.
+  gs_layout_line-sel_mode   = 'D'.
+  gs_layout_line-grid_title = '전표 아이템'.
+<font color ="#0000FF">*  gs_layout_line-no_totline = abap_true.</font>
+
+  CLEAR : gt_sort_line, gs_sort_line.
+  gs_sort_line-spos = 1.
+  gs_sort_line-fieldname = 'DUEDT'.
+  gs_sort_line-up        = abap_true.
+  APPEND gs_sort_line TO gt_sort_line.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form call_part_clearing</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM call_part_clearing .
+
+  DATA : lt_roid TYPE lvc_t_roid.
+
+  go_top_grid-&gt;get_selected_rows( IMPORTING et_row_no = lt_roid ).
+
+  IF lt_roid IS INITIAL.
+    MESSAGE s012 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  CLEAR gs_header_mm.
+  READ TABLE gt_header INTO gs_header INDEX lt_roid[ 1 ]-row_id.
+
+  MOVE-CORRESPONDING gs_header TO gs_header_mm.
+
+  EXPORT gs_header_mm TO MEMORY ID 'ZC102_GS_HEADER'.
+  SUBMIT zc102fir0019 AND RETURN.
+
+  PERFORM refresh_screen.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form call_open_clearing</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM call_open_clearing .
+
+  DATA : lt_roid TYPE lvc_t_roid.
+
+  go_top_grid-&gt;get_selected_rows( IMPORTING et_row_no = lt_roid ).
+
+  IF lt_roid IS INITIAL.
+    MESSAGE s012 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  CLEAR gs_header_mm.
+
+  CLEAR gs_header.
+  READ TABLE gt_header INTO gs_header INDEX lt_roid[ 1 ]-row_id.
+  IF gs_header-icon = icon_led_yellow.
+    MESSAGE s000 WITH TEXT-w01 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  MOVE-CORRESPONDING gs_header TO gs_header_mm.
+
+
+  EXPORT gs_header_mm TO MEMORY ID 'ZC102_GS_HEADER_OPEN'.
+  CALL TRANSACTION 'ZMZC102FI0001'. " 모듈풀 수동반제 티코드
+
+  PERFORM refresh_screen.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_item_status</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_item_status .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  CLEAR : gv_part_cnt, gv_entire_cnt.
+  LOOP AT gt_header INTO gs_header.
+
+    lv_tabix = sy-tabix.
+    IF gs_header-rebzg IS NOT INITIAL.
+      gs_header-icon = icon_led_yellow.
+      gv_part_cnt += 1.
+    ELSE.
+      gs_header-icon = icon_led_red.
+      gv_entire_cnt += 1.
+    ENDIF.
+
+    MODIFY gt_header FROM gs_header INDEX lv_tabix TRANSPORTING icon.
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_edit_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_INTERACTIVE</font>
+<font color ="#0000FF">*&      --&gt; E_OBJECT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_edit_toolbar USING pv_interactive
+                               po_object TYPE REF TO
+                                          cl_alv_event_toolbar_set.
+
+  DATA : lv_enable.
+
+<font color ="#0000FF">*-- 구분선 생성</font>
+  PERFORM make_division_line USING po_object.
+
+<font color ="#0000FF">*-- 삭제 버튼 생성</font>
+  PERFORM make_button USING 'FILTER' icon_filter '필터' '상태 필터'
+                            lv_enable po_object.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form make_division_line</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; PO_OBJECT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM make_division_line USING po_object TYPE REF TO
+                                          cl_alv_event_toolbar_set.
+
+  gs_button-butn_type = 3.
+  APPEND gs_button TO po_object-&gt;mt_toolbar.
+  CLEAR gs_button.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form make_button</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; ICON_DELETE_ROW</font>
+<font color ="#0000FF">*&      --&gt; LV_ENABLE</font>
+<font color ="#0000FF">*&      --&gt; PO_OBJECT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM make_button USING pv_func pv_icon pv_text pv_quick pv_enable
+                       po_object TYPE REF TO cl_alv_event_toolbar_set.
+
+  gs_button-function  = pv_func.
+  gs_button-icon      = pv_icon.
+  gs_button-disabled  = pv_enable.
+  gs_button-text      = pv_text.
+  gs_button-quickinfo = pv_quick.
+  APPEND gs_button TO po_object-&gt;mt_toolbar.
+  CLEAR gs_button.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_user_command</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_UCOMM</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_user_command USING pv_ucomm.
+
+  CASE pv_ucomm.
+    WHEN 'FILTER'.
+      CALL SCREEN 110 STARTING AT 05 05.
+
+  ENDCASE.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form init_process_control_0110</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM init_process_control_0110 .
+
+  IF go_pop_cont IS NOT BOUND.
+
+    CLEAR : gs_fcat_pop, gt_fcat_pop.
+    PERFORM set_fcat_pop USING : ' ' 'ICON' ' ' 'C' ' ',
+                                 ' ' 'NAME' ' ' ' ' ' '.
+
+    PERFORM set_layout_pop.
+    PERFORM set_exclude_toolbar.
+    PERFORM create_object_pop.
+
+    SET HANDLER lcl_event_handler=&gt;double_click FOR go_pop_grid.
+    CALL METHOD go_pop_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_layout_pop
+        it_toolbar_excluding = gt_exclude_toolbar
+      CHANGING
+        it_outtab            = gt_filter_pop
+        it_fieldcatalog      = gt_fcat_pop.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_fcat_pop</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_fcat_pop USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_pop-key       = pv_key.
+  gs_fcat_pop-fieldname = pv_field.
+  gs_fcat_pop-ref_table = pv_table.
+  gs_fcat_pop-just      = pv_just.
+  gs_fcat_pop-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'ICON'.
+      gs_fcat_pop-coltext = 'Icon'.
+    WHEN 'NAME'.
+      gs_fcat_pop-coltext = '설명'.
+  ENDCASE.
+
+  APPEND gs_fcat_pop TO gt_fcat_pop.
+  CLEAR gs_fcat_pop.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout_pop</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout_pop .
+
+  gs_layout_pop-zebra      = abap_true.
+  gs_layout_pop-cwidth_opt = 'A'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object_pop</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object_pop .
+
+  CREATE OBJECT go_pop_cont
+    EXPORTING
+      container_name = 'POP_CONT'.
+
+  CREATE OBJECT go_pop_grid
+    EXPORTING
+      i_parent = go_pop_cont.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_sort_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_sort_table .
+
+  gt_filter_pop = VALUE #( ( icon = ''              name = '전체조회' )
+                           ( icon = icon_led_red    name = '미결전표' )
+                           ( icon = icon_led_yellow name = '부분반제' ) ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_exclude_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_exclude_toolbar .
+
+<font color ="#0000FF">*-- 툴바 전부 지우기</font>
+  APPEND cl_gui_alv_grid=&gt;mc_fc_excl_all TO gt_exclude_toolbar.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_double_click_filter</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_COLUMN</font>
+<font color ="#0000FF">*&      --&gt; E_ROW</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_double_click_filter USING pv_column pv_row.
+
+  READ TABLE gt_filter_pop INTO gs_filter_pop INDEX pv_row.
+
+  IF sy-subrc = 0.
+
+<font color ="#0000FF">*-- 필터 조건 저장 변수 -&gt; Filter ALV에서 선택한거</font>
+    gv_filter = gs_filter_pop-icon.
+
+<font color ="#0000FF">*-- 조건이 있다면 조건 필터에 세팅</font>
+    CLEAR : gt_filter_header, gs_filter_header.
+    IF gv_filter IS NOT INITIAL.
+      gs_filter_header-fieldname = 'ICON'.
+      gs_filter_header-sign      = 'I'.
+      gs_filter_header-option    = 'EQ'.
+      gs_filter_header-low       = gv_filter.
+      APPEND gs_filter_header TO gt_filter_header.
+    ENDIF.
+
+<font color ="#0000FF">*-- 필터 적용 후 갱신</font>
+    CALL METHOD go_top_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_header
+        it_fieldcatalog = gt_fcat_header
+        it_sort         = gt_sort_header
+        it_filter       = gt_filter_header.
+
+<font color ="#0000FF">*-- 밑 라인 아이템도 제거</font>
+    CLEAR gt_line.
+    PERFORM refresh_bot_grid.
+
+    PERFORM exit_0110.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_bot_grid</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_bot_grid .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-col = abap_true.
+  ls_stable-row = abap_true.
+  CALL METHOD go_bottom_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form exit_0110</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM exit_0110 .
+
+  CALL METHOD : go_pop_grid-&gt;free, go_pop_cont-&gt;free.
+
+  FREE : go_pop_grid, go_pop_cont.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_double_main</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_COLUMN</font>
+<font color ="#0000FF">*&      --&gt; E_ROW</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_double_main USING pv_column pv_row.
+
+  READ TABLE gt_header INTO gs_header INDEX pv_row.
+
+  IF sy-subrc = 0.
+
+    PERFORM get_line_data.
+    PERFORM refresh_alv_grid.
+    PERFORM refresh_bot_grid.
+
+  ENDIF.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_screen .
+
+  PERFORM set_data_condition.
+  CLEAR : gt_line.
+  CASE 'X'.
+    WHEN gv_check1.
+      PERFORM get_all_data.
+    WHEN gv_check2.
+      PERFORM set_ac_data.
+    WHEN gv_check3.
+      PERFORM set_ap_data.
+  ENDCASE.
+
+  CLEAR gt_line.
+  PERFORM refresh_bot_grid.
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

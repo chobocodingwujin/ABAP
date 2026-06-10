@@ -1,0 +1,247 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0005TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0005TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0005TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102PPR0005TOP                          - Report ZC102PPR0005</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102ppr0005 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES: zc102ppt0012, zc102hrt0001,
+        zc102ppt0002, zc102ppt0010, zc102ppt0011.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*tab strip</font>
+<font color ="#0000FF">**********************************************************************</font>
+CONTROLS gc_tab TYPE TABSTRIP.
+
+DATA: gv_subscreen TYPE sy-dynnr.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*call instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA: go_container TYPE REF TO cl_gui_custom_container,
+      go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">*--tab--*</font>
+DATA: go_container1 TYPE REF TO cl_gui_custom_container,
+      go_alv_grid1  TYPE REF TO cl_gui_alv_grid,
+
+      go_container2 TYPE REF TO cl_gui_custom_container,
+      go_alv_grid2  TYPE REF TO cl_gui_alv_grid,
+
+      go_container3 TYPE REF TO cl_gui_custom_container,
+      go_alv_grid3  TYPE REF TO cl_gui_alv_grid,
+
+      go_container4 TYPE REF TO cl_gui_custom_container,
+      go_alv_grid4  TYPE REF TO cl_gui_alv_grid.
+
+
+<font color ="#0000FF">*--팝업 띄우기</font>
+<font color ="#0000FF">*      go_pop_container    TYPE REF TO cl_gui_custom_container,</font>
+<font color ="#0000FF">*      go_pop_grid         TYPE REF TO cl_gui_alv_grid,</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      go_pop_container2   TYPE REF TO cl_gui_custom_container,</font>
+<font color ="#0000FF">*      go_pop_grid2        TYPE REF TO cl_gui_alv_grid.</font>
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*itab and work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*DATA: BEGIN OF gs_input,</font>
+<font color ="#0000FF">*        werks TYPE zc102ppt0012-werks,</font>
+<font color ="#0000FF">*END OF gs_input,</font>
+<font color ="#0000FF">*gt_input LIKE TABLE OF gs_input.</font>
+
+<font color ="#0000FF">*--생산오더 alv 왼쪽--*</font>
+DATA: BEGIN OF gs_pdo,
+        pdono       TYPE  zc102ppt0012-pdono,
+        wkcno       TYPE  zc102ppt0012-wkcno,
+        werks       TYPE zc102ppt0012-werks,
+        rouno       TYPE zc102ppt0012-rouno,
+        plono       TYPE zc102ppt0012-plono,
+        pdstt       TYPE zc102ppt0012-pdstt,
+        pdfns       TYPE zc102ppt0012-pdfns,
+        mksta       TYPE zc102ppt0012-mksta,
+        matnr       TYPE zc102ppt0012-matnr,
+        menge       TYPE zc102ppt0012-menge,
+        meins       TYPE zc102ppt0012-meins,
+        prog        TYPE zc102ppt0012-prog,
+        p_unit      TYPE zc102ppt0012-p_unit,
+        d_state(10),
+        ddtext(6),
+      END OF gs_pdo,
+      gt_pdo LIKE TABLE OF gs_pdo.
+
+<font color ="#0000FF">**진행상태 도메인 값**</font>
+DATA: gt_list TYPE TABLE OF dd07v,
+      gs_list TYPE dd07v.
+
+<font color ="#0000FF">*--플랜트 번호 서치헬프--*</font>
+DATA: BEGIN OF gs_search,
+        werks TYPE zc102ppt0012-werks,
+        text  TYPE dd07v-ddtext, "도메인 텍스트 읽기용
+      END OF gs_search,
+      gt_search LIKE TABLE OF gs_search.
+
+"도메인으로 관리되는 텍스트까지 불러올 수 있음 서치헬프 부분
+DATA: gt_domval TYPE TABLE OF dd07v,
+      gs_domval TYPE dd07v.
+
+<font color ="#0000FF">*--우측 tab 라우팅--*</font>
+
+"라우팅1
+DATA: BEGIN OF gs_route,
+        rouno  TYPE zc102ppt0010-rouno,
+        wctno  TYPE zc102ppt0010-wctno,
+        matnr  TYPE zc102ppt0010-matnr,
+        pdono  TYPE zc102ppt0010-pdono,
+        werks  TYPE zc102ppt0010-werks,
+        rstda  TYPE zc102ppt0010-rstda,
+        renda  TYPE zc102ppt0010-renda,
+        reman  TYPE zc102ppt0010-reman,
+        remac  TYPE zc102ppt0010-remac,
+        status TYPE zc102ppt0010-status,
+        menge  TYPE zc102ppt0010-menge,
+        meins  TYPE zc102ppt0010-meins,
+        prog   TYPE zc102ppt0010-prog,
+        p_unit TYPE zc102ppt0012-p_unit,
+        icon   TYPE icon-id,
+      END OF  gs_route,
+      gt_route LIKE TABLE OF gs_route.
+
+"라우팅2
+DATA: BEGIN OF gs_route2,
+        rouno  TYPE zc102ppt0010-rouno,
+        wctno  TYPE zc102ppt0010-wctno,
+        matnr  TYPE zc102ppt0010-matnr,
+        pdono  TYPE zc102ppt0010-pdono,
+        werks  TYPE zc102ppt0010-werks,
+        rstda  TYPE zc102ppt0010-rstda,
+        renda  TYPE zc102ppt0010-renda,
+        reman  TYPE zc102ppt0010-reman,
+        remac  TYPE zc102ppt0010-remac,
+        status TYPE zc102ppt0010-status,
+        menge  TYPE zc102ppt0010-menge,
+        meins  TYPE zc102ppt0010-meins,
+        prog   TYPE zc102ppt0010-prog,
+        p_unit TYPE zc102ppt0012-p_unit,
+        icon   TYPE icon-id,
+      END OF  gs_route2,
+      gt_route2 LIKE TABLE OF gs_route2.
+
+"라우팅3
+DATA: BEGIN OF gs_route3,
+        rouno  TYPE zc102ppt0010-rouno,
+        wctno  TYPE zc102ppt0010-wctno,
+        matnr  TYPE zc102ppt0010-matnr,
+        pdono  TYPE zc102ppt0010-pdono,
+        werks  TYPE zc102ppt0010-werks,
+        rstda  TYPE zc102ppt0010-rstda,
+        renda  TYPE zc102ppt0010-renda,
+        reman  TYPE zc102ppt0010-reman,
+        remac  TYPE zc102ppt0010-remac,
+        status TYPE zc102ppt0010-status,
+        menge  TYPE zc102ppt0010-menge,
+        meins  TYPE zc102ppt0010-meins,
+        prog   TYPE zc102ppt0010-prog,
+        p_unit TYPE zc102ppt0012-p_unit,
+        icon   TYPE icon-id,
+      END OF  gs_route3,
+      gt_route3 LIKE TABLE OF gs_route3.
+
+"라우팅4
+DATA: BEGIN OF gs_route4,
+        rouno  TYPE zc102ppt0010-rouno,
+        wctno  TYPE zc102ppt0010-wctno,
+        matnr  TYPE zc102ppt0010-matnr,
+        pdono  TYPE zc102ppt0010-pdono,
+        werks  TYPE zc102ppt0010-werks,
+        rstda  TYPE zc102ppt0010-rstda,
+        renda  TYPE zc102ppt0010-renda,
+        reman  TYPE zc102ppt0010-reman,
+        remac  TYPE zc102ppt0010-remac,
+        status TYPE zc102ppt0010-status,
+        menge  TYPE zc102ppt0010-menge,
+        meins  TYPE zc102ppt0010-meins,
+        prog   TYPE zc102ppt0010-prog,
+        p_unit TYPE zc102ppt0012-p_unit,
+        icon   TYPE icon-id,
+      END OF  gs_route4,
+      gt_route4 LIKE TABLE OF gs_route4.
+
+<font color ="#0000FF">*--워크센터--*</font>
+DATA: BEGIN OF gs_work,
+        wctno TYPE zc102ppt0011-wctno,
+        werks TYPE zc102ppt0011-werks,
+        manzt TYPE zc102ppt0011-manzt,
+        pernr TYPE zc102ppt0011-pernr,
+      END OF gs_work,
+      gt_work LIKE TABLE OF gs_work.
+
+<font color ="#0000FF">**--자재마스터 테이블</font>
+<font color ="#0000FF">*DATA: gt_master TYPE TABLE OF zc102mmt0004,</font>
+<font color ="#0000FF">*      gs_master TYPE zc102mmt0004.</font>
+
+<font color ="#0000FF">*--숙성창고--*</font>
+DATA: gt_ripen TYPE TABLE OF zc102mmt0014,
+      gs_ripen TYPE zc102mmt0014.
+
+<font color ="#0000FF">*--for ALV</font>
+DATA: gt_left_fcat    TYPE lvc_t_fcat,
+      gt_right_fcat   TYPE lvc_t_fcat,
+      gt_pfcat        TYPE lvc_t_fcat,
+
+      gs_left_fcat    TYPE lvc_s_fcat,
+      gs_right_fcat   TYPE lvc_s_fcat,
+      gs_pfcat        TYPE lvc_s_fcat,
+
+      gs_layout       TYPE lvc_s_layo,
+      gs_right_layout TYPE lvc_s_layo,
+      gs_playout      TYPE lvc_s_layo,
+
+      gs_variant      TYPE disvariant,
+      gs_variant_pop  TYPE disvariant.
+
+<font color ="#0000FF">*--toolbar</font>
+DATA: gt_ui_functions TYPE ui_functions,
+      gs_button       TYPE stb_button,
+      gs_button_pop   TYPE stb_button.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*variant</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA: gv_okcode TYPE sy-ucomm,
+      gv_mode   VALUE 'E'.
+
+DATA: gv_new_rouno TYPE zc102ppt0010-rouno,
+      gv_today     TYPE sy-datum.
+
+<font color ="#0000FF">*--배치번호 채번--*</font>
+DATA: gv_bcno TYPE string.
+
+DATA:gv_title1(20), " 텝 타이틀 변수 선언
+     gv_title2(20),
+     gv_title3(20),
+     gv_title4(20).
+
+DATA: gv_cnt1(3),
+      gv_cnt2(3),
+      gv_cnt3(3),
+      gv_cnt4(3).   " 메세지 띄울때 총합 한번에 보려고 만듦
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

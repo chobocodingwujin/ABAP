@@ -1,0 +1,534 @@
+*&---------------------------------------------------------------------*
+*& Include          ZALV_TREEF01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form change
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_2
+*&      --> CL_GUI_COLUMN_TREE=>STYLE_EMPH
+*&---------------------------------------------------------------------*
+FORM change  USING type  TYPE i
+                   value TYPE i.
+
+  DATA: lt_selected_nodes   TYPE lvc_t_nkey,
+        ls_selected_node    TYPE lvc_nkey,
+        lt_item_layout      TYPE lvc_t_layi,
+        ls_item_layout_wa   TYPE lvc_s_layi,
+        lt_change_layout    TYPE lvc_t_laci,
+        ls_change_layout_wa TYPE lvc_s_laci,
+        l_fieldname         TYPE lvc_fname,
+        ls_outtab           TYPE sflight.
+
+  CALL METHOD go_tree->get_selected_nodes
+    CHANGING
+      ct_selected_nodes = lt_selected_nodes.
+
+  IF lt_selected_nodes IS INITIAL.
+    CALL METHOD go_tree->get_selected_item
+      IMPORTING
+        e_selected_node = ls_selected_node
+        e_fieldname     = l_fieldname.
+    APPEND ls_selected_node TO lt_selected_nodes.
+  ENDIF.
+
+  LOOP AT lt_selected_nodes INTO ls_selected_node.
+    CALL METHOD go_tree->get_outtab_line
+      EXPORTING
+        i_node_key     = ls_selected_node
+      IMPORTING
+        e_outtab_line  = ls_outtab
+        et_item_layout = lt_item_layout.
+
+    CLEAR lt_change_layout.
+    LOOP AT lt_item_layout INTO ls_item_layout_wa.
+      IF l_fieldname IS INITIAL OR
+         ls_item_layout_wa-fieldname EQ l_fieldname.
+
+        MOVE-CORRESPONDING ls_item_layout_wa TO ls_change_layout_wa.
+
+        CASE type.
+          WHEN 0.
+            ls_change_layout_wa-class = value.
+            ls_change_layout_wa-u_class = 'X'.
+            IF value EQ cl_gui_column_tree=>item_class_checkbox.
+              ls_change_layout_wa-editable = 'X'.
+            ELSE.
+              ls_change_layout_wa-editable = space.
+            ENDIF.
+            ls_change_layout_wa-u_editable = 'X'.
+          WHEN 1.
+            ls_change_layout_wa-font = value.
+            ls_change_layout_wa-u_font = 'X'.
+          WHEN 2.
+            ls_change_layout_wa-style = value.
+            ls_change_layout_wa-u_style = 'X'.
+          WHEN 3.
+            IF value EQ 0.
+              ls_change_layout_wa-t_image = icon_okay.
+            ELSE.
+              ls_change_layout_wa-t_image = space.
+            ENDIF.
+
+            ls_change_layout_wa-u_t_image = 'X'.
+        ENDCASE.
+        APPEND ls_change_layout_wa TO lt_change_layout.
+      ENDIF.
+    ENDLOOP.
+
+    CALL METHOD go_tree->change_node
+      EXPORTING
+        i_node_key     = ls_selected_node
+        i_outtab_line  = ls_outtab
+        it_item_layout = lt_change_layout.
+
+  ENDLOOP.
+
+  CALL METHOD go_tree->frontend_update.
+  CALL METHOD cl_gui_cfw=>flush.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_base_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_base_data .
+
+  CLEAR gt_partner.
+  SELECT *
+    INTO CORRESPONDING FIELDS OF TABLE gt_partner
+    FROM zbut000
+    WHERE partner IN so_bp.
+
+  IF gt_partner IS INITIAL.
+    MESSAGE s037 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form init_tree
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM init_tree .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = go_container->dock_at_left
+      extension = 3000.
+
+  CREATE OBJECT go_tree
+    EXPORTING
+      parent              = go_container
+      node_selection_mode = cl_gui_column_tree=>node_sel_mode_multiple
+      item_selection      = 'X'
+      no_html_header      = pa_check.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form define_hierarchy_header
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- GS_HIERHDR
+*&---------------------------------------------------------------------*
+FORM define_hierarchy_header  CHANGING pv_hierhdr TYPE treev_hhdr.
+
+  pv_hierhdr-heading = 'Treasure partner group'.
+  pv_hierhdr-tooltip = 'Treasure partner group'.
+  pv_hierhdr-width = 35.
+  pv_hierhdr-width_pix = space.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form build_comment
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> GT_LIST_COMMENTARY
+*&      --> GV_LOGO
+*&---------------------------------------------------------------------*
+FORM build_comment  USING pt_list_commentary TYPE slis_t_listheader
+                          pv_logo            TYPE sdydo_value.
+  DATA: ls_line TYPE slis_listheader.
+
+  CLEAR ls_line.
+  ls_line-typ = 'H'. " High font
+  ls_line-info = 'ALV Tree sample program : Partner info'.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " Small font
+  ls_line-key = 'Current date : '.
+  ls_line-info = sy-datum.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'.
+  ls_line-key = 'Current time : '.
+  ls_line-info = sy-uzeit.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'A'. " Italic font
+  ls_line-info = 'SYNC-6 Seoul'.
+  APPEND ls_line TO pt_list_commentary.
+
+*  pv_logo = 'ENJOYSAP_LOGO'.
+  pv_logo = 'S_Air'.
+  gs_variant-report = sy-repid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form define_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM define_field_catalog .
+
+  CLEAR : gt_fcat, gs_fcat.
+  PERFORM set_field_catalog USING : 'BU_GROUP'  'Group'                      'X',
+                                    'NAME_ORG1' 'Name'                       'X',
+                                    'BU_SORT1'  'Search Term 1'              ' ',
+                                    'BU_SORT2'  'Search Term 2'              ' ',
+                                    'TYPE'      'Business Partner Category'  ' '.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_field_catalog  USING pv_field pv_text pv_noout.
+
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-coltext   = pv_text.
+  gs_fcat-no_out    = pv_noout.
+  gs_fcat-outputlen = 36.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_hierarchy
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_hierarchy .
+
+  CALL METHOD go_tree->set_table_for_first_display
+    EXPORTING
+      is_variant          = gs_variant
+      i_save              = 'A'
+      i_default           = 'X'
+      is_hierarchy_header = gs_hierhdr
+      it_list_commentary  = gt_list_commentary
+      i_logo              = 'SLOGO1'
+*      i_logo              = 'T1PLANE'
+*      i_logo              = 'FOODLOGO'
+*      i_background_id     = 'SIWB_WALLPAPER'  " 'TRVPICTURE18'
+      i_background_id     = 'SBACK1'  " 'TRVPICTURE18'
+    CHANGING
+      it_outtab           = gt_outtab
+      it_fieldcatalog     = gt_fcat.
+
+*--register item_cxt_menu_request------------------------------------*.
+  SET HANDLER : lcl_event_handler=>on_item_cxt_menu_request  FOR go_tree,
+                lcl_event_handler=>on_item_cxt_menu_selected FOR go_tree.
+
+  CALL METHOD go_tree->get_registered_events
+    IMPORTING
+      events = gt_events.
+
+  gs_event-eventid = cl_gui_column_tree=>eventid_item_context_menu_req.
+  APPEND gs_event TO gt_events.
+
+  CALL METHOD go_tree->set_registered_events
+    EXPORTING
+      events = gt_events.
+
+*--add new functions to toolbar--------------------------------------*
+*  PERFORM add_function_to_toolbar.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form fill_column_tree
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM fill_column_tree .
+
+  DATA: lv_node_text    TYPE lvc_value,
+        lv_bu_group_key TYPE lvc_nkey,
+        lv_root_key     TYPE lvc_nkey,
+        lv_partner_key  TYPE lvc_nkey,
+        lt_layout_item  TYPE lvc_t_layi,
+        ls_layout       TYPE lvc_s_layn.
+
+  SORT gt_partner BY bu_group.
+
+  LOOP AT gt_partner INTO gs_partner.
+
+    ON CHANGE OF gs_partner-bu_group.
+      CLEAR ls_layout.
+*-- 하위에 Level 정보가 더 있다면 Folder 속성 적용 ------------------*
+      ls_layout-isfolder = 'X'.
+      ls_layout-n_image  = '@06@'.
+      ls_layout-exp_image = '@07@'.
+*--------------------------------------------------------------------*
+      lv_node_text = gs_partner-bu_group.
+
+      CALL METHOD go_tree->add_node
+        EXPORTING
+          i_relat_node_key = lv_root_key
+          i_relationship   = cl_gui_column_tree=>relat_last_child
+          i_node_text      = lv_node_text
+          is_node_layout   = ls_layout
+          is_outtab_line   = gs_partner
+        IMPORTING
+          e_new_node_key   = lv_bu_group_key.
+    ENDON.
+
+    PERFORM create_item_layouts CHANGING lt_layout_item.
+
+*-- 최하위 노드
+    lv_node_text = gs_partner-name_org1.
+    CALL METHOD go_tree->add_node
+      EXPORTING
+        i_relat_node_key = lv_bu_group_key
+        i_relationship   = cl_gui_column_tree=>relat_last_child
+        i_node_text      = lv_node_text
+        is_outtab_line   = gs_partner
+      IMPORTING
+        e_new_node_key   = lv_partner_key.
+
+    PERFORM create_item_layouts CHANGING lt_layout_item.
+
+  ENDLOOP.
+
+  CALL METHOD : go_tree->update_calculations,
+                go_tree->frontend_update,
+                cl_gui_cfw=>flush.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form add_function_to_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM add_function_to_toolbar .
+
+  DATA: lo_toolbar     TYPE REF TO cl_gui_toolbar,
+        lo_style_menu  TYPE REF TO cl_ctmenu,
+        lo_image_menu  TYPE REF TO cl_ctmenu,
+        lo_change_menu TYPE REF TO cl_ctmenu.
+
+  CALL METHOD go_tree->get_toolbar_object
+    IMPORTING
+      er_toolbar = lo_toolbar.
+
+  CHECK NOT lo_toolbar IS INITIAL.
+
+*-- Submenu for fonts
+  DATA lo_font_menu TYPE REF TO cl_ctmenu.
+  CREATE OBJECT lo_font_menu.
+
+  CALL METHOD lo_font_menu->add_function
+    EXPORTING
+      fcode = 'FONT_DEFAULT'
+      text  = 'Default'.
+
+  CALL METHOD lo_font_menu->add_function
+    EXPORTING
+      fcode = 'PROP'
+      text  = 'Prop'.
+
+  CALL METHOD lo_font_menu->add_function
+    EXPORTING
+      fcode = 'FIXED'
+      text  = 'Fixed'.
+
+*-- Submenu for style
+  CREATE OBJECT lo_style_menu.
+
+  CALL METHOD lo_style_menu->add_function
+    EXPORTING
+      fcode = 'STYLE_DEFAULT'
+      text  = 'Default'.
+
+  CALL METHOD lo_style_menu->add_function
+    EXPORTING
+      fcode = 'INHERITED'
+      text  = 'Inherited'.
+
+  CALL METHOD lo_style_menu->add_function
+    EXPORTING
+      fcode = 'INTENSIFIED'
+      text  = 'Intensified'.
+
+  CALL METHOD lo_style_menu->add_function
+    EXPORTING
+      fcode = 'INACTIVE'
+      text  = 'Inactive'.
+
+  CALL METHOD lo_style_menu->add_function
+    EXPORTING
+      fcode = 'CRITICAL'
+      text  = 'Critical'.
+
+  CALL METHOD lo_style_menu->add_function
+    EXPORTING
+      fcode = 'NEGATIVE'
+      text  = 'Negative'.
+
+  CALL METHOD lo_style_menu->add_function
+    EXPORTING
+      fcode = 'POSITIVE'
+      text  = 'Positive'.
+
+  CALL METHOD lo_style_menu->add_function
+    EXPORTING
+      fcode = 'EMPHASIZED'
+      text  = 'Emphasized'.
+
+*-- Submenu for class
+  DATA lo_class_menu TYPE REF TO cl_ctmenu.
+  CREATE OBJECT lo_class_menu.
+
+  CALL METHOD lo_class_menu->add_function
+    EXPORTING
+      fcode = 'TEXT'
+      text  = 'Text'.
+
+  CALL METHOD lo_class_menu->add_function
+    EXPORTING
+      fcode = 'CHECKBOX'
+      text  = 'Checkbox'.
+
+  CALL METHOD lo_class_menu->add_function
+    EXPORTING
+      fcode = 'BUTTON'
+      text  = 'Button'.
+
+  CALL METHOD lo_class_menu->add_function
+    EXPORTING
+      fcode = 'LINK'
+      text  = 'Link'.
+
+*-- Submenu for image/no image
+  CREATE OBJECT lo_image_menu.
+
+  CALL METHOD lo_image_menu->add_function
+    EXPORTING
+      fcode = 'IMAGE'
+      text  = 'Image'.
+
+  CALL METHOD lo_image_menu->add_function
+    EXPORTING
+      fcode = 'NOIMAGE'
+      text  = 'No Image'.
+
+*-- Change menu
+  CREATE OBJECT lo_change_menu.
+
+  CALL METHOD lo_change_menu->add_submenu
+    EXPORTING
+      menu = lo_font_menu
+      text = 'Font'.
+
+  CALL METHOD lo_change_menu->add_submenu
+    EXPORTING
+      menu = lo_style_menu
+      text = 'Style'.
+
+  CALL METHOD lo_change_menu->add_submenu
+    EXPORTING
+      menu = lo_class_menu
+      text = 'Class'.
+
+  CALL METHOD lo_change_menu->add_submenu
+    EXPORTING
+      menu = lo_image_menu
+      text = 'Image'.
+
+*-- Add separator to toolbar
+  CALL METHOD lo_toolbar->add_button
+    EXPORTING
+      fcode     = ''
+      icon      = ''
+      butn_type = cntb_btype_sep.
+
+*-- Add change menu to toolbar
+  CALL METHOD lo_toolbar->add_button
+    EXPORTING
+      fcode     = 'CHANGE'
+      icon      = ''
+      text      = 'Change'
+      butn_type = cntb_btype_dropdown
+      quickinfo = 'Change selected items'.
+
+  CALL METHOD lo_toolbar->set_static_ctxmenu
+    EXPORTING
+      fcode   = 'CHANGE'
+      ctxmenu = lo_change_menu.
+
+*-- Set handler
+  SET HANDLER lcl_event_handler=>on_function_selected FOR lo_toolbar.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_item_layouts
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LT_LAYOUT_ITEM
+*&---------------------------------------------------------------------*
+FORM create_item_layouts  CHANGING pt_item_layout TYPE lvc_t_layi.
+
+  DATA: ls_item_layout TYPE lvc_s_layi.
+
+  CLEAR pt_item_layout.
+  LOOP AT gt_fcat INTO gs_fcat.
+    CLEAR ls_item_layout.
+    IF gs_fcat-no_out EQ space.
+      ls_item_layout-fieldname = gs_fcat-fieldname.
+      APPEND ls_item_layout TO pt_item_layout.
+    ENDIF.
+  ENDLOOP.
+
+  CLEAR ls_item_layout.
+  ls_item_layout-fieldname = go_tree->c_hierarchy_column_name.
+  APPEND ls_item_layout TO pt_item_layout.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

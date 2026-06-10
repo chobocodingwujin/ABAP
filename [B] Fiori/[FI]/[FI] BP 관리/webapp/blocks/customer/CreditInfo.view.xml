@@ -1,0 +1,51 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc"
+	xmlns:forms="sap.ui.layout.form"
+	xmlns:core="sap.ui.core"
+	xmlns="sap.m">
+	<forms:SimpleForm editable="false" layout="ColumnLayout">
+
+		<Label text="여신한도" />
+		<Text text="{
+    			parts: [
+     			 { path: 'PartnerSet>/to_Credit/CreditLimit' },
+     			 { path: 'PartnerSet>/Waers' }
+   				 ],
+    		  	type: 'sap.ui.model.type.Currency',
+   				 formatOptions: {
+    			 showMeasure: true
+    			}
+  		}" />
+
+		<Label text="사용한도"/>
+		<Text text="{
+    			parts: [
+     			 { path: 'PartnerSet>/to_Credit/CreditUsed' },
+     			 { path: 'PartnerSet>/Waers' }
+   				 ],
+    		  	type: 'sap.ui.model.type.Currency',
+   				 formatOptions: {
+    			 showMeasure: true
+    			}
+  		}" />
+		<!-- <Text text="{PartnerSet>/to_Credit/CreditUsed}"/> -->
+
+		<Label text="잔여한도" />
+		<Text text="{
+    			parts: [
+     			 { path: 'PartnerSet>/to_Credit/CreditRemain' },
+     			 { path: 'PartnerSet>/Waers' }
+   				 ],
+    		  	type: 'sap.ui.model.type.Currency',
+   				 formatOptions: {
+    			 showMeasure: true
+    			}
+  		}" />
+
+		<Label text="갱신일자"/>
+		<Text id="lasted_update" text="2025-05-11"/>
+
+		<Label text="상태" />
+		<ObjectStatus id="credit_status" state="{PartnerSet>/to_Credit/status}" icon="{PartnerSet>/to_Credit/CreditStatus}"/>
+
+	</forms:SimpleForm>
+</mvc:View>

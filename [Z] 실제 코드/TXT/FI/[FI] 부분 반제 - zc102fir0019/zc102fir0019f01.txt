@@ -1,0 +1,2694 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102FIR0019F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form display_screen_0100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen_0100 .
+
+  IF go_split_cont IS NOT BOUND.
+
+    CLEAR : gt_fcat_open, gs_fcat_open.
+    PERFORM set_fcat_open USING :
+                          'X' 'BELNR'       'ZC102FIT0010' 'C' ' ',
+                          'X' 'GJAHR'       'ZC102FIT0010' 'C' ' ',
+                          'X' 'BUZEI'       'ZC102FIT0010' 'C' ' ',
+                          ' ' 'SAKNR'       'ZC102FIT0010' 'C' ' ',
+                          ' ' 'TXT20'       'ZC102FIT0002' ' ' 'X',
+                          ' ' 'AUGBL'       'ZC102FIT0010' 'C' ' ',
+                          ' ' 'AUGDT'       'ZC102FIT0010' 'C' ' ',
+                          ' ' 'BSCHL'       'ZC102FIT0010' 'C' ' ',
+                          ' ' 'LTEXT'       'ZC102FIT0004' ' ' 'X',
+                          ' ' 'SHKZG'       'ZC102FIT0010' 'C' ' ',
+                          ' ' 'KOART'       'ZC102FIT0010' 'C' ' ',
+*                          ' ' 'PARTNER'     'ZC102FIT0010' 'C' ' ',
+                          ' ' 'SGTXT'       'ZC102FIT0010' ' ' 'X',
+                          ' ' 'EBELN'       'ZC102FIT0010' 'C' ' ',
+                          ' ' 'VBELN'       'ZC102FIT0010' 'C' ' ',
+                          ' ' 'WRBTR'       'ZC102FIT0010' ' ' 'X',
+                          ' ' 'DMBTR'       'ZC102FIT0010' ' ' 'X',
+                          ' ' 'WAERS'       'ZC102FIT0010' 'C' ' '.
+
+    CLEAR : gt_fcat_clear, gs_fcat_clear.
+    PERFORM set_fcat_clear USING :
+*                          'X' 'AUGBL'       'ZC102FIT0016' 'C' ' ',
+                          'X' 'BELNR'       'ZC102FIT0016' 'C' ' ',
+                          'X' 'GJAHR'       'ZC102FIT0016' 'C' ' ',
+                          'X' 'BUZEI'       'ZC102FIT0016' 'C' ' ',
+                          ' ' 'SAKNR'       'ZC102FIT0016' 'C' ' ',
+                          ' ' 'TXT20'       'ZC102FIT0002' ' ' 'X',
+                          ' ' 'AUGDT'       'ZC102FIT0016' 'C' ' ',
+                          ' ' 'REBZG'       'ZC102FIT0016' 'C' ' ',
+                          ' ' 'BSCHL'       'ZC102FIT0016' 'C' ' ',
+                          ' ' 'LTEXT'       'ZC102FIT0004' ' ' 'X',
+                          ' ' 'SHKZG'       'ZC102FIT0016' 'C' ' ',
+                          ' ' 'KOART'       'ZC102FIT0016' 'C' ' ',
+*                          ' ' 'PARTNER'     'ZC102FIT0016' 'C' ' ',
+                          ' ' 'SGTXT'       'ZC102FIT0016' ' ' 'X',
+                          ' ' 'WRBTR'       'ZC102FIT0016' ' ' 'X',
+                          ' ' 'WAERS'       'ZC102FIT0016' 'C' ' ',
+                          ' ' 'SORT_KEY'    ' '            ' ' ' '.
+
+    PERFORM set_layout_open.
+    PERFORM set_layout_clear.
+    PERFORM create_object.
+
+*    SET HANDLER lcl_event_handler=>hotspot_click FOR go_left_grid.
+    CALL METHOD go_left_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_open
+      CHANGING
+        it_outtab       = gt_open
+        it_fieldcatalog = gt_fcat_open
+        it_sort         = gt_sort_open.
+
+    CALL METHOD go_right_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_clear
+      CHANGING
+        it_outtab       = gt_clear
+        it_fieldcatalog = gt_fcat_clear
+        it_sort         = gt_sort_clear.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat_line
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat_open USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_open-key       = pv_key.
+  gs_fcat_open-fieldname = pv_field.
+  gs_fcat_open-ref_table = pv_table.
+  gs_fcat_open-just      = pv_just.
+  gs_fcat_open-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_fcat_open-cfieldname = 'WAERS'.
+      gs_fcat_open-do_sum     = abap_true.
+*    WHEN 'BELNR'.
+*      gs_fcat_open-hotspot    = abap_true.
+  ENDCASE.
+
+  APPEND gs_fcat_open TO gt_fcat_open.
+  CLEAR gs_fcat_open.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_open .
+
+  gs_layout_open-zebra      = abap_true.
+  gs_layout_open-cwidth_opt = 'A'.
+  gs_layout_open-sel_mode   = ' '.
+  gs_layout_open-grid_title = TEXT-t01.
+*  gs_layout_open-totals_bef = abap_true. " Total 칼럼 맨 위로 올리기
+  gs_layout_open-no_totline = abap_true.
+
+  gs_variant-report = sy-repid.
+  gs_variant-handle = 'ALV1'.
+
+*-- SET SORT
+  CLEAR : gt_sort_open, gs_sort_open.
+  gs_sort_open-spos      = 1.
+  gs_sort_open-fieldname = 'BELNR'.
+  gs_sort_open-up        = abap_true.
+  gs_sort_open-subtot    = abap_true.
+  APPEND gs_sort_open TO gt_sort_open.
+
+  CLEAR : gs_sort_open.
+  gs_sort_open-spos      = 2.
+  gs_sort_open-fieldname = 'BUZEI'.
+  gs_sort_open-up        = abap_true.
+  APPEND gs_sort_open TO gt_sort_open.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_container
+      rows    = 2
+      columns = 1.
+
+  CALL METHOD go_split_cont->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_left_cont.
+
+  CALL METHOD go_split_cont->set_row_height
+    EXPORTING
+      id     = 1     " 첫 번째 행 (상단)
+      height = 40.   " 퍼센트 기준
+
+
+  CALL METHOD go_split_cont->get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_right_cont.
+
+  CALL METHOD go_split_cont->set_row_height
+    EXPORTING
+      id     = 2     " 두 번째 행 (하단)
+      height = 60.   " 퍼센트 기준
+
+  CREATE OBJECT go_left_grid
+    EXPORTING
+      i_parent = go_left_cont.
+
+  CREATE OBJECT go_right_grid
+    EXPORTING
+      i_parent = go_right_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_open_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_open_data .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  CLEAR : gt_open.
+  SELECT bukrs belnr gjahr buzei saknr bpact augdt augbl bschl shkzg koart
+         partner sgtxt ebeln vbeln wrbtr waers
+         erdat ernam erzet aedat aenam aezet
+    INTO CORRESPONDING FIELDS OF TABLE gt_open
+    FROM zc102fit0010
+    WHERE bukrs = gs_header-bukrs
+      AND belnr = gs_header-belnr
+      AND gjahr = gs_header-gjahr.
+
+  IF sy-dbcnt = 0.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  CLEAR gv_partner.
+  LOOP AT gt_open INTO gs_open.
+
+    lv_tabix = sy-tabix.
+    IF gs_open-bpact IS NOT INITIAL.
+      gs_open-saknr = gs_open-bpact.
+      gv_partner = gs_open-partner.
+      MODIFY gt_open FROM gs_open INDEX lv_tabix TRANSPORTING saknr.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_open_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_open_credit .
+
+  CLEAR gv_sum_open.
+  gv_waers_open = gs_header-waers.
+
+  gv_sum_open = gt_open[ 1 ]-wrbtr.
+*  LOOP AT gt_open INTO gs_open.
+*
+*    IF gs_open-shkzg = 'S'.
+*      gv_sum_open += gs_open-wrbtr.
+*    ENDIF.
+*
+*  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat_clear
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat_clear USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_clear-key       = pv_key.
+  gs_fcat_clear-fieldname = pv_field.
+  gs_fcat_clear-ref_table = pv_table.
+  gs_fcat_clear-just      = pv_just.
+  gs_fcat_clear-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_fcat_clear-cfieldname = 'WAERS'.
+      gs_fcat_clear-do_sum     = abap_true.
+    WHEN 'SORT_KEY'.
+      gs_fcat_clear-no_out = abap_true.
+  ENDCASE.
+
+  APPEND gs_fcat_clear TO gt_fcat_clear.
+  CLEAR gs_fcat_clear.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout_clear
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_clear .
+
+  gs_layout_clear-zebra      = abap_true.
+  gs_layout_clear-cwidth_opt = 'A'.
+  gs_layout_clear-sel_mode   = ' '.
+  gs_layout_clear-ctab_fname = 'COLOR'.
+  gs_layout_clear-grid_title = TEXT-t02.
+*  gs_layout_open-totals_bef = abap_true. " Total 칼럼 맨 위로 올리기
+  gs_layout_clear-no_totline = abap_true.
+
+*-- SET SORT
+*-- 새로 생긴 아이템 맨 위로
+  CLEAR : gt_sort_clear, gs_sort_clear.
+  gs_sort_clear-spos = 1.
+  gs_sort_clear-fieldname = 'SORT_KEY'.
+  gs_sort_clear-up = abap_false.
+  APPEND gs_sort_clear TO gt_sort_clear.
+
+*-- AUGBL 별 차/대변 합 구해야 함
+  CLEAR : gs_sort_clear.
+  gs_sort_clear-spos      = 2.
+  gs_sort_clear-fieldname = 'BELNR'.
+  gs_sort_clear-up        = abap_true.
+  gs_sort_clear-subtot    = abap_true.
+  APPEND gs_sort_clear TO gt_sort_clear.
+
+  CLEAR : gs_sort_clear.
+  gs_sort_clear-spos = 3.
+  gs_sort_clear-fieldname = 'BUZEI'.
+  gs_sort_clear-up = abap_false.
+  APPEND gs_sort_clear TO gt_sort_clear.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_hotspot_click
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_COLUMN_ID
+*&      --> E_ROW_ID
+*&---------------------------------------------------------------------*
+FORM handle_hotspot_click USING pv_column_id pv_row_id.
+
+  DATA : lv_type TYPE dd01v-datatype.
+
+  CALL FUNCTION 'NUMERIC_CHECK'
+    EXPORTING
+      string_in = pv_row_id
+    IMPORTING
+      htype     = lv_type.
+
+  IF lv_type = 'CHAR'.
+    MESSAGE s015 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+
+  READ TABLE gt_open INTO gs_open INDEX pv_row_id.
+
+  CHECK gs_open IS NOT INITIAL.
+
+  CASE pv_column_id.
+    WHEN 'BELNR'.
+      PERFORM get_clear_data.
+      PERFORM refresh_alv_grid.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_clear_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_clear_data .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  CLEAR gt_clear.
+  SELECT belnr gjahr buzei rebzg saknr bpact augdt bschl shkzg koart
+         partner sgtxt dmbtr wrbtr waers
+         erdat ernam erzet aedat aenam aezet
+    INTO CORRESPONDING FIELDS OF TABLE gt_clear
+    FROM zc102fit0016
+    WHERE bukrs = gs_header-bukrs
+      AND rebzg = gs_header-belnr
+      AND gjahr = gs_header-gjahr.
+
+  LOOP AT gt_clear INTO gs_clear.
+
+    lv_tabix = sy-tabix.
+    IF gs_clear-bpact IS NOT INITIAL.
+      gs_clear-saknr = gs_clear-bpact.
+
+      MODIFY gt_clear FROM gs_clear INDEX lv_tabix TRANSPORTING saknr.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_alv_grid
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_alv_grid .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-col = abap_true.
+  ls_stable-row = abap_true.
+
+  CALL METHOD go_left_grid->refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+  CALL METHOD go_right_grid->refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_clear_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_clear_credit .
+
+  CLEAR gv_sum_clear.
+  gv_waers_clear = gs_header-waers.
+
+  LOOP AT gt_clear INTO gs_clear.
+
+    IF gs_clear-shkzg = 'S'.
+      gv_sum_clear += gs_clear-wrbtr.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_remain_credit
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_remain_credit .
+
+  gv_remain = gv_sum_open - gv_sum_clear.
+  gv_waers_remain = gs_header-waers.
+
+  IF gv_sum_clear = 0.
+    gv_status = icon_led_red.
+  ELSEIF gv_remain > 0.
+    gv_status = icon_led_yellow.
+  ELSEIF gv_remain = 0.
+    gv_status = icon_led_green.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_basic_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_basic_data .
+
+  gs_clear_header-bldat = sy-datum.
+  gs_clear_header-bukrs = gs_header-bukrs.
+  gs_clear_header-rebzg = gs_header-belnr.
+  gs_clear_header-waers = gs_header-waers.
+  gs_clear_header-gjahr = gs_header-gjahr.
+  gs_clear_header-budat = sy-datum.
+  gs_clear_item-augdt = sy-datum.
+
+  CASE gs_header-blart.
+    WHEN 'DR'.
+      gs_clear_header-blart = 'DZ'.
+    WHEN 'KR'.
+      gs_clear_header-blart = 'KZ'.
+    WHEN 'SA'.
+      gs_clear_header-blart = 'SA'.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form clear_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM clear_item .
+
+  DATA : lv_check.
+
+  PERFORM call_popup USING TEXT-q04 TEXT-q02 lv_check.
+  CHECK lv_check = '1'.
+  CLEAR gs_clear_item.
+  MESSAGE s020.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form call_popup
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> LV_CHECK
+*&---------------------------------------------------------------------*
+FORM call_popup USING pv_title pv_question pv_check.
+
+  CALL FUNCTION 'ZFM_CL102_CM_POP_UP'
+    EXPORTING
+      iv_titlebar = pv_title
+      iv_question = pv_question
+    IMPORTING
+      ev_answer   = pv_check.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen_0110
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen_0110 .
+
+  IF go_pop_clear_cont IS NOT BOUND.
+
+    CLEAR : gt_fcat_pop_clear, gs_fcat_pop_clear.
+    PERFORM set_fcat_pop_clear USING :
+*                               'X' 'BUZEI'       'ZC102FIT0016' 'C' ' ',
+                               ' ' 'SAKNR'       'ZC102FIT0016' 'C' ' ',
+                               ' ' 'TXT20'       'ZC102FIT0002' ' ' 'X',
+                               ' ' 'AUGDT'       'ZC102FIT0016' 'C' ' ',
+                               ' ' 'REBZG'       'ZC102FIT0016' 'C' ' ',
+                               ' ' 'BSCHL'       'ZC102FIT0016' 'C' ' ',
+                               ' ' 'LTEXT'       'ZC102FIT0004' ' ' 'X',
+                               ' ' 'SHKZG'       'ZC102FIT0016' 'C' ' ',
+                               ' ' 'KOART'       'ZC102FIT0016' 'C' ' ',
+*                               ' ' 'PARTNER'     'ZC102FIT0016' 'C' ' ',
+                               ' ' 'SGTXT'       'ZC102FIT0016' ' ' 'X',
+                               ' ' 'WRBTR'       'ZC102FIT0016' ' ' 'X',
+                               ' ' 'WAERS'       'ZC102FIT0016' 'C' ' '.
+
+    PERFORM set_layout_pop_clear.
+    PERFORM set_exclude_toolbar.
+    PERFORM create_object_pop_clear.
+
+    SET HANDLER : lcl_event_handler=>edit_toolbar FOR go_pop_clear_grid,
+                  lcl_event_handler=>user_command FOR go_pop_clear_grid.
+    CALL METHOD go_pop_clear_grid->set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_layout_pop_clear
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_clear_item
+        it_fieldcatalog      = gt_fcat_pop_clear.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat_pop_clear
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat_pop_clear USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_pop_clear-key       = pv_key.
+  gs_fcat_pop_clear-fieldname = pv_field.
+  gs_fcat_pop_clear-ref_table = pv_table.
+  gs_fcat_pop_clear-just      = pv_just.
+  gs_fcat_pop_clear-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_fcat_pop_clear-cfieldname = 'WAERS'.
+      gs_fcat_pop_clear-do_sum     = abap_true.
+  ENDCASE.
+
+  APPEND gs_fcat_pop_clear TO gt_fcat_pop_clear.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout_pop
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_pop_clear .
+
+  gs_layout_pop_clear-zebra      = abap_true.
+  gs_layout_pop_clear-cwidth_opt = 'A'.
+  gs_layout_pop_clear-sel_mode   = 'D'.
+  gs_layout_pop_clear-grid_title = TEXT-t02.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object_pop_clear
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object_pop_clear .
+
+  CREATE OBJECT go_pop_clear_cont
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_pop_clear_grid
+    EXPORTING
+      i_parent = go_pop_clear_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form make_clear_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM make_clear_item .
+
+  DATA : lv_check VALUE abap_true.
+
+*-- 필수 입력 칸이 비어있는지 체크
+  PERFORM check_field_empty USING lv_check.
+  CLEAR gv_okcode.  " gv_okcode 초기화 -> 안하면 계속 MAKE라서 진행이 안됨
+  CHECK lv_check = abap_true. " 빈 필드있으면 나가기
+
+*-- gv_missing_field 초기화
+  CLEAR gv_missing_field.
+
+*-- gt_bschl(전기키 마스터 데이터) 기반으로 shkgz, koart, ltext 값 가져오기
+  PERFORM set_bschl_data.
+
+*-- SAP 금액, 순번 지정 -> 기본값 세팅
+  PERFORM set_basic_clear_data.
+
+*-- ITAB에 넣고 갱신
+  READ TABLE gt_saknr INTO gs_saknr WITH KEY gs_clear_item-saknr
+                                    BINARY SEARCH.
+  IF sy-subrc = 0.
+    gs_clear_item-txt20 = gs_saknr-txt20.
+  ENDIF.
+  APPEND gs_clear_item TO gt_clear_item.
+  PERFORM refresh_pop_clear_grid.
+
+*-- 반제 전표 차/대변 금액 합 계산
+  PERFORM set_clear_sum.
+
+*-- 다쓴 아이템 필드 비우기
+  CLEAR gs_clear_item.
+  gs_clear_item-waers = gs_clear_header-waers.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_pop_clear_grid
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_pop_clear_grid .
+
+  go_pop_clear_grid->refresh_table_display( ).
+  CLEAR gs_clear_item.
+  " 강제 PBO 메소드
+  CALL METHOD cl_gui_cfw=>set_new_ok_code
+    EXPORTING
+      new_code = 'XXXX'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_bschl_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_bschl_data .
+
+  CLEAR gt_bschl.
+  SELECT bschl shkzg koart ltext
+    INTO CORRESPONDING FIELDS OF TABLE gt_bschl
+    FROM zc102fit0004.
+
+  SORT gt_bschl ASCENDING BY bschl.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_bschl_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_bschl_data .
+
+  CLEAR gs_bschl.
+  READ TABLE gt_bschl INTO gs_bschl WITH KEY gs_clear_item-bschl
+                                    BINARY SEARCH.
+
+  IF sy-subrc = 0.
+
+    gs_clear_item-shkzg = gs_bschl-shkzg.
+    gs_clear_item-koart = gs_bschl-koart.
+    gs_clear_item-ltext = gs_bschl-ltext.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_basic_clear_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_basic_clear_data .
+
+*-- 환전 팡숀
+*  CALL FUNCTION 'CURRENCY_AMOUNT_IDOC_TO_SAP'
+*    EXPORTING
+*      currency    = gs_clear_item-waers
+*      idoc_amount = gs_clear_item-wrbtr
+*    IMPORTING
+*      sap_amount  = gs_clear_item-wrbtr.
+
+*-- 반제 전표 번호, 회사코드, 회계연도 지정 -> 헤더껄로
+  gs_clear_item-bukrs = gs_clear_header-bukrs.
+*  gs_clear_item-belnr = gs_clear_header-belnr.
+  gs_clear_item-rebzg = gs_header-belnr.
+  gs_clear_item-gjahr = gs_clear_header-gjahr.
+
+  IF gs_clear_item-wrbtr < 0.
+    gs_clear_item-wrbtr *= -1.
+  ENDIF.
+
+*-- 대변일 경우 음수 처리
+  IF gs_clear_item-shkzg = 'H'.
+    gs_clear_item-wrbtr = -1 * gs_clear_item-wrbtr.
+  ENDIF.
+
+*  gs_clear_item = VALUE #( BASE gs_clear_item
+*                                buzei = lines( gt_clear_item ) + 1 ).
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_screen_data_0110
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_screen_data_0110 .
+
+  DATA : lv_budat TYPE string.
+
+*-- 전표 유형 선택 시 오른쪽에 상세 텍스트 출력
+  IF gs_clear_header-blart IS NOT INITIAL.
+    CLEAR gs_blart.
+    READ TABLE gt_blart INTO gs_blart
+                        WITH KEY gs_clear_header-blart
+                        BINARY SEARCH.
+    gs_clear_header-ltext = gs_blart-ltext.
+
+  ENDIF.
+
+*-- 날짜 형식 2025/07/11, 2025-07-11 입력도 OK로 만들기
+  IF gs_clear_header-budat IS NOT INITIAL.
+    lv_budat = gs_clear_header-budat.
+  ENDIF.
+
+*-- 라인 아이템 통화키 동기화
+  IF gs_clear_item-waers IS INITIAL.
+    gs_clear_item-waers = gs_clear_header-waers.
+  ENDIF.
+
+*-- 계정과목에 따라 BPACT 값 입력
+  PERFORM set_bpact_data.
+
+*-- 생성 전표 아이템 금액 합계에 따른 생성 가능 여부
+  IF ( gt_clear_item IS INITIAL ) OR
+     ( gv_clear_sum NE 0 ).
+    gv_clear_status = icon_led_red.
+  ELSEIF gv_clear_sum = 0.
+    gv_clear_status = icon_led_green.
+  ENDIF.
+
+*-- bschl가 유효하지 않다면
+  CLEAR gs_bschl.
+  READ TABLE gt_bschl INTO gs_bschl
+                      WITH KEY bschl = gs_clear_item-bschl.
+  IF ( gs_bschl IS NOT INITIAL ) AND
+     ( gs_bschl IS INITIAL ).
+    MESSAGE s026 WITH '전기키' DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+*-- Screen 세팅
+  LOOP AT SCREEN.
+*-- 필수 필드가 비어있다면 해당 필드를 강조하고 다른 모든 필드 잠그기
+    IF screen-group2 = 'IOF'.
+      IF gv_missing_field IS NOT INITIAL.
+        IF screen-name = gv_missing_field.
+          screen-input = 1.
+          screen-intensified = '1'.
+        ELSE.
+          screen-input = 0.
+        ENDIF.
+      ELSE.
+        screen-input = 1.
+        screen-intensified = 0.
+      ENDIF.
+    ENDIF.
+
+*-- 조정계정 필드 없애기
+    IF screen-group1 = 'ACT'.
+      IF gs_clear_item-bpact IS INITIAL.
+        screen-invisible = 1.
+      ENDIF.
+    ENDIF.
+
+    IF gv_missing_field IS INITIAL.
+*-- 전기키 제외 다른 필드 잠그기
+      IF screen-group1 = 'FST'.
+        IF gs_clear_item-bschl IS INITIAL.
+          screen-input = 0.
+        ELSE.
+          screen-input = 1.
+        ENDIF.
+      ENDIF.
+
+      IF screen-name = 'GS_CLEAR_ITEM-BSCHL'.
+        IF gs_clear_item-bschl IS INITIAL.
+          screen-input = 1.
+        ELSE.
+          screen-input = 0.
+        ENDIF.
+      ENDIF.
+    ENDIF.
+
+
+*-- gt_clear_line(반제 전표 아이템)이 비어있지 않다면 Header 잠그기
+*    CASE screen-group1.
+*      WHEN 'LOC'.
+*        IF gt_clear_item IS NOT INITIAL.
+*          screen-input = 0.
+*        ENDIF.
+*    ENDCASE.
+
+    MODIFY SCREEN.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_blart_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_blart_data .
+
+  CLEAR gt_blart.
+  SELECT blart ltext
+    INTO CORRESPONDING FIELDS OF TABLE gt_blart
+    FROM zc102fit0005
+    WHERE spras = sy-langu.
+
+  SORT gt_blart ASCENDING BY blart.
+
+ENDFORM.
+FORM set_exclude_toolbar .
+
+*-- 툴바 제거
+  DATA : ls_ui_functions TYPE ui_func.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_edit_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_INTERACTIVE
+*&      --> E_OBJECT
+*&---------------------------------------------------------------------*
+FORM handle_edit_toolbar USING pv_interactive
+                               po_object TYPE REF TO
+                                          cl_alv_event_toolbar_set.
+
+  DATA : lv_enable.
+
+*-- 테이블 비었으면 삭제버튼 비활성화
+  IF gt_clear_item IS INITIAL.
+    lv_enable = abap_true.
+  ENDIF.
+
+  CLEAR gs_button.
+
+*-- 구분선 생성
+  PERFORM make_division_line USING po_object.
+
+*-- 삭제 버튼 생성
+  PERFORM make_button USING 'DROW' icon_delete_row
+                            lv_enable po_object.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form make_division_line
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> PO_OBJECT
+*&---------------------------------------------------------------------*
+FORM make_division_line USING po_object TYPE REF TO
+                                          cl_alv_event_toolbar_set.
+
+  gs_button-butn_type = '3'.
+  APPEND gs_button TO po_object->mt_toolbar.
+  CLEAR gs_button.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form make_button
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> ICON_DELETE_ROW
+*&      --> LV_ENABLE
+*&      --> PO_OBJECT
+*&---------------------------------------------------------------------*
+FORM make_button USING pv_func pv_icon pv_enable
+                       po_object TYPE REF TO cl_alv_event_toolbar_set.
+
+  gs_button-function = pv_func.
+  gs_button-icon     = pv_icon.
+  gs_button-disabled = pv_enable.
+  APPEND gs_button TO po_object->mt_toolbar.
+  CLEAR gs_button.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_field_empty
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_field_empty USING pv_check.
+
+*-- blart가 유효하지 않다면
+  CLEAR gs_blart.
+  READ TABLE gt_blart INTO gs_blart
+                      WITH KEY blart = gs_clear_header-blart.
+  IF gs_blart IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_HEADER-BLART'.
+    MESSAGE s026 WITH '전표유형' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- blart가 비었다면
+  IF gs_clear_header-blart IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_HEADER-BLART'.
+    MESSAGE s022 WITH '전표유형' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- budat가 비었다면
+  IF gs_clear_header-budat IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_HEADER-BUDAT'.
+    MESSAGE s022 WITH '전기일' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- budat가 유효하지 않다면
+  IF gs_clear_header-budat < gs_clear_header-bldat.
+    gv_missing_field = 'GS_CLEAR_HEADER-BUDAT'.
+    MESSAGE s059 WITH '전기일' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- bktxt가 비었다면
+  IF gs_clear_header-bktxt IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_HEADER-BKTXT'.
+    MESSAGE s022 WITH '전표텍스트' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- bschl가 유효하지 않다면
+  CLEAR gs_bschl.
+  READ TABLE gt_bschl INTO gs_bschl
+                      WITH KEY bschl = gs_clear_item-bschl.
+  IF gs_bschl IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_ITEM-BSCHL'.
+    MESSAGE s026 WITH '전기키' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- bschl가 비었다면
+  IF gs_clear_item-bschl IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_ITEM-BSCHL'.
+    MESSAGE s022 WITH '전기키' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- saknr가 유효하지 않다면
+  CLEAR gs_saknr.
+  READ TABLE gt_saknr INTO gs_saknr
+                      WITH KEY saknr = gs_clear_item-saknr.
+  IF gs_saknr IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_ITEM-SAKNR'.
+    MESSAGE s026 WITH '계정과목' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- saknr가 비었다면
+  IF gs_clear_item-saknr IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_ITEM-SAKNR'.
+    MESSAGE s022 WITH '계정과목' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- augdt가 비었다면
+  IF gs_clear_item-augdt IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_ITEM-AUGDT'.
+    MESSAGE s022 WITH '반제일' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*-- wrbtr가 비었다면
+  IF gs_clear_item-wrbtr IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_ITEM-WRBTR'.
+    MESSAGE s022 WITH '입력 금액' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+
+*  CLEAR gs_partner.
+*  READ TABLE gt_partner INTO gs_partner
+*                      WITH KEY partner = gs_clear_item-partner.
+*  IF gs_partner IS INITIAL.
+*    gv_missing_field = 'GS_CLEAR_ITEM-PARTNER'.
+*    MESSAGE s026 WITH '비즈니스 파트너' DISPLAY LIKE 'E'.
+*    pv_check = abap_false.
+*    EXIT.
+*  ENDIF.
+*
+**-- partner가 비었다면
+*  IF gs_clear_item-partner IS INITIAL.
+*    gv_missing_field = 'GS_CLEAR_ITEM-PARTNER'.
+*    MESSAGE s022 WITH '비즈니스 파트너' DISPLAY LIKE 'E'.
+*    pv_check = abap_false.
+*    EXIT.
+*  ENDIF.
+
+*-- sgtxt가 비었다면
+  IF gs_clear_item-sgtxt IS INITIAL.
+    gv_missing_field = 'GS_CLEAR_ITEM-SGTXT'.
+    MESSAGE s022 WITH '아이템 텍스트' DISPLAY LIKE 'E'.
+    pv_check = abap_false.
+    EXIT.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_field_not_empty
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_field_not_empty .
+
+*-- Field Symbol을 통해서 입력 필드 값을 Assign
+  ASSIGN (gv_missing_field) TO <gs_fs>.
+
+*-- 만약 <gs_fs> 즉 필드와 깂이 있다면 gv_missing_field를 초기화해서 스크린 페인터 초기화
+  IF sy-subrc = 0 AND <gs_fs> IS NOT INITIAL.
+    CLEAR gv_missing_field.
+    UNASSIGN <gs_fs>.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_clear_sum
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_clear_sum .
+
+  CLEAR : gv_clear_sum, gv_clear_debit.
+  LOOP AT gt_clear_item INTO gs_clear_item.
+    gv_clear_sum += gs_clear_item-wrbtr.
+
+*-- 반제 금액 총 합
+    IF gs_clear_item-shkzg = 'S'.
+      gv_clear_debit += gs_clear_item-wrbtr.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_user_command
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_UCOMM
+*&---------------------------------------------------------------------*
+FORM handle_user_command USING pv_ucomm.
+
+  CASE pv_ucomm.
+    WHEN 'DROW'.
+      PERFORM delete_row.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form delete_row
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM delete_row .
+
+  DATA : lt_roid TYPE lvc_t_roid.
+
+  go_pop_clear_grid->get_selected_rows( IMPORTING et_row_no = lt_roid ).
+
+  SORT lt_roid DESCENDING BY row_id.
+  LOOP AT lt_roid INTO DATA(ls_roid).
+
+*-- 0번은 통계 필드임
+    IF ls_roid-row_id > 0.
+      DELETE gt_clear_item INDEX ls_roid-row_id.
+    ENDIF.
+
+  ENDLOOP.
+
+  PERFORM refresh_pop_clear_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_clear_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_clear_item .
+
+  DATA : lt_clear_item TYPE TABLE OF zc102fit0016,
+         lv_check,
+         lv_belnr      TYPE string. "반제 전표 번호
+
+*-- 반제 전표 아이템 테이블이 비었다면 필터
+  IF gt_clear_item IS INITIAL.
+    MESSAGE i016 DISPLAY LIKE 'E'.
+    EXIT.
+*-- 반제 전표 차/대변 합이 0이 아니라면 필터
+  ELSEIF gv_clear_sum NE 0.
+    MESSAGE i014 DISPLAY LIKE 'E'.
+    EXIT.
+*-- 입력 반제액이 미결잔액 보다 크다면 필터
+  ELSEIF ( gv_remain - gv_clear_debit ) < 0.
+    MESSAGE i024 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+*-- 팝업 스크린 출력
+  PERFORM call_popup USING TEXT-q03 TEXT-q01 lv_check.
+  CHECK lv_check = '1'.
+
+*-- 전표 번호 가져오기
+  PERFORM set_next_value USING lv_belnr.
+
+*-- 헤더 생성
+  CLEAR gs_clear_header_s.
+  " 타임스탬프 및 생성 전표번호 박기
+  PERFORM set_timestamp_header USING lv_belnr.
+  MOVE-CORRESPONDING gs_clear_header TO gs_clear_header_s.
+  MODIFY zc102fit0009 FROM gs_clear_header_s.
+
+*-- 아이템들 생성
+  CLEAR lt_clear_item.
+  " 타임스탬프 박기 및 생성 전표번호(반제전표 번호) 박기 및 대변 양수로 변경
+  PERFORM set_remain_data USING lv_belnr.
+  MOVE-CORRESPONDING gt_clear_item TO lt_clear_item.
+  MODIFY zc102fit0016 FROM TABLE lt_clear_item.
+
+  IF sy-subrc = 0.
+    COMMIT WORK AND WAIT.
+*-- 저장이 성공했다면 저장 팝업 종료 및 원 화면 갱신
+    PERFORM clear_save USING lv_belnr.
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_timestamp
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_timestamp_header USING pv_belnr.
+
+  gs_clear_header-belnr = pv_belnr.
+
+  IF gs_clear_header-erdat IS INITIAL.
+    gs_clear_header-erdat = sy-datum.
+    gs_clear_header-ernam = sy-uname.
+    gs_clear_header-erzet = sy-uzeit.
+  ELSE.
+    gs_clear_header-aedat = sy-datum.
+    gs_clear_header-aenam = sy-uname.
+    gs_clear_header-aezet = sy-uzeit.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_timestamp_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_remain_data USING pv_belnr.
+
+  DATA : lv_tabix TYPE sy-tabix,
+         lv_buzei TYPE zc102fit0016-buzei VALUE 1,
+         lv_bpact TYPE zc102fit0016-bpact.
+
+  SORT gt_clear_item BY shkzg DESCENDING.
+
+  LOOP AT gt_clear_item INTO gs_clear_item.
+
+    lv_tabix = sy-tabix.
+
+*-- 개별항목 세팅
+    gs_clear_item-buzei = lv_buzei.
+    lv_buzei += 1.
+
+*-- 계정과목 조정계정 세팅
+    IF gs_clear_item-bpact IS NOT INITIAL.
+      lv_bpact = gs_clear_item-bpact.
+      gs_clear_item-bpact = gs_clear_item-saknr.
+      gs_clear_item-saknr = lv_bpact.
+    ENDIF.
+
+*-- 타임스태프 및 전표번호, 반제전표 번호 입력
+    gs_clear_item-belnr = pv_belnr.
+    gs_clear_item-augbl = pv_belnr.
+    IF gs_clear_item-erdat IS INITIAL.
+      gs_clear_item-erdat = sy-datum.
+      gs_clear_item-ernam = sy-uname.
+      gs_clear_item-erzet = sy-uzeit.
+    ELSE.
+      gs_clear_item-aedat = sy-datum.
+      gs_clear_item-aenam = sy-uname.
+      gs_clear_item-aezet = sy-uzeit.
+    ENDIF.
+
+*-- 대변 양수로 변경
+    IF gs_clear_item-shkzg = 'H'.
+      gs_clear_item-wrbtr *= -1.
+    ENDIF.
+
+    MODIFY gt_clear_item FROM gs_clear_item INDEX lv_tabix
+                                            TRANSPORTING
+                                              aedat aenam aezet
+                                              erdat ernam erzet
+                                              augbl belnr wrbtr
+                                              buzei bpact saknr.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_next_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> LV_AUGBL
+*&---------------------------------------------------------------------*
+FORM set_next_value USING pv_belnr.
+
+  CALL FUNCTION 'NUMBER_GET_NEXT'
+    EXPORTING
+      object      = 'ZC102CM_AU'  " SNRO 오브젝트 이름
+      nr_range_nr = '02'          " 인터벌 번호
+      subobject   = 'BNR'         " Prefix (서브오브젝트)
+      quantity    = 1
+    IMPORTING
+      number      = pv_belnr
+    EXCEPTIONS
+      OTHERS      = 1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form clear_save
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM clear_save USING pv_belnr.
+
+  DATA : lt_clear_item LIKE TABLE OF gs_clear.
+
+  MESSAGE s007.
+*  PERFORM get_open_data.
+*  PERFORM get_clear_data.
+
+*-- 생성한 반제전표를 기존 메인 반제 전표 테이블로 이동
+  MOVE-CORRESPONDING gt_clear_item TO lt_clear_item.
+  PERFORM set_color_item CHANGING lt_clear_item.        " 이동할 전표 아이템에 Color 데이터 추가
+  INSERT LINES OF lt_clear_item INTO gt_clear INDEX 1.
+*  APPEND LINES OF lt_clear_item TO gt_clear.
+  PERFORM refresh_alv_grid.
+
+*-- 반제 상태(금액 정보) 갱신
+  PERFORM set_open_credit.
+  PERFORM set_clear_credit.
+  PERFORM set_remain_credit.
+
+*-- 반제가 완료되었다면...
+  IF gv_remain = 0.
+    " 메시지 출력
+    MESSAGE i023 DISPLAY LIKE 'S'.
+    " 미결전표 반제처리
+    PERFORM set_clear_field USING pv_belnr.
+    PERFORM refresh_alv_grid.
+  ENDIF.
+*-- 다쓴 아이템 필드 비우기
+  CLEAR gs_clear_item.
+  PERFORM leave_to_0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form leave_to_0
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM leave_to_0 .
+  CLEAR : gt_clear_item, gs_clear_item, gs_clear_header, gv_missing_field.
+
+  CALL METHOD : go_pop_clear_grid->free, go_pop_clear_cont->free.
+
+  FREE : go_pop_clear_grid, go_pop_clear_cont.
+
+  LEAVE TO SCREEN 0.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_color_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_color_item CHANGING pt_clear_item LIKE gt_clear.
+
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_scol  TYPE lvc_s_scol.
+
+  LOOP AT pt_clear_item INTO DATA(ls_clear_item).
+
+    lv_tabix = sy-tabix.
+
+*-- 대변 음수로 변경
+    IF ls_clear_item-shkzg = 'H'.
+      ls_clear_item-wrbtr *= -1.
+    ENDIF.
+
+    PERFORM set_color USING ' ' 7 1 1 ' '
+                      CHANGING ls_scol ls_clear_item.
+    ls_clear_item-sort_key = 'A'.
+
+    MODIFY pt_clear_item FROM ls_clear_item INDEX lv_tabix
+                                            TRANSPORTING wrbtr
+                                                         color
+                                                         sort_key.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_color
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_7
+*&      --> P_1
+*&      --> P_1
+*&      --> P_
+*&      <-- LS_SCOL
+*&---------------------------------------------------------------------*
+FORM set_color USING pv_field pv_color pv_int pv_inv pv_nokey
+               CHANGING ps_scol TYPE lvc_s_scol
+                        ps_clear_item LIKE gs_clear.
+
+  ps_scol-fname = pv_field.
+  ps_scol-color-col = pv_color.
+  ps_scol-color-int = pv_int.
+  ps_scol-color-inv = pv_inv.
+  ps_scol-nokeycol = pv_nokey.
+  INSERT ps_scol INTO TABLE ps_clear_item-color.
+  CLEAR ps_scol.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_basic_color_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_basic_color_data .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  LOOP AT gt_clear INTO gs_clear.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR gs_clear-color.
+
+    gs_clear-sort_key = 'B'.
+    MODIFY gt_clear FROM gs_clear INDEX lv_tabix TRANSPORTING
+                                                  sort_key color.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_clear_field
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_clear_field USING pv_belnr.
+
+  DATA : lv_tabix  TYPE sy-tabix,
+         lt_open_s TYPE TABLE OF zc102fit0010.
+
+  LOOP AT gt_open INTO gs_open.
+
+*    lv_tabix = sy-tabix.
+
+*    gs_open-augbl = pv_belnr.
+*    gs_open-augdt = sy-datum.
+*    gs_open-aedat = sy-datum.
+*    gs_open-aenam = sy-uname.
+*    gs_open-aezet = sy-uzeit.
+
+    UPDATE zc102fit0010 SET augbl = pv_belnr
+                            augdt = sy-datum
+                            aedat = sy-datum
+                            aenam = sy-uname
+                            aezet = sy-uzeit
+                        WHERE bukrs = gs_open-bukrs
+                          AND belnr = gs_open-belnr
+                          AND gjahr = gs_open-gjahr.
+
+
+  ENDLOOP.
+
+*  CLEAR lt_open_s.
+*  MOVE-CORRESPONDING gt_open TO lt_open_s.
+
+
+*  MODIFY zc102fit0010 FROM TABLE lt_open_s.
+  IF sy-subrc = 0.
+    COMMIT WORK AND WAIT.
+  ELSE.
+    MESSAGE i008 DISPLAY LIKE 'E'.
+    ROLLBACK WORK.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_blart.
+
+*-- Screen 110 Data 추출
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 110 Data 추출)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+**-- Search Help 데이터 추출
+**  SELECT blart, ltext FROM zc102fit0005
+**    WHERE spras = @sy-langu
+**    INTO TABLE @DATA(lt_blart).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'BLART'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_BLART-BLART'
+      window_title = '전표 유형'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_blart
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_partner
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_partner .
+
+*-- Screen 110 Data 추출
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'PARTNER'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_PARTNER-PARTNER'
+      window_title = 'Business Partner'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_partner
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_partner_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_partner_data .
+
+  CLEAR gt_partner.
+  SELECT partner name1 bp_role bp_type
+    INTO CORRESPONDING FIELDS OF TABLE gt_partner
+    FROM zc102bpt0001.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_saknr
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_saknr .
+
+*-- Screen 110 Data 추출
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : lv_shkzg TYPE zc102fit0016-shkzg,
+         lv_koart TYPE zc102fit0016-koart,
+         lv_ktoks TYPE zc102fit0002-ktoks,
+         lv_saknr TYPE string.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 계정 마스터 데이터, 조정계정 마스터 데이터 비교해서 차/대변에 맞는 계정 필터
+  CLEAR : gs_bschl, gt_saknr_sh.
+  READ TABLE gt_bschl INTO gs_bschl WITH KEY gs_clear_item-bschl
+                                    BINARY SEARCH.
+
+*-- 전표 유형이 DZ(매출)이면 대변에 조정 계정, KZ(매입)이면 차변에 조정 계정 세팅
+  CASE gs_clear_header-blart.
+    WHEN 'DZ'.
+      lv_shkzg = 'S'.
+      lv_koart = 'D'.
+      lv_ktoks = 'D'.
+      lv_saknr = '6%'.
+    WHEN 'KZ'.
+      lv_shkzg = 'H'.
+      lv_koart = 'K'.
+      lv_ktoks = 'K'.
+      lv_saknr = '7%'.
+    WHEN OTHERS.
+      CLEAR : lv_shkzg, lv_koart.
+  ENDCASE.
+
+*-- 전표 유형이 D나 K일 경우
+  IF ( lv_ktoks = 'D' ) OR
+     ( lv_ktoks = 'K' ).
+    IF gs_bschl-shkzg = lv_shkzg.
+      SELECT a~saknr, a~txt20
+        FROM @gt_saknr AS a
+        WHERE a~bpact = ''
+        INTO CORRESPONDING FIELDS OF TABLE @gt_saknr_sh.
+    ELSE.
+      SELECT a~saknr AS saknr, a~txt20
+        FROM @gt_saknr AS a LEFT JOIN @gt_bpact AS b
+          ON a~saknr = b~saknr
+        WHERE b~bpact NE ''
+          AND a~saknr LIKE @lv_saknr
+        INTO CORRESPONDING FIELDS OF TABLE @gt_saknr_sh.
+    ENDIF.
+  ELSE.
+    SELECT a~saknr, a~txt20
+      FROM @gt_saknr AS a
+      WHERE ktoks NOT IN ( 'D', 'K' )
+      INTO CORRESPONDING FIELDS OF TABLE @gt_saknr_sh.
+  ENDIF.
+
+
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'SAKNR'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_SAKNR-SAKNR'
+      window_title = '계정과목'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_saknr_sh
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_saknr_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_saknr_data .
+
+  CLEAR gt_saknr.
+  SELECT a~saknr ktoks txt20 bpact
+    INTO CORRESPONDING FIELDS OF TABLE gt_saknr
+    FROM zc102fit0002 AS a LEFT JOIN zc102bpt0002 AS b
+      ON a~saknr = b~saknr.
+
+  SORT gt_saknr ASCENDING BY saknr.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen_0120
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen_0120 .
+
+  IF go_pop_acc_cont IS NOT BOUND.
+
+    CLEAR : gt_fcat_account, gs_fcat_account.
+    PERFORM set_fcat_account USING :
+                              'X' 'SERNO'   'ZC102FIT0014' 'C' ' ',
+*                              'X' 'ACCNO'   'ZC102FIT0014' 'C' ' ',
+*                              'X' 'PARTNER' 'ZC102FIT0014' 'C' ' ',
+                              'X' 'NAME1'   'ZC102BPT0001' ' ' 'X',
+                              'X' 'DWDATE'  'ZC102FIT0014' 'C' ' ',
+                              ' ' 'WRBTR'   'ZC102FIT0014' ' ' 'X',
+                              ' ' 'WAERS'   'ZC102FIT0014' 'C' ' ',
+                              ' ' 'HISTORY' 'ZC102FIT0014' ' ' 'X',
+*                              ' ' 'TTYPE'   'ZC102FIT0014' 'C' ' ',
+                              ' ' 'TTEXT'   ' '            'C' 'X'.
+
+
+    PERFORM set_layout_account.
+    PERFORM create_object_account.
+
+    SET HANDLER lcl_event_handler_acc=>double_click
+                FOR go_pop_acc_grid.
+    CALL METHOD go_pop_acc_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_account
+      CHANGING
+        it_outtab       = gt_history
+        it_fieldcatalog = gt_fcat_account.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat_account
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat_account USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_account-key       = pv_key.
+  gs_fcat_account-fieldname = pv_field.
+  gs_fcat_account-ref_table = pv_table.
+  gs_fcat_account-just      = pv_just.
+  gs_fcat_account-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_fcat_account-cfieldname = 'WAERS'.
+    WHEN 'TTEXT'.
+      gs_fcat_account-coltext = '입/출금'.
+  ENDCASE.
+
+  APPEND gs_fcat_account TO gt_fcat_account.
+  CLEAR gs_fcat_account.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout_account
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_account .
+
+  gs_layout_account-zebra      = abap_true.
+  gs_layout_account-cwidth_opt = 'A'.
+  gs_layout_account-sel_mode   = ' '.
+  gs_layout_account-grid_title = '계좌 내역'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object_account
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object_account .
+
+  CREATE OBJECT go_pop_acc_cont
+    EXPORTING
+      container_name = 'ACC_CONT'.
+
+  CREATE OBJECT go_pop_acc_grid
+    EXPORTING
+      i_parent = go_pop_acc_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_account_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_history_data .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  PERFORM set_search_condition. " 검색 조건 생성
+
+  CLEAR gt_history.
+  SELECT serno a~accno dwdate wrbtr a~waers history ttype a~partner
+    INTO CORRESPONDING FIELDS OF TABLE gt_history
+    FROM zc102fit0014 AS a INNER JOIN zc102fit0013 AS b
+      ON a~accno = b~accno
+    WHERE bank IN gr_bank
+      AND a~accno IN gr_accno
+      AND a~partner = gs_account-partner
+      AND dwdate IN gr_dwdate.
+
+*-- Partner 이름 세팅, 거래 타입 세팅
+  LOOP AT gt_history INTO gs_history.
+
+    lv_tabix = sy-tabix.
+
+*-- 거래 타입
+    CASE gs_history-ttype.
+      WHEN 'D'.
+        gs_history-ttext = '입금'.
+      WHEN 'W'.
+        gs_history-ttext = '출금'.
+    ENDCASE.
+
+*-- Partner 이름 세팅
+    CLEAR gs_partner.
+    gs_history-name1 = gt_partner[ partner = gs_history-partner ]-name1.
+
+    MODIFY gt_history FROM gs_history INDEX lv_tabix
+                                      TRANSPORTING ttext name1.
+
+  ENDLOOP.
+
+  MESSAGE s010 WITH sy-dbcnt.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_double_click
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_COLUMN
+*&      --> E_ROW
+*&---------------------------------------------------------------------*
+FORM handle_double_click USING pv_column pv_row.
+
+  READ TABLE gt_history INTO gs_history INDEX pv_row.
+  IF sy-subrc = 0.
+
+    gs_clear_item-partner = gs_history-partner.
+    gs_clear_item-wrbtr = gs_history-wrbtr.
+    gs_clear_item-sgtxt = gs_history-history.
+    PERFORM exit_screen_0120.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form exit_screen_0120
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM exit_screen_0120 .
+
+  CLEAR : gs_account.
+
+  CALL METHOD : go_pop_acc_grid->free, go_pop_acc_cont->free.
+
+  FREE : go_pop_acc_grid, go_pop_acc_cont.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_condition
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_condition .
+
+  _init gr_accno.
+  _init gr_partner.
+  _init gr_dwdate.
+
+*-- 은행 세팅
+  PERFORM set_bank_condition.
+
+*-- 계좌번호 세팅
+  IF gs_account-accno IS NOT INITIAL.
+    gr_accno-sign   = 'I'.
+    gr_accno-option = 'EQ'.
+    gr_accno-low    = gs_account-accno.
+    APPEND gr_accno.
+  ENDIF.
+
+*-- BP 세팅
+  IF gs_clear_item-partner IS NOT INITIAL.
+    gr_partner-sign   = 'I'.
+    gr_partner-option = 'EQ'.
+    gr_partner-low    = gs_clear_item-partner.
+    APPEND gr_partner.
+  ENDIF.
+
+*-- 기간 조건 세팅
+  IF ( gs_account-dwdate_fr IS NOT INITIAL ) AND
+     ( gs_account-dwdate_to IS NOT INITIAL ).
+    PERFORM set_date_value
+      USING 'I' 'BT' gs_account-dwdate_fr gs_account-dwdate_to.
+  ELSEIF ( gs_account-dwdate_fr IS NOT INITIAL ).
+    PERFORM set_date_value
+      USING 'I' 'EQ' gs_account-dwdate_fr gs_account-dwdate_to.
+  ELSEIF ( gs_account-dwdate_to IS NOT INITIAL ).
+    PERFORM set_date_value
+      USING 'I' 'BT' gs_account-dwdate_fr gs_account-dwdate_to.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_date_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> GV_BUDAT_FR
+*&      --> GV_BUDAT_TO
+*&---------------------------------------------------------------------*
+FORM set_date_value USING pv_sign pv_option pv_from pv_to.
+
+  gr_dwdate-sign   = pv_sign.
+  gr_dwdate-option = pv_option.
+  gr_dwdate-low    = pv_from.
+  gr_dwdate-high   = pv_to.
+  APPEND gr_dwdate.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_account_grid
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_account_grid .
+
+  go_pop_acc_grid->refresh_table_display( ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_bank
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_bank .
+
+*-- Screen 120 Data 추출
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 입력한 BP에 맞게 데이터 추출
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 110 Data 추출)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'bank'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GV_BANK'
+      window_title = '은행'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_account
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_accno
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_accno .
+
+*-- Screen 120 Data 추출
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 110 Data 추출)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+*-- Search Help 데이터 추출
+  PERFORM set_bank_condition.
+  PERFORM set_partner_condition.
+  SELECT accno, accnum, bank FROM zc102fit0013
+    WHERE bank IN @gr_bank
+      AND partner IN @gr_partner
+    INTO TABLE @DATA(lt_account).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'accno'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GV_ACCNO'
+      window_title = '계좌'
+      value_org    = 'S'
+    TABLES
+      value_tab    = lt_account
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+    " 🔥 여기서 강제로 OK_CODE 설정
+    CALL METHOD cl_gui_cfw=>set_new_ok_code
+      EXPORTING
+        new_code = 'ENTER'.  " 또는 네가 정의한 OK_CODE (예: 'EXEC')
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_screen_data_0120
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_screen_data_0120 .
+
+  CLEAR gv_flag.
+*-- Bank 입력 값이 유효한지 체크
+*  IF gs_account-bank IS NOT INITIAL.
+*    CLEAR gs_account_read.
+*    READ TABLE gt_account INTO gs_account_read
+*                          WITH KEY bank = gs_account-bank.
+*    IF gs_account_read IS INITIAL.
+*      gv_flag = abap_true.
+*      EXIT.
+*    ENDIF.
+*  ENDIF.
+
+*-- 계좌코드 값이 유효한지 체크
+  IF gs_account-accno IS NOT INITIAL.
+    CLEAR gs_account_read.
+    READ TABLE gt_account INTO gs_account_read
+                          WITH KEY accno = gs_account-accno.
+    IF gs_account_read IS INITIAL.
+      gv_flag = abap_true.
+      EXIT.
+    ELSE.
+*-- 계좌 코드에 따른 계좌번호 조회 후 출력
+      gs_account-accnum = gs_account_read-accnum.
+      gs_account-bank = gs_account_read-bank.
+      gs_account-bank_name = gs_account_read-bank_name.
+    ENDIF.
+  ELSE.
+    CLEAR : gs_account-accnum, gs_account-bank, gs_account-bank_name.
+  ENDIF.
+
+*-- BP 값이 유효한지 체크
+  IF gs_account-partner IS NOT INITIAL.
+    CLEAR gs_partner.
+    READ TABLE gt_partner INTO gs_partner
+                          WITH KEY partner = gs_account-partner.
+    IF gs_partner IS INITIAL.
+      gv_flag = abap_true.
+      EXIT.
+    ELSE.
+      gs_account-name1 = gs_partner-name1.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_account_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_account_data .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  CLEAR gt_account.
+  SELECT accno accnum bank ddtext AS bank_name partner
+    INTO CORRESPONDING FIELDS OF TABLE gt_account
+    FROM zc102fit0013 AS a INNER JOIN dd07t AS b
+      ON a~bank = b~domvalue_l
+    WHERE b~domname = 'ZC102D_FI_BANK'.
+
+*-- Partner 이름 세팅
+  LOOP AT gt_account INTO gs_account_read.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR gs_partner.
+    READ TABLE gt_partner INTO gs_partner
+                          WITH KEY partner = gs_account_read-partner
+                          BINARY SEARCH.
+    IF sy-subrc = 0.
+      gs_account_read-name1 = gs_partner-name1.
+      MODIFY gt_account FROM gs_account_read INDEX lv_tabix
+                                             TRANSPORTING name1.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_bank_condition
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_bank_condition .
+
+  _init gr_bank.
+  IF gs_account-bank IS NOT INITIAL.
+    gr_bank-sign   = 'I'.
+    gr_bank-option = 'EQ'.
+    gr_bank-low    = gs_account-bank.
+    APPEND gr_bank.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_empty
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_empty .
+
+  IF gs_header IS INITIAL.
+
+    gv_pop_flag = abap_true.
+    CALL SCREEN 130 STARTING AT 05 05.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_item_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_item_data .
+
+  CLEAR gs_header_sh.
+  SELECT SINGLE bukrs belnr gjahr blart bldat budat bktxt
+         stblg stodt stgrd waers
+    INTO CORRESPONDING FIELDS OF gs_header_sh
+    FROM zc102fit0009
+    WHERE bukrs = zc102fit0009-bukrs
+      AND belnr = zc102fit0009-belnr
+      AND gjahr = zc102fit0009-gjahr.
+
+  IF gs_header_sh IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  MOVE-CORRESPONDING gs_header_sh TO gs_header.
+  CLEAR : zc102fit0009-bukrs, zc102fit0009-belnr, zc102fit0009-gjahr.
+*-- 조회했으면 gv_flag true로 리프레시 설정
+  gv_flag = abap_true.
+  MESSAGE s005.
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_screen .
+
+  " 미결 가져오기
+  PERFORM get_open_data.
+  " 반제 가져오기
+  PERFORM get_clear_data.
+*-- 계정 과목 텍스트 세팅
+  PERFORM set_screen_item.
+  " 미결금액 계산
+  PERFORM set_open_credit.
+  " 반제금액 계산
+  PERFORM set_clear_credit.
+  " 잔액 계산
+  PERFORM set_remain_credit.
+  " 기본 틀 세팅
+  PERFORM set_basic_color_data.
+  " ALV 갱신
+  PERFORM refresh_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_bpact
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_bpact .
+
+*-- Screen 110 DATA 추출
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 110 Data 추출)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+**-- Search Help 데이터 추출
+**  SELECT blart, ltext FROM zc102fit0005
+**    WHERE spras = @sy-langu
+**    INTO TABLE @DATA(lt_blart).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'BLART'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_BLART-BLART'
+      window_title = '전표 유형'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_blart
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_bschl
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_bschl .
+
+*-- Screen 110 DATA 추출
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  DATA : lt_search LIKE gt_bschl,
+         lv_koart  TYPE zc102fit0016-koart.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 110 Data 추출)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+*-- Search Help 데이터 추출
+  IF gs_clear_header-blart = 'DZ'.
+    lv_koart = 'K'.
+  ELSEIF gs_clear_header-blart = 'KZ'.
+    lv_koart = 'D'.
+  ELSE.
+*    lv_koart = 'S'.
+  ENDIF.
+
+  SELECT *
+    FROM @gt_bschl AS a
+    WHERE a~koart NE @lv_koart
+    INTO CORRESPONDING FIELDS OF TABLE @lt_search.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'BSCHL'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_BLART-BSCHL'
+      window_title = '전기키'
+      value_org    = 'S'
+    TABLES
+      value_tab    = lt_search
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_bpact_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_bpact_data .
+
+  CLEAR : gt_bpact.
+  SELECT bpact saknr partner
+    INTO CORRESPONDING FIELDS OF TABLE gt_bpact
+    FROM zc102bpt0002
+    WHERE partner = gv_partner
+    ORDER BY saknr ASCENDING.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_saknr_text
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_screen_item .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+*-- 미결 아이템 텍스트 세팅
+  LOOP AT gt_open INTO gs_open.
+
+    lv_tabix = sy-tabix.
+
+*-- 대변금액 음수로 세팅
+    IF gs_open-shkzg = 'H'.
+      gs_open-wrbtr *= -1.
+    ENDIF.
+
+*-- BSCHL 데이터 세팅
+    CLEAR gs_bschl.
+    READ TABLE gt_bschl INTO gs_bschl WITH KEY gs_open-bschl
+                                      BINARY SEARCH.
+    IF sy-subrc = 0.
+      gs_open-ltext = gs_bschl-ltext.
+    ENDIF.
+
+*-- SAKNR_TEXT 세팅
+    CLEAR gs_saknr.
+    READ TABLE gt_saknr INTO gs_saknr WITH KEY saknr = gs_open-saknr
+                                      BINARY SEARCH.
+
+    IF sy-subrc = 0.
+      gs_open-txt20 = gs_saknr-txt20.
+    ENDIF.
+
+    MODIFY gt_open FROM gs_open INDEX lv_tabix
+                                TRANSPORTING txt20 wrbtr ltext.
+
+  ENDLOOP.
+
+*-- 반제 아이템 텍스트 세팅
+  LOOP AT gt_clear INTO gs_clear.
+
+    lv_tabix = sy-tabix.
+
+*-- 대변금액 음수로 세팅
+    IF gs_clear-shkzg = 'H'.
+      gs_clear-wrbtr *= -1.
+    ENDIF.
+
+*-- BSCHL 데이터 세팅
+    CLEAR gs_bschl.
+    READ TABLE gt_bschl INTO gs_bschl WITH KEY gs_clear-bschl
+                                      BINARY SEARCH.
+    IF sy-subrc = 0.
+      gs_clear-ltext = gs_bschl-ltext.
+    ENDIF.
+
+*-- 계정과목 텍스트 세팅
+    CLEAR gs_saknr.
+    READ TABLE gt_saknr INTO gs_saknr WITH KEY saknr = gs_clear-saknr
+                                      BINARY SEARCH.
+
+    IF sy-subrc = 0.
+      gs_clear-txt20 = gs_saknr-txt20.
+    ENDIF.
+
+    MODIFY gt_clear FROM gs_clear INDEX lv_tabix
+                              TRANSPORTING txt20 wrbtr ltext.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_bpact_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_bpact_data .
+
+*-- 계정과목에 따라 bpact 값 입력
+*-- 계정과목에 해당하는 조정계정이 없으면 EXIT
+  CLEAR gs_bpact.
+  READ TABLE gt_bpact INTO gs_bpact WITH KEY saknr = gs_clear_item-saknr
+                                    BINARY SEARCH.
+  IF gs_bpact IS INITIAL.
+    CLEAR gs_clear_item-bpact.
+    EXIT.
+  ENDIF.
+
+*-- 조정계정 세팅
+  gs_clear_item-bpact   = gs_bpact-bpact.
+  gs_clear_item-partner = gs_bpact-partner.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_screen .
+
+  zc102fit0009-bukrs = '1000'.
+  zc102fit0009-gjahr = sy-datum(4).
+
+  gv_okcode = 'CHCK'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_base_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_base_data .
+
+*-- Partner 세팅
+  CLEAR gs_open.
+  LOOP AT gt_open INTO gs_open WHERE partner IS NOT INITIAL.
+    gs_account-partner = gs_open-partner.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_partner_condition
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_partner_condition .
+
+  _init gr_partner.
+  IF gs_account-partner IS NOT INITIAL.
+    gr_partner-sign   = 'I'.
+    gr_partner-option = 'EQ'.
+    gr_partner-low    = gs_account-partner.
+    APPEND gr_partner.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_accno_validation
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_accno_validation .
+
+*-- 계좌코드 값이 유효한지 체크
+  IF gs_account-accno IS NOT INITIAL.
+    CLEAR gs_account_read.
+    READ TABLE gt_account INTO gs_account_read
+                          WITH KEY accno = gs_account-accno.
+    IF gs_account_read IS INITIAL.
+      gv_flag = abap_true.
+      EXIT.
+    ELSE.
+*-- 계좌 코드에 따른 계좌번호 조회 후 출력
+      gs_account-accnum = gs_account_read-accnum.
+      gs_account-bank = gs_account_read-bank.
+      gs_account-bank_name = gs_account_read-bank_name.
+    ENDIF.
+  ELSE.
+    CLEAR : gs_account-accnum, gs_account-bank, gs_account-bank_name.
+  ENDIF.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

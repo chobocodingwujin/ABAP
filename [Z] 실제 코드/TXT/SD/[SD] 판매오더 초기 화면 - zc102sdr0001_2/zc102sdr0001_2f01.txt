@@ -1,0 +1,772 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102SDR0001_2F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form get_base_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_base_data .
+
+  CLEAR gs_matnr.
+  READ TABLE gt_matnr INTO gs_matnr WITH KEY matnr = gs_period-matnr.
+
+  IF gs_period-matnr IS INITIAL OR gs_period-year_sd IS INITIAL OR
+     gs_matnr IS INITIAL.
+    MESSAGE s048 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  SELECT YEAR_SD QUART_SD MONTH_SD MATNR MPPOS KWMENG
+    INTO CORRESPONDING FIELDS OF TABLE gt_forcast
+    FROM zc102sdt0008
+   WHERE year_sd  EQ gs_period-year_sd
+*     AND quart_sd EQ gs_period-quart_sd
+*     AND month_sd EQ gs_period-month_sd
+     AND matnr    EQ gs_period-matnr
+   ORDER BY matnr year_sd quart_sd month_sd.
+
+  PERFORM refresh_alv.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_fcat, gs_fcat.
+    PERFORM set_field_catalog USING : 'X' 'YEAR_SD'  'ZC102SDT0008' 'C' ' ',
+                                      'X' 'QUART_SD' 'ZC102SDT0008' 'C' ' ',
+                                      'X' 'MONTH_SD' 'ZC102SDT0008' 'C' ' ',
+                                      ' ' 'MATNR'    'ZC102SDT0008' ' ' ' ',
+                                      ' ' 'MPPOS'    'ZC102SDT0008' ' ' ' ',
+                                      ' ' 'KWMENG'   'ZC102SDT0008' ' ' ' '.
+*                                      ' ' 'ERROR'    'ZC102SDT0008' ' ' ' '.
+
+    PERFORM set_layout.
+    PERFORM create_object.
+    PERFORM exclude_toolbar.
+
+    CALL METHOD go_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_forcast
+        it_fieldcatalog = gt_fcat.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout .
+
+  gs_layout = VALUE #( zebra      = abap_true
+                     cwidth_opt = 'A'
+                     sel_mode   = 'D' ).
+
+  gs_variant  = VALUE #( report = sy-repid
+                         handle = 'ALV1' ).
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+**********************************************************************
+* Create Container
+**********************************************************************
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_container
+      rows    = 1
+      columns = 2.
+
+  CALL METHOD go_split_cont->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_left_cont.
+
+  CALL METHOD go_split_cont->get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_right_cont.
+
+  CALL METHOD go_split_cont->set_column_width
+    EXPORTING
+      id    = 1
+      width = 30.
+
+**********************************************************************
+* ALV & Chart
+**********************************************************************
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_left_cont.
+
+  CREATE OBJECT go_chart
+    EXPORTING
+      parent = go_right_cont.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat = VALUE #(
+                     key        = pv_key
+                     fieldname  = pv_field
+                     ref_table  = pv_table
+                     just       = pv_just
+                     emphasize  = pv_emph
+                    ).
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_chart
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_chart .
+
+  PERFORM set_chart_data.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_chart_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_chart_data .
+
+  CLEAR : go_ixml,
+          go_ixml_sf,
+          go_ixml_docu,
+          go_ixml_ostream,
+          go_ixml_encoding,
+          go_chartdata,
+          go_categories,
+          go_category,
+          go_series,
+          go_point,
+          go_value.
+
+  CLEAR : gv_xstring.
+
+  go_ixml = cl_ixml=>create(  ).
+  go_ixml_sf = go_ixml->create_stream_factory( ).
+
+  go_ixml_docu = go_ixml->create_document( ).
+
+  go_ixml_encoding = go_ixml->create_encoding(
+                       byte_order    = if_ixml_encoding=>co_little_endian
+                       character_set = 'utf-8' ).
+
+  go_ixml_docu->set_encoding( encoding = go_ixml_encoding ).
+
+*-- Now build a DOM, representing an XML document with chart data
+  go_chartdata = go_ixml_docu->create_simple_element(
+                                        name   = 'ChartData'
+                                        parent = go_ixml_docu ).
+
+*-- Categories (parent)
+  go_categories = go_ixml_docu->create_simple_element(
+                                        name   = 'Categories'
+                                        parent = go_chartdata ).
+
+  PERFORM set_category_value.
+  PERFORM set_chart_value.
+*  PERFORM design_mode.
+
+  go_chart->set_data( xdata = gv_xstring ).
+  go_chart->render( ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_category_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_category_value .
+
+  DATA : lv_month TYPE zc102sdt0008-month_sd.
+
+  lv_month = 1.
+
+  DO 12 TIMES.
+
+    go_category = go_ixml_docu->create_simple_element(
+                                    name   = 'Category'
+                                    parent = go_categories ).
+    go_category->if_ixml_node~set_value( lv_month && '월' ).
+
+    lv_month += 1.
+
+  ENDDO.
+
+*  DATA : lv_value TYPE string.
+*
+**-- Categories (children)
+*  go_category = go_ixml_docu->create_simple_element(
+*                                        name   = 'Category'
+*                                        parent = go_categories ).
+*  go_category->if_ixml_node~set_value( 'Forcast Sales' ). " 예상 판매량(MPPOS)
+*
+*
+*  go_category = go_ixml_docu->create_simple_element(
+*                                      name   = 'Category'
+*                                      parent = go_categories ).
+*  go_category->if_ixml_node~set_value( 'Actual Sales' ). " 실 판매량 (KWMENG)
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_chart_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_chart_value .
+
+  DATA : lv_value  TYPE string,
+         lv_value2 TYPE string,
+         lv_fvalue TYPE string,
+         lv_avalue TYPE string,
+         lv_matnr  TYPE string,
+         lv_month  TYPE zc102sdt0008-month_sd.
+
+  FIELD-SYMBOLS : <ls_value> TYPE any.
+
+*-- Series는 이전, 현재 년도
+*-- Value는 계정 별 현재, 이전 년도 값
+  DO 2 TIMES.
+    IF sy-index = 1.
+      lv_value = 'KWMENG'.
+      lv_value2 = '실 판매량'.
+    ELSE.
+      lv_value = 'MPPOS'.
+      lv_value2 = '예측량'.
+    ENDIF.
+
+    ASSIGN COMPONENT lv_value OF STRUCTURE gs_forcast TO <ls_value>.
+
+    IF <ls_value> IS ASSIGNED.
+*-- 라벨 달기
+      lv_value = lv_value2.
+      go_series = go_ixml_docu->create_simple_element(
+                                                        name = 'Series'
+                                                        parent = go_chartdata ).
+      go_series->set_attribute( name  = 'label'
+                                value = lv_value ). "'Series1' ).
+      LOOP AT gt_forcast INTO gs_forcast.
+
+*-- 값 계산
+        lv_value = <ls_value>.
+
+        go_point = go_ixml_docu->create_simple_element(
+                                                        name = 'Point'
+                                                        parent = go_series ).
+        go_point->set_attribute( name  = 'label'
+                                 value = lv_value ).
+*
+        go_value = go_ixml_docu->create_simple_element(
+                                                        name = 'Value'
+                                                        parent = go_point ).
+
+        go_value->if_ixml_node~set_value( lv_value ).
+
+      ENDLOOP.
+      UNASSIGN <ls_value>.
+    ENDIF.
+
+  ENDDO.
+
+*  LOOP AT gt_forcast INTO gs_forcast.
+*
+*    lv_fvalue = gs_forcast-matnr.
+*
+**-- 라벨 설정
+*    go_series = go_ixml_docu->create_simple_element(
+*                                                      name = 'Series'
+*                                                      parent = go_chartdata ).
+*    go_series->set_attribute( name  = 'label'
+*                              value = '예측량' ). "'Series1' ).
+*
+**-- Value 세팅
+*    lv_fvalue = gs_forcast-mppos.
+*
+*    go_point = go_ixml_docu->create_simple_element(
+*                                                    name = 'Point'
+*                                                    parent = go_series ).
+*    go_point->set_attribute( name  = 'label'
+*                             value = lv_fvalue ).
+*
+*    go_value = go_ixml_docu->create_simple_element(
+*                                                    name = 'Value'
+*                                                    parent = go_point ).
+*
+*    go_value->if_ixml_node~set_value( lv_fvalue ).
+
+**-- 실제
+*    DO.
+*      lv_fvalue = gs_forcast-mppos.
+*
+*      go_point = go_ixml_docu->create_simple_element(
+*                                                      name = 'Point'
+*                                                      parent = go_series ).
+*      go_point->set_attribute( name  = 'label'
+*                               value = lv_fvalue ).
+*
+*      go_value = go_ixml_docu->create_simple_element(
+*                                                      name = 'Value'
+*                                                      parent = go_point ).
+*
+*      go_value->if_ixml_node~set_value( lv_fvalue ).
+*
+**-- Seatsocc category
+*      lv_avalue = gs_forcast-kwmeng.
+*
+*      go_point = go_ixml_docu->create_simple_element(
+*                                                      name = 'Point'
+*                                                      parent = go_series ).
+*      go_point->set_attribute( name  = 'label'
+*                               value = lv_avalue ).
+*
+*      go_value = go_ixml_docu->create_simple_element(
+*                                                      name = 'Value'
+*                                                      parent = go_point ).
+*
+*      go_value->if_ixml_node~set_value( lv_avalue ).
+*
+*      lv_month += 1.
+*
+*      IF lv_month GT 12.
+*        EXIT.
+*      ENDIF.
+*
+*    ENDDO.
+
+*ENDLOOP.
+
+*-- create ostream (into string variable) and render document into stream
+  go_ixml_ostream = go_ixml_sf->create_ostream_xstring( gv_xstring ).
+  go_ixml_docu->render( go_ixml_ostream ). "here f_xstring is filled
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form design_mode
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM design_mode .
+
+*********************************************************************
+* Chart type : Only Columns and Lines
+**********************************************************************
+  DATA: l_win_chart   TYPE REF TO cl_gui_chart_engine_win,
+        g_design_mode.
+
+  CATCH SYSTEM-EXCEPTIONS move_cast_error = 1.
+    l_win_chart ?= go_chart->get_control( ).
+  ENDCATCH.
+
+  IF sy-subrc IS INITIAL.
+
+    l_win_chart->set_design_mode( flag = g_design_mode event = 'X' ).
+    l_win_chart->restrict_property_events( events = 'ChartType' ).
+
+*-- 꺾은선 차트
+    l_win_chart->restrict_chart_types( charttypes = 'Lines' ).
+
+  ENDIF.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form set_search_help_year
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_year .
+
+
+*-- Screen Data 발췌
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE STRUCTURE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 발췌)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+*-- Search Help 데이터 발췌
+  SELECT DISTINCT year_sd
+    FROM zc102sdt0008
+    INTO TABLE @DATA(lt_year).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'YEAR_SD'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'LT_YEAR'
+      window_title = '고객사 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = lt_year
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc EQ 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_quater
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_quater .
+
+*-- Screen Data 발췌
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE STRUCTURE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 발췌)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+*-- Search Help 데이터 발췌
+  SELECT DISTINCT quart_sd
+    FROM zc102sdt0008
+    INTO TABLE @DATA(lt_quart).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'QUART_SD'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'LT_QUART'
+      window_title = '분기'
+      value_org    = 'S'
+    TABLES
+      value_tab    = lt_quart
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc EQ 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_month
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_month .
+
+*-- Screen Data 발췌
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE STRUCTURE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 발췌)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+*-- Search Help 데이터 발췌
+  CASE gs_period-quart_sd.
+    WHEN '1'.
+      SELECT DISTINCT month_sd
+        FROM zc102sdt0008
+        INTO TABLE @DATA(lt_month)
+       WHERE month_sd BETWEEN 1 AND 3.
+
+    WHEN '2'.
+      SELECT DISTINCT month_sd
+        FROM zc102sdt0008
+        INTO TABLE lt_month
+       WHERE month_sd BETWEEN 4 AND 6.
+
+    WHEN '3'.
+      SELECT DISTINCT month_sd
+        FROM zc102sdt0008
+        INTO TABLE lt_month
+       WHERE month_sd BETWEEN 7 AND 9.
+
+    WHEN '4'.
+      SELECT DISTINCT month_sd
+        FROM zc102sdt0008
+        INTO TABLE lt_month
+       WHERE month_sd BETWEEN 10 AND 12.
+
+  ENDCASE.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'MONTH_SD'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'LT_MONTH'
+      window_title = '분기'
+      value_org    = 'S'
+    TABLES
+      value_tab    = lt_month
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc EQ 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_matnr
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_matnr .
+
+*-- Screen Data 발췌
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE STRUCTURE dynpread.
+  DATA : END OF dynpfields.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 발췌)
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+*-- Search Help 데이터 발췌
+
+*  SELECT DISTINCT matnr, maktx
+*    FROM zc102mmt0004
+*    INTO TABLE @DATA(lt_matnr)
+*   WHERE mtart EQ 'P'
+*   ORDER BY matnr.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'MATNR'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'LT_MATNR'
+      window_title = '분기'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_matnr
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc EQ 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_alv
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_alv .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+*-- 현재 Cursor 위치를 유지
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+*-- Refresh ALV
+  CALL METHOD go_alv_grid->refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form exclude_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM exclude_toolbar .
+
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_matnr_master
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_matnr_master .
+
+*-- SEARCH Help 데이터 발췌
+  SELECT DISTINCT matnr maktx
+    FROM zc102mmt0004
+    INTO CORRESPONDING FIELDS OF TABLE gt_matnr
+   WHERE mtart EQ 'P'
+   ORDER BY matnr.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

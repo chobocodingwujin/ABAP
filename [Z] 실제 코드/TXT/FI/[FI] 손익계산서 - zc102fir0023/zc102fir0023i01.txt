@@ -1,0 +1,67 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102FIR0023I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_0100 INPUT.
+
+  CALL METHOD : go_alv_grid->free,
+                go_bottom_cont->free,
+                go_top_cont->free,
+                go_split_cont2->free,
+                go_chart_cont->free,
+                go_alv_cont->free,
+                go_split_cont->free,
+                go_container->free,
+                go_html_cntrl->free,
+                go_page_cont->free.
+
+  FREE : go_alv_grid,
+         go_chart2, go_chart,
+         go_bottom_cont,
+         go_top_cont,
+         go_split_cont2,
+         go_chart_cont,
+         go_alv_cont,
+         go_split_cont,
+         go_container,
+         go_html_cntrl,
+         go_page_cont.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_0200 INPUT.
+
+  CALL METHOD : go_tree->free,
+                go_container->free.
+
+  FREE : go_tree, go_container.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0200  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0200 INPUT.
+
+  CASE gv_okcode.
+    WHEN 'PDF'.
+      PERFORM excel_job.
+  ENDCASE.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

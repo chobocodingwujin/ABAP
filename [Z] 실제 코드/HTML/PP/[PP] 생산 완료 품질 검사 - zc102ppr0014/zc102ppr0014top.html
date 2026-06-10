@@ -1,0 +1,110 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0014TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0014TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0014TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102PPR0014TOP                          - Report ZC102PPR0014</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102ppr0014 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zc102ppt0007.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Class instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_container TYPE REF TO cl_gui_custom_container,
+       go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_random    TYPE REF TO cl_abap_random_packed_dec1.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">************************************ **********************************</font>
+
+DATA : BEGIN OF gs_check.
+         include structure <a href ="zc102ppt0007/dictionary-zc102ppt0007.html">zc102ppt0007</a>.
+DATA :   rate TYPE p DECIMALS 1,
+       END OF gs_check,
+       gt_check LIKE TABLE OF gs_check.
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gt_fcat    TYPE lvc_t_fcat,
+       gs_fcat    TYPE lvc_s_fcat,
+       gs_layout  TYPE lvc_s_layo,
+       gs_variant TYPE disvariant.
+
+DATA : gt_ui_functions TYPE ui_functions,
+       gs_button       TYPE stb_button.
+
+<font color ="#0000FF">*-- For Search Help</font>
+DATA : BEGIN OF gs_pdonum, "PDONUM
+         pdono TYPE zc102e_pp_pdono,
+       END OF gs_pdonum,
+       gt_pdonum LIKE TABLE OF gs_pdonum.
+
+DATA : BEGIN OF gs_matnr, "자재명
+         matnr TYPE zc102mmt0004-matnr,
+         maktx TYPE zc102mmt0004-maktx,
+       END OF gs_matnr,
+       gt_matnr LIKE TABLE OF gs_matnr.
+
+DATA : BEGIN OF gs_plant, "Plant
+         werks TYPE zc102e_pp_werks,
+       END OF gs_plant,
+       gt_plant LIKE TABLE OF gs_plant.
+
+<font color ="#0000FF">*-- For Insert</font>
+DATA : gv_batno TYPE zc102ppt0005-batno,    " 배치번호
+       gs_batch TYPE zc102ppt0005,          " 배치 WA
+       gt_batch TYPE TABLE OF zc102ppt0005. " 배치 IT
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Common variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_rate   TYPE p.
+
+DATA : gv_retno TYPE zc102mmt0018-disno. "폐기 번호
+
+
+<font color ="#0000FF">*-- For Screen</font>
+DATA : gv_pdonum TYPE zc102e_pp_pdono,
+       gv_plant  TYPE zc102e_pp_werks,
+       gv_matnr  TYPE zc102e_mm_matnr.
+
+DATA : gv_rqty TYPE zc102e_mm_menge,
+       gv_eqty TYPE zc102e_mm_menge.
+
+DATA : gv_wc100 TYPE P DECIMALS 2,
+       gv_wc200 TYPE P DECIMALS 2,
+       gv_wc300 TYPE P DECIMALS 2,
+       gv_wc400 TYPE P DECIMALS 2.
+
+<font color ="#0000FF">*-- 배치 채번</font>
+       data:        gv_number    TYPE n LENGTH 10,     " 도메인의 길이에 맞게
+       gv_prefix(3),  " PPO, PD0 등
+       gv_full_code TYPE string,
+       gv_range_nr  TYPE inri-nrrangenr,
+       gv_quantity  TYPE inri-quantity.
+
+DATA: ls_nriv TYPE nriv.
+
+gv_prefix = 'B'.  " 원하는 prefix 사용
+gv_range_nr = '02'. " 원하는 번호 - 도메인 정의서에 있음!!!
+gv_quantity = 1.    " 원하는 증가량 사용
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

@@ -1,0 +1,12 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102MMR0005S01
+*&---------------------------------------------------------------------*
+*-- 창고번호 + 입고일 입력 스크린
+SELECTION-SCREEN BEGIN OF BLOCK pa1 WITH FRAME TITLE TEXT-t01.
+  PARAMETERS : pa_stlno TYPE zc102mmt0001-stlno OBLIGATORY.
+
+  SELECT-OPTIONS so_lfdat FOR zc102mmt0015-lfdat.
+SELECTION-SCREEN END OF BLOCK pa1.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

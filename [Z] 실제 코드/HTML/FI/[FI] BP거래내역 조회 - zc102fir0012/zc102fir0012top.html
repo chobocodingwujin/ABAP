@@ -1,0 +1,107 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0012TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0012TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0012TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102FIR0012TOP                          - Report ZC102FIR0012</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102fir0012 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zc102fit0009, zc102fit0010.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Macro</font>
+<font color ="#0000FF">**********************************************************************</font>
+DEFINE _init.
+
+  REFRESH &1.
+  CLEAR &1.
+
+END-OF-DEFINITION.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Class instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_container TYPE REF TO cl_gui_custom_container,
+       go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- 메인 데이터 테이블</font>
+DATA : BEGIN OF gs_trade,
+         belnr       TYPE zc102fit0009-belnr, " 전표번호
+         gjahr       TYPE zc102fit0009-gjahr, " 회계연도
+         bktxt       TYPE zc102fit0009-bktxt, " 문서텍스트
+         blart       TYPE zc102fit0009-blart, " 전표유형
+         bldat       TYPE zc102fit0009-bldat, " 증빙일
+         duedt       TYPE zc102fit0010-duedt, " 지급기한
+         wrbtr       TYPE zc102fit0010-wrbtr, " 금액
+         waers       TYPE zc102fit0010-waers, " 통화키
+         augbl       TYPE zc102fit0010-augbl, " 반제전표 번호
+         sgtxt       TYPE zc102fit0010-sgtxt, " 아이템 텍스트
+         rebzg       TYPE zc102fit0016-rebzg, " 원전표 번호
+         shkzg       TYPE zc102fit0010-shkzg, " 차/대변 지시자
+<font color ="#0000FF">*         dstat  TYPE icon-id,</font>
+         status      TYPE icon-id,            " 반제 상태
+         remain_date TYPE string,             " 남은 납기일 필드
+         calc_date   TYPE p,                  " 계산용 필드 -&gt; 출력X 단순 날짜 차이 계산
+         color       TYPE lvc_t_scol,         " 라인 색
+       END OF gs_trade,
+       gt_trade LIKE TABLE OF gs_trade.
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*DATA : BEGIN OF gs_store_belnr,</font>
+<font color ="#0000FF">*         belnr TYPE zc102fit0010-belnr,</font>
+<font color ="#0000FF">*       END OF gs_store_belnr,</font>
+<font color ="#0000FF">*       gt_store_belnr LIKE TABLE OF gs_store_belnr.</font>
+
+<font color ="#0000FF">*-- BP 마스터 테이블</font>
+DATA : BEGIN OF gs_partner,
+         partner      TYPE zc102bpt0001-partner,      " BP 코드
+         name1        TYPE zc102sdt0001-name1,        " BP 이름
+         bp_role      TYPE zc102bpt0001-bp_role,      " BP 타입
+         bpno         TYPE zc102sdt0001-cusno,        " 고객 번호
+         venno        TYPE zc102mmt0002-venno,        " 거래처번호
+         bukrs        TYPE zc102fit0009-bukrs,        " 회사코드
+         stras        TYPE zc102sdt0001-stras,        " 주소
+         total        TYPE zc102fit0008-credit_limit, " 여신 한도
+         used         TYPE zc102fit0008-credit_used,  " 사용 여신
+         remain       TYPE zc102fit0008-credit_limit, " 잔여 여신
+         waers        TYPE zc102fit0008-waers,        " 통화키
+         waers_used   TYPE zc102fit0008-waers,        " 통화키
+         waers_remain TYPE zc102fit0008-waers,        " 통화키
+         status       TYPE icon-id,                   " 잔여 상태
+       END OF gs_partner,
+       gt_partner LIKE TABLE OF gs_partner.
+
+DATA : gt_fcat    TYPE lvc_t_fcat,
+       gs_fcat    TYPE lvc_s_fcat,
+       gs_layout  TYPE lvc_s_layo,
+       gs_variant TYPE disvariant,
+       gt_sort    TYPE lvc_t_sort,
+       gs_sort    TYPE lvc_s_sort.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Global variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_sum_s  TYPE zc102fit0010-wrbtr, " 한도 합
+       gv_sum_h  TYPE zc102fit0010-wrbtr, " 채무 합
+       gv_text   TYPE string,
+       gv_datum  TYPE sy-datum.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

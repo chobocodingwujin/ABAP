@@ -1,0 +1,63 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0009TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0009TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0009TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102PPR0009TOP                          - Report ZC102PPR0009</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102ppr0009 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES: zc102ppt0010, zc102mmt0014, zc102ppt0012, zc102ppt0007.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*itab and work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*--라우팅 마스터--*</font>
+DATA: gt_rmaster TYPE TABLE OF zc102ppt0009,
+      gs_rmaster TYPE zc102ppt0009.
+
+<font color ="#0000FF">*--라우팅--*</font>
+DATA: gt_route TYPE TABLE OF zc102ppt0010,
+      gs_route TYPE zc102ppt0010.
+
+<font color ="#0000FF">*--숙성창고--*</font>
+DATA: gt_ripen TYPE TABLE OF zc102mmt0014,
+      gs_ripen TYPE zc102mmt0014.
+
+<font color ="#0000FF">*--생산오더--*</font>
+DATA: gt_pdo TYPE TABLE OF zc102ppt0012,
+      gs_pdo TYPE zc102ppt0012.
+
+<font color ="#0000FF">*--생산완료 수정여부 확인용--*</font>
+DATA: gt_check TYPE TABLE OF zc102ppt0012,
+      gs_check TYPE zc102ppt0012.
+
+<font color ="#0000FF">*--생산완료--*</font>
+DATA: gt_complit TYPE TABLE OF zc102ppt0007,
+      gs_complit TYPE zc102ppt0007.
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*variant</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA: gv_new_rouno TYPE zc102ppt0010-rouno,
+      gv_today     TYPE sy-datum.
+
+<font color ="#0000FF">*--배치번호 채번--*</font>
+DATA: gv_bcno TYPE string.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

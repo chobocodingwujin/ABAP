@@ -1,0 +1,727 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102SDR0004F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102SDR0004F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102SDR0004F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102SDR0004F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_del_item</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_del_item .
+
+  CLEAR gt_del_item.
+
+  SELECT vbeln_del matnr stlno vbeln_so
+         partner stprs waers menge meins
+         bwart
+    INTO CORRESPONDING FIELDS OF TABLE gt_del_item
+    FROM zc102sdt0005
+    WHERE vbeln_del = gs_del-vbeln_del.
+
+  IF gt_del_item IS INITIAL.
+    MESSAGE s001 WITH TEXT-t01 DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+
+  IF go_container IS INITIAL.
+
+    PERFORM set_left_catalog USING: 'X'   'VBELN_DEL'  'ZC102SDT0004'  'C'   ' ',
+                                    'X'   'VBELN_SO'   'ZC102SDT0004'  'C'   ' ',
+                                    'X'   'PARTNER'    'ZC102SDT0004'  'C'   ' ',
+                                    ' '   'DREAL'      'ZC102SDT0004'  'C'   ' ',
+                                    ' '   'DDONE'      'ZC102SDT0004'  'C'   ' ',
+                                    ' '   'VDATU'      'ZC102SDT0004'  'C'   ' ',
+                                    ' '   'D_STATE'    'ZC102SDT0004'  'C'   'X',
+                                    ' '   'GBSTK'      'ZC102SDT0004'  'C'   'X',
+                                    ' '   'DDTEXT'     ' '             'C'   ' '.
+<font color ="#0000FF">*                                    ' '   'STATE'      'ZC102SDT0004'  'C'   ' '.</font>
+
+
+    PERFORM set_right_catalog USING:   'X'   'VBELN_DEL'  'ZC102SDT0005'  'C'   ' ',
+                                       'X'   'VBELN_SO'   'ZC102SDT0005'  'C'   ' ',
+                                       'X'   'MATNR'      'ZC102SDT0005'  'C'   ' ',
+                                       'X'   'STLNO'      'ZC102SDT0005'  ' '   ' ',
+                                       'X'   'PARTNER'    'ZC102SDT0005'  'C'   'X',
+                                       ' '   'STPRS'      'ZC102SDT0005'  ' '   ' ',
+                                       ' '   'WAERS'      'ZC102SDT0005'  'C'   'X',
+                                       ' '   'MENGE'      'ZC102SDT0005'  'C'   ' ',
+                                       ' '   'MEINS'      'ZC102SDT0005'  'C'   'X'.
+<font color ="#0000FF">*                                       ' '   'BWART'      'ZC102SDT0005'  'C'   ' '.</font>
+
+
+    PERFORM set_left_layout.
+    PERFORM set_right_layout.
+    PERFORM create_object.
+
+<font color ="#0000FF">**EVENT 설치</font>
+    SET HANDLER: lcl_event_handler=&gt;hotspot_click FOR go_left_grid.
+
+<font color ="#0000FF">**ALV 왼쪽</font>
+    CALL METHOD go_left_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_left
+      CHANGING
+        it_outtab       = gt_del
+        it_fieldcatalog = gt_lfcat.
+
+<font color ="#0000FF">**ALV 오른쪽</font>
+    CALL METHOD go_right_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_right
+      CHANGING
+        it_outtab       = gt_del_item
+        it_fieldcatalog = gt_rfcat.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_left_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_left_catalog  USING pv_key pv_field pv_table pv_just pv_emp.
+
+  gs_lfcat-key        = pv_key.
+  gs_lfcat-fieldname  = pv_field.
+  gs_lfcat-ref_table  = pv_table.
+  gs_lfcat-just       = pv_just.
+  gs_lfcat-emphasize  = pv_emp.
+
+<font color ="#0000FF">**납품문서 번호  핫스팟 등록</font>
+  CASE pv_field.
+    WHEN 'VBELN_DEL'.
+      gs_lfcat-hotspot = abap_true.
+    WHEN 'D_STATE' .
+      gs_lfcat-coltext = '납품유형'.
+    WHEN 'DDTEXT'.
+      gs_lfcat-coltext = '배송상태'.
+      gs_lfcat-emphasize = 'C710'.
+    WHEN 'GBSTK'.
+      gs_lfcat-no_out = abap_true.
+  ENDCASE.
+
+  APPEND gs_lfcat TO gt_lfcat.
+  CLEAR gs_lfcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_right_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_right_catalog  USING pv_key pv_field pv_table pv_just pv_emp .
+
+  gs_rfcat-key        = pv_key.
+  gs_rfcat-fieldname  = pv_field.
+  gs_rfcat-ref_table  = pv_table.
+  gs_rfcat-just       = pv_just.
+  gs_rfcat-emphasize  = pv_emp.
+
+  CASE pv_field.
+    WHEN 'STPRS'.
+      gs_rfcat-coltext = '구매가'.
+      gs_rfcat-cfieldname = 'WAERS'.
+    WHEN 'WAERS'.
+      gs_rfcat-coltext = '통화키'.
+    WHEN 'MENGE'.
+      gs_rfcat-coltext = '수량'.
+      gs_rfcat-qfieldname = 'MEINS'.
+    WHEN 'MEINS'.
+      gs_rfcat-coltext = '단위'.
+  ENDCASE.
+
+  APPEND gs_rfcat TO gt_rfcat.
+  CLEAR gs_rfcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_left_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_left_layout .
+
+  gs_layout_left-zebra  = abap_true.
+  gs_layout_left-cwidth_opt = 'A'.
+  gs_layout_left-sel_mode   = 'D'.
+
+<font color ="#0000FF">*  gs_layout_left-stylefname  = 'CELL_TAB'.</font>
+  gs_layout_left-grid_title = '납품문서 헤더'.
+
+  gs_variant-report  = sy-repid.
+  gs_variant-handle  = 'ALV1'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_right_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_right_layout .
+
+  gs_layout_right-zebra      = abap_true.
+  gs_layout_right-cwidth_opt = 'A'.
+  gs_layout_right-sel_mode   = 'D'.
+
+  gs_layout_right-grid_title = '납품문서 아이템'.
+
+  gs_variant-report  = sy-repid.
+  gs_variant-handle  = 'ALV2'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_split_container
+    EXPORTING
+      parent  = go_container
+      rows    = 1
+      columns = 2.
+
+<font color ="#0000FF">*--왼쪽 스플릿</font>
+  CALL METHOD go_split_container-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_left_container.
+
+<font color ="#0000FF">*--오른쪽 스필릿</font>
+  CALL METHOD go_split_container-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_right_container.
+
+<font color ="#0000FF">*--ALV grid left</font>
+  CREATE OBJECT go_left_grid
+    EXPORTING
+      i_parent = go_left_container.
+
+<font color ="#0000FF">*--ALV grid right</font>
+  CREATE OBJECT go_right_grid
+    EXPORTING
+      i_parent = go_right_container.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_hotspot_click</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_ROW_ID</font>
+<font color ="#0000FF">*&      --&gt; E_COLUM_ID</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_hotspot_click  USING    pv_row_id
+                                    pv_column_id.
+
+  CLEAR: gs_del.
+
+  READ TABLE gt_del INTO gs_del INDEX pv_row_id.
+
+<font color ="#0000FF">**get item table</font>
+  IF sy-subrc = 0.
+    PERFORM get_del_item.
+  ELSE.
+    MESSAGE s001 WITH TEXT-t02 DISPLAY LIKE 'E'.
+  ENDIF.
+
+  CALL METHOD go_right_grid-&gt;refresh_table_display.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_del_header</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_del_header .
+
+  CLEAR: gt_del, gt_del_item, gs_del_item.
+  CASE 'X'.
+    WHEN gv_radio1.
+      PERFORM set_all_display.
+    WHEN gv_radio2.
+      PERFORM set_complit_display.
+    WHEN gv_radio3.
+      PERFORM set_uncomplit_display.
+  ENDCASE.
+
+  PERFORM set_delivery_cnt.
+
+  CALL METHOD go_left_grid-&gt;refresh_table_display.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_search_condition</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_search_condition .
+
+  CLEAR: gt_del_item, gs_del_item.
+
+  PERFORM get_vbeln_del.
+  PERFORM get_partner.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_vbeln_del</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_vbeln_del .
+
+  CLEAR:gr_vbeln_del.
+  REFRESH gr_vbeln_del.
+
+  IF gs_input-vbeln_del IS NOT INITIAL.
+
+    gr_vbeln_del-sign = 'I'.
+    gr_vbeln_del-option = 'EQ'.
+    gr_vbeln_del-low = gs_input-vbeln_del.
+    APPEND gr_vbeln_del.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_partner</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_partner .
+
+  CLEAR:gr_partner.
+  REFRESH gr_partner.
+
+  IF gs_input-partner IS NOT INITIAL.
+
+    gr_partner-sign = 'I'.
+    gr_partner-option = 'EQ'.
+    gr_partner-low = gs_input-partner.
+    APPEND gr_partner.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form trans_shipment</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM trans_shipment .
+
+  CALL TRANSACTION 'ZC102SDR0007'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_all_display</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_uncomplit_display .
+
+  DATA: lv_dbcnt TYPE sy-dbcnt.
+
+  CLEAR: gs_input.
+
+  SELECT DISTINCT vbeln_del vbeln_so partner cusno
+            vdatu wadat_ist ddtext AS d_state
+            gbstk state iseme dreal ddone
+       INTO CORRESPONDING FIELDS OF TABLE gt_del
+       FROM zc102sdt0004 AS a INNER JOIN dd07t AS b
+         ON a~iseme = b~domvalue_l
+       WHERE iseme = 'E'
+         AND vbeln_del IN gr_vbeln_del
+         AND partner   IN gr_partner
+         AND b~domname = 'ZC102D_SD_ISEME'.
+
+  lv_dbcnt = sy-dbcnt.
+
+<font color ="#0000FF">**배송상태 필드 텍스트 세팅</font>
+  PERFORM set_delivery.
+
+  IF lv_dbcnt IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ELSE.
+    MESSAGE s010 WITH lv_dbcnt.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_complit_display</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_complit_display .
+
+  DATA: lv_dbcnt TYPE sy-dbcnt.
+
+  CLEAR: gs_input.
+
+  SELECT DISTINCT vbeln_del vbeln_so partner cusno
+            vdatu wadat_ist ddtext AS d_state
+            gbstk state iseme dreal ddone
+       INTO CORRESPONDING FIELDS OF TABLE gt_del
+       FROM zc102sdt0004 AS a INNER JOIN dd07t AS b
+         ON a~iseme = b~domvalue_l
+       WHERE iseme = 'G'
+         AND vbeln_del IN gr_vbeln_del
+         AND partner   IN gr_partner
+         AND b~domname = 'ZC102D_SD_ISEME'.
+
+  lv_dbcnt = sy-dbcnt.
+
+<font color ="#0000FF">**배송상태 필드 텍스트 세팅</font>
+  PERFORM set_delivery.
+
+  IF lv_dbcnt IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ELSE.
+    MESSAGE s010 WITH lv_dbcnt.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_all_display</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_all_display .
+
+  DATA: lv_dbcnt TYPE sy-dbcnt.
+
+  CLEAR: gs_input.
+
+  SELECT DISTINCT vbeln_del vbeln_so partner cusno
+             vdatu wadat_ist ddtext AS d_state
+             gbstk state iseme dreal ddone
+        INTO CORRESPONDING FIELDS OF TABLE gt_del
+        FROM zc102sdt0004 AS a INNER JOIN dd07t AS b
+          ON a~iseme = b~domvalue_l
+        WHERE  vbeln_del IN gr_vbeln_del
+          AND  partner   IN gr_partner
+          AND b~domname = 'ZC102D_SD_ISEME'.
+
+  lv_dbcnt = sy-dbcnt.
+
+<font color ="#0000FF">**배송상태 필드 텍스트 세팅</font>
+  PERFORM set_delivery.
+
+  IF lv_dbcnt IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ELSE.
+    MESSAGE s010 WITH lv_dbcnt.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form auto_Enter</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM auto_enter .
+
+<font color ="#0000FF">*-- 자동엔터 from 판매오더 조회</font>
+  CALL FUNCTION 'SAPGUI_SET_FUNCTIONCODE'  " 엔터를 대신 눌러줌
+    EXPORTING
+      functioncode           = 'ENTER'
+    EXCEPTIONS
+      function_not_supported = 1
+      OTHERS                 = 2.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_delivery</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_delivery .
+
+  DATA lv_tabix TYPE sy-tabix.
+
+  CALL FUNCTION 'GET_DOMAIN_VALUES'
+    EXPORTING
+      domname         = 'ZC102D_SD_GBSTK'    " Domain 값을 넣으면 된다. "
+      text            = 'X'
+    TABLES
+      values_tab      = gt_list    " Function Module Table에서 선언된 타입으로 선언 "
+    EXCEPTIONS
+      value_not_found = 1
+      OTHERS          = 2.
+
+<font color ="#0000FF">**세팅**</font>
+  LOOP AT gt_del INTO gs_del.
+    lv_tabix = sy-tabix.
+    READ TABLE gt_list INTO gs_list WITH KEY domvalue_l = gs_del-gbstk.
+
+    gs_del-ddtext = gs_list-ddtext.
+
+    MODIFY gt_del FROM gs_del INDEX lv_tabix TRANSPORTING ddtext.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_delivery_cnt</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_delivery_cnt .
+
+  DATA: lv_tabix TYPE sy-tabix.
+
+  CLEAR: gv_cnt1, gv_cnt2, gv_cnt3, gv_cnt4, gv_cnt5.
+
+  LOOP AT gt_del INTO gs_del.
+    CLEAR gs_iv.
+
+
+    lv_tabix = sy-tabix.
+
+    CASE gs_del-gbstk.
+      WHEN 'P'.
+        gv_cnt1 += 1.
+      WHEN 'R'.
+        gv_cnt2 += 1.
+      WHEN 'I'.
+        gv_cnt3 += 1.
+      WHEN 'D'.
+        gv_cnt4 += 1.
+      WHEN 'C'.
+        gv_cnt5 += 1.
+    ENDCASE.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_search_help_vbeln</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_search_help_vbeln .
+
+<font color ="#0000FF">*-- Screen 100 DATA 추출</font>
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+<font color ="#0000FF">*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 추출)</font>
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+<font color ="#0000FF">**-- Search Help 데이터 추출</font>
+  SELECT vbeln_del
+    INTO CORRESPONDING FIELDS OF TABLE gt_vbeln
+    FROM zc102sdt0004
+    ORDER BY vbeln_del DESCENDING.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'VBELN_DEL'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GS_VBELN-VBELN_DEL'
+      window_title = '납품문서 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_vbeln
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  CUST_F4_PARTNER  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE cust_f4_partner INPUT.
+
+  PERFORM set_search_help_partner.
+
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_search_help_partner</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_search_help_partner .
+
+<font color ="#0000FF">*-- Screen 100 DATA 추출</font>
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+<font color ="#0000FF">*-- 소스 코드 구현 위한 Function 호출 (Screen 100 Data 추출)</font>
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+<font color ="#0000FF">**-- Search Help 데이터 추출</font>
+  SELECT partner name1
+    INTO CORRESPONDING FIELDS OF TABLE gt_partner
+    FROM zc102bpt0001.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'VBELN_DEL'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GS_PARTNER-PARTNER'
+      window_title = 'BP 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_partner
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form trans_emergen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM trans_emergen .
+
+  CALL TRANSACTION 'ZC102SDR0008'.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

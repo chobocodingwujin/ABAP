@@ -1,0 +1,133 @@
+{
+    "_version": "1.60.0",
+    "sap.app": {
+        "id": "anln1display.anln1display",
+        "type": "application",
+        "i18n": "i18n/i18n.properties",
+        "applicationVersion": {
+            "version": "0.0.1"
+        },
+        "title": "{{appTitle}}",
+        "description": "{{appDescription}}",
+        "resources": "resources.json",
+        "sourceTemplate": {
+            "id": "@sap/generator-fiori:basic",
+            "version": "1.16.5",
+            "toolsId": "398579af-0331-40fa-94f3-b0f4d1b5174d"
+        },
+        "dataSources": {
+            "ZC102_P_AA_ANLN1_CDS_VAN": {
+                "uri": "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Annotations(TechnicalName='ZC102_P_AA_ANLN1_CDS_VAN',Version='0001')/$value/",
+                "type": "ODataAnnotation",
+                "settings": {
+                    "localUri": "localService/mainService/ZC102_P_AA_ANLN1_CDS_VAN.xml"
+                }
+            },
+            "mainService": {
+                "uri": "/sap/opu/odata/sap/ZC102_P_AA_ANLN1_CDS/",
+                "type": "OData",
+                "settings": {
+                    "annotations": [
+                        "ZC102_P_AA_ANLN1_CDS_VAN"
+                    ],
+                    "localUri": "localService/mainService/metadata.xml",
+                    "odataVersion": "2.0"
+                }
+            }
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "icons": {
+            "icon": "",
+            "favIcon": "",
+            "phone": "",
+            "phone@2": "",
+            "tablet": "",
+            "tablet@2": ""
+        },
+        "deviceTypes": {
+            "desktop": true,
+            "tablet": true,
+            "phone": true
+        }
+    },
+    "sap.ui5": {
+        "flexEnabled": false,
+        "dependencies": {
+            "minUI5Version": "1.120.0",
+            "libs": {
+                "sap.m": {},
+                "sap.ui.core": {}
+            }
+        },
+        "contentDensities": {
+            "compact": true,
+            "cozy": true
+        },
+        "models": {
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "anln1display.anln1display.i18n.i18n"
+                }
+            },
+            "": {
+                "dataSource": "mainService",
+                "preload": true,
+                "settings": {}
+            }
+        },
+        "resources": {
+            "css": [
+                {
+                    "uri": "css/style.css"
+                }
+            ]
+        },
+        "routing": {
+            "config": {
+                "routerClass": "sap.m.routing.Router",
+                "controlAggregation": "pages",
+                "controlId": "app",
+                "transition": "slide",
+                "type": "View",
+                "viewType": "XML",
+                "path": "anln1display.anln1display.view",
+                "async": true,
+                "viewPath": "anln1display.anln1display.view"
+            },
+            "routes": [
+                {
+                    "name": "Routeanln1_display",
+                    "pattern": ":?query:",
+                    "target": [
+                        "Targetanln1_display"
+                    ]
+                },
+                {
+                    "name": "Routeanln1_detail",
+                    "pattern": "detail/{anln1}",
+                    "target": [
+                        "Targetanln1_detail"
+                    ]
+                }
+            ],
+            "targets": {
+                "Targetanln1_display": {
+                    "id": "anln1_display",
+                    "name": "anln1_display"
+                },
+                "Targetanln1_detail": {
+                    "id": "anln1_detail",
+                    "name": "anln1_detail"
+                }
+            }
+        },
+        "rootView": {
+            "viewName": "anln1display.anln1display.view.App",
+            "type": "XML",
+            "id": "App"
+        }
+    }
+}

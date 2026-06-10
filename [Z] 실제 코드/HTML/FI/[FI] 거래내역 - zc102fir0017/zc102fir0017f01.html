@@ -1,0 +1,779 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0017F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0017F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0017F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102FIR0017F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  EXIT_100  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE exit_100 INPUT.
+
+  CALL METHOD : go_right_alv_grid-&gt;free,
+                go_tree-&gt;free,
+                go_right_bot_cont-&gt;free,
+                go_left_cont-&gt;free,
+                go_right_cont-&gt;free,
+                go_split_cont-&gt;free,
+                go_container-&gt;free.
+
+  FREE : go_right_bot_cont, go_right_alv_grid,
+         go_tree, go_left_cont, go_right_cont,
+         go_split_cont, go_container.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Module STATUS_0100 OUTPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+MODULE status_0100 OUTPUT.
+  SET PF-STATUS 'MENU100'.
+  SET TITLEBAR 'TITLE100'.
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen_100</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen_100 .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_fcat, gs_fcat.
+    PERFORM set_field_catalog USING : 'X' 'SERNO'   'ZC102FIT0014' 'C' ' ',
+                                      'X' 'PARTNER' 'ZC102FIT0014' 'C' ' ',
+                                      'X' 'DWDATE'  'ZC102FIT0014' 'C' ' ',
+                                      ' ' 'WRBTR'   'ZC102FIT0014' ' ' ' ',
+                                      ' ' 'WAERS'   'ZC102FIT0014' 'C' ' ',
+                                      ' ' 'HISTORY' 'ZC102FIT0014' ' ' 'X',
+                                      ' ' 'TTYPE'   'ZC102FIT0014' 'C' ' '.
+    PERFORM create_object.
+    PERFORM register_tree_event.
+    PERFORM set_layout.
+    PERFORM build_node.
+
+
+    CALL METHOD go_tree-&gt;add_nodes
+      EXPORTING
+        table_structure_name = 'MTREESNODE'
+        node_table           = node_table.
+
+    CALL METHOD go_tree-&gt;expand_node
+      EXPORTING
+        node_key = 'ROOT'.
+
+
+    SET HANDLER : lcl_event_handler=&gt;hotspot_click_partner FOR go_right_alv_grid.
+
+    CALL METHOD go_right_alv_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_account
+        it_fieldcatalog = gt_fcat.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_field_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_field_catalog  USING  pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat-key       = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_fcat-cfieldname = 'WAERS'.
+    WHEN 'PARTNER'.
+      gs_fcat-hotspot = abap_true.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+  gs_layout-zebra = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = 'D'.
+
+<font color ="#0000FF">*  gs_variant-report = sy-repid.</font>
+<font color ="#0000FF">*  gs_variant-handle = 'ALV'.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = cl_gui_docking_container=&gt;dock_at_left
+      extension = 5000.
+
+  CREATE OBJECT go_base_cont
+    EXPORTING
+      parent        = go_container
+      orientation   = 1
+      sash_position = 20
+      with_border   = 1.
+
+  go_left_cont  = go_base_cont-&gt;top_left_container.
+  go_right_cont = go_base_cont-&gt;bottom_right_container.
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_right_cont
+      rows    = 2
+      columns = 1.
+
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_right_cont.
+
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_right_bot_cont.
+
+  CREATE OBJECT go_tree
+    EXPORTING
+      parent              = go_left_cont
+      node_selection_mode = cl_gui_simple_tree=&gt;node_sel_mode_single.
+
+  CREATE OBJECT go_right_alv_grid
+    EXPORTING
+      i_parent = go_right_cont.
+
+  CREATE OBJECT go_chart
+    EXPORTING
+      parent = go_right_bot_cont.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form refresh_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM refresh_screen .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+<font color ="#0000FF">*-- 현재 커서</font>
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+<font color ="#0000FF">*-- alv refresh</font>
+  CALL METHOD go_right_alv_grid-&gt;refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form renewal_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM renewal_data .
+
+  CLEAR : gs_account, gs_total.
+  REFRESH : gt_account, gt_total.
+
+ENDFORM.
+
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form search_clicked_node_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; NODE_KEY</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM search_clicked_node_info  USING pv_node_key.
+
+  CLEAR : gt_total.
+  SELECT accno ttype waers hsl01 hsl02 hsl03 hsl04 hsl05 hsl06
+         hsl07 hsl08 hsl09 hsl10 hsl11 hsl12
+    FROM zvfiaccsum
+    INTO CORRESPONDING FIELDS OF TABLE gt_total
+   WHERE accno EQ pv_node_key
+     AND gjahr EQ pa_gjahr.
+
+  CLEAR gt_account.
+  SELECT serno accno dwdate partner wrbtr waers history ttype gjahr
+    FROM zc102fit0014
+    INTO CORRESPONDING FIELDS OF TABLE gt_account
+   WHERE accno EQ pv_node_key
+     AND gjahr EQ pa_gjahr
+   ORDER BY serno accno dwdate.
+
+  IF gt_account IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    PERFORM refresh_screen.
+    EXIT.
+  ELSEIF gt_total IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  PERFORM refresh_screen.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form register_tree_event</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM register_tree_event .
+
+  event-eventid = cl_gui_simple_tree=&gt;eventid_node_double_click.
+  event-appl_event = 'X'.
+  APPEND event TO events.
+
+  CALL METHOD go_tree-&gt;set_registered_events
+    EXPORTING
+      events                    = events
+    EXCEPTIONS
+      cntl_error                = 1
+      cntl_system_error         = 2
+      illegal_event_combination = 3
+      OTHERS                    = 4.
+
+  IF sy-subrc &lt;&gt; 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  SET HANDLER lcl_tree_event_handler=&gt;handle_node_double_click FOR go_tree.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form build_node</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM build_node .
+
+  DATA: node       TYPE mtreesnode,
+        lv_partner TYPE zc102mmt0002-partner,
+        lv_text    TYPE zc102mmt0002-name1.
+
+  node-node_key   = 'ROOT'.
+  node-text       = '거래 정보'.
+  node-isfolder   = 'X'.
+<font color ="#0000FF">*  node-n_image    = '@06@'.   " 접은 이미지</font>
+<font color ="#0000FF">*  node-exp_image  = '@07@'.   " 펼친 이미지</font>
+  node-n_image    = '@04@'.   " 접은 이미지
+  node-exp_image  = '@05@'.   " 펼친 이미지
+  APPEND node TO node_table.
+  CLEAR node.
+
+  SORT gt_tree BY partner.
+
+  LOOP AT gt_tree INTO gs_tree.
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+    ON CHANGE OF gs_tree-partner.
+
+      lv_text = gs_tree-name1.
+
+      node-node_key  = gs_tree-partner.
+      node-relatkey  = 'ROOT'.
+      node-isfolder  = 'X'.
+      node-n_image   = '@04@'. " 접은 이미지
+      node-exp_image = '@05@'. " 펼친 이미지
+      node-text = lv_text.
+      APPEND node TO node_table.
+
+      CLEAR node.
+
+    ENDON.
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+    node-node_key = gs_tree-accno.  " 실질적인 값?
+    node-text = gs_tree-accnum.
+    node-relatkey = gs_tree-partner.
+    node-isfolder = ' '.
+    APPEND node TO node_table.
+    CLEAR : node.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_tree_master_info</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_tree_master_info .
+
+  SELECT a~partner name1 accnum accno
+    INTO CORRESPONDING FIELDS OF TABLE gt_tree
+    FROM zc102mmt0002 AS a INNER JOIN zc102fit0013 AS b
+      ON a~partner EQ b~partner
+    WHERE accno NE ''
+      AND accnum NE ''
+      AND name1 NE ''
+      AND a~partner NE ''.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_double_click</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_ROW_ID</font>
+<font color ="#0000FF">*&      --&gt; E_COLUMN_ID</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_double_click  USING  pv_row_id
+                                 pv_column_id.
+
+  READ TABLE gt_account INTO gs_account INDEX pv_row_id.
+
+  CASE gs_account-ttype.
+    WHEN 'D'.
+      PERFORM get_header_dr. " 입급 D DR
+    WHEN 'K'.
+      PERFORM get_header_kr. " 출급 K KR
+  ENDCASE.
+
+<font color ="#0000FF">*  SORT gt_migyeol BY belnr ASCENDING.</font>
+
+  CALL SCREEN 110 STARTING AT 50 5
+                  ENDING AT 130 20.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen_110</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen_110 .
+
+  IF go_pop_cont IS NOT BOUND.
+
+    CLEAR : gt_pop_fcat, gs_pop_fcat.
+    PERFORM set_pop_field_catalog USING : 'X' 'BUKRS' 'ZC102FIT0009' 'C' ' ',
+                                          'X' 'BELNR' 'ZC102FIT0009' 'C' ' ',
+                                          'X' 'GJAHR' 'ZC102FIT0009' 'C' ' ',
+                                          ' ' 'BLART' 'ZC102FIT0009' 'C' ' ',
+                                          ' ' 'BLDAT' 'ZC102FIT0009' 'C' ' ',
+                                          ' ' 'BUDAT' 'ZC102FIT0009' 'C' ' ',
+                                          ' ' 'BKTXT' 'ZC102FIT0009' 'C' ' ',
+<font color ="#0000FF">*                                          ' ' 'STBLG' 'ZC102FIT0009' 'C' ' ',</font>
+<font color ="#0000FF">*                                          ' ' 'STODT' 'ZC102FIT0009' 'C' ' ',</font>
+<font color ="#0000FF">*                                          ' ' 'STGRD' 'ZC102FIT0009' 'C' ' ',</font>
+                                          ' ' 'PARTNER' 'ZC102FIT0010' 'C' 'X',
+                                          ' ' 'WAERS' 'ZC102FIT0009' 'C' ' '.
+
+    PERFORM set_pop_layout.
+    PERFORM create_object_110.
+
+    CALL METHOD go_pop_alv_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_pop_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_pop_layout
+      CHANGING
+        it_outtab       = gt_migyeol
+        it_fieldcatalog = gt_pop_fcat.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_pop_field_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_pop_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_pop_fcat-key       = pv_key.
+  gs_pop_fcat-fieldname = pv_field.
+  gs_pop_fcat-ref_table = pv_table.
+  gs_pop_fcat-just      = pv_just.
+  gs_pop_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'WRBTR'.
+      gs_pop_fcat-cfieldname = 'WAERS'.
+  ENDCASE.
+
+  APPEND gs_pop_fcat TO gt_pop_fcat.
+  CLEAR gs_pop_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_pop_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_pop_layout .
+
+  gs_pop_layout-zebra      = abap_true.
+  gs_pop_layout-cwidth_opt = 'A'.
+  gs_pop_layout-sel_mode   = ' '.
+  gs_pop_layout-grid_title = '거래처 관련 전표헤더'.
+
+  gs_pop_variant-report = sy-repid.
+  gs_pop_variant-handle = 'POPALV1'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object_110</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object_110 .
+
+  CREATE OBJECT go_pop_cont
+    EXPORTING
+      container_name = 'POP_CONT'.
+
+  CREATE OBJECT go_pop_alv_grid
+    EXPORTING
+      i_parent = go_pop_cont.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_header_dr</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_header_dr .
+
+  DATA : lv_date TYPE zc102fit0014-dwdate.
+
+  lv_date = gs_account-dwdate(4).
+
+  CLEAR : gt_migyeol.
+  SELECT a~bukrs a~belnr a~gjahr blart bldat budat bktxt stblg stodt
+<font color ="#0000FF">*    stgrd</font>
+         a~waers partner
+    FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b
+      ON a~bukrs EQ b~bukrs
+     AND a~belnr EQ b~belnr
+     AND a~gjahr EQ b~gjahr
+    INTO CORRESPONDING FIELDS OF TABLE gt_migyeol
+   WHERE partner = gs_account-partner
+     AND blart = 'DR'
+     AND stblg = ''
+     AND a~gjahr = lv_date
+     AND a~waers = gs_account-waers
+    ORDER BY a~bukrs a~belnr a~gjahr.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_header_kr</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_header_kr .
+
+  DATA : lv_date TYPE zc102fit0014-dwdate.
+
+  lv_date = gs_account-dwdate(4).
+
+  CLEAR : gt_migyeol.
+  SELECT a~bukrs a~belnr a~gjahr blart bldat budat bktxt stblg stodt
+<font color ="#0000FF">*    stgrd</font>
+         a~waers partner
+    FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b
+      ON a~bukrs EQ b~bukrs
+     AND a~belnr EQ b~belnr
+     AND a~gjahr EQ b~gjahr
+    INTO CORRESPONDING FIELDS OF TABLE gt_migyeol
+   WHERE partner = gs_account-partner
+     AND blart = 'KR'
+     AND stblg = ''
+     AND a~gjahr = lv_date
+     AND a~waers = gs_account-waers
+    ORDER BY a~bukrs a~belnr a~gjahr.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_chart</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_chart .
+
+  CLEAR : go_ixml,
+          go_ixml_sf,
+          go_ixml_docu,
+          go_ixml_ostream,
+          go_ixml_encoding,
+          go_chartdata,
+          go_categories,
+          go_category,
+          go_series,
+          go_point,
+          go_value.
+  CLEAR : gv_xstring.
+
+  go_ixml = cl_ixml=&gt;create(  ).
+  go_ixml_sf = go_ixml-&gt;create_stream_factory( ).
+
+  go_ixml_docu = go_ixml-&gt;create_document( ).
+
+  go_ixml_encoding = go_ixml-&gt;create_encoding(
+                       byte_order    = if_ixml_encoding=&gt;co_little_endian
+                       character_set = 'utf-8' ).
+
+  go_ixml_docu-&gt;set_encoding( encoding = go_ixml_encoding ).
+
+<font color ="#0000FF">*-- Now build a DOM, representing an XML document with chart data</font>
+  go_chartdata = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'ChartData'
+                                        parent = go_ixml_docu ).
+
+<font color ="#0000FF">*-- Categories (parent)</font>
+  go_categories = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'Categories'
+                                        parent = go_chartdata ).
+
+  PERFORM set_category_value.
+  PERFORM set_chart_value.
+
+  go_chart-&gt;set_data( xdata = gv_xstring ).
+  go_chart-&gt;render( ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_category_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_category_value .
+
+  DATA : lv_month TYPE zc102sdt0008-month_sd.
+
+  lv_month = 1.
+
+  DO 12 TIMES.
+
+    go_category = go_ixml_docu-&gt;create_simple_element(
+                                    name   = 'Category'
+                                    parent = go_categories ).
+    go_category-&gt;if_ixml_node~set_value( lv_month && '월' ).
+
+    lv_month += 1.
+
+  ENDDO.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_chart_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_chart_value .
+
+  DATA : lv_value TYPE string,
+         lv_dsum  TYPE zvfiaccsum-hsl01,
+         lv_hsum  TYPE zvfiaccsum-hsl01,
+         lv_month TYPE bkpf-monat.
+
+  FIELD-SYMBOLS : &lt;ls_value&gt; TYPE any.
+
+  lv_value = '입금'.
+
+<font color ="#0000FF">*-- Build series (we need only 1)</font>
+  go_series = go_ixml_docu-&gt;create_simple_element(
+                                                   name = 'Series'
+                                                    parent = go_chartdata ).
+  go_series-&gt;set_attribute( name  = 'label'
+                            value = lv_value ). "'Series1' ).
+
+  CLEAR gs_total.
+  READ TABLE gt_total INTO gs_total WITH KEY ttype = 'D'.
+
+  DO 12 TIMES.
+
+    lv_month = sy-index.
+    lv_value = 'HSL' && lv_month.
+
+    ASSIGN COMPONENT lv_value OF STRUCTURE gs_total TO &lt;ls_value&gt;.
+    IF &lt;ls_value&gt; IS NOT ASSIGNED.
+      EXIT.
+    ENDIF.
+
+    lv_value = &lt;ls_value&gt;.
+
+    go_point = go_ixml_docu-&gt;create_simple_element(
+                                                    name = 'Point'
+                                                    parent = go_series ).  " 라벨
+    go_point-&gt;set_attribute( name  = 'label'
+                             value = lv_value ).
+
+    go_value = go_ixml_docu-&gt;create_simple_element(
+                                                    name = 'Value'
+                                                    parent = go_point ). " 막대기 값
+
+    go_value-&gt;if_ixml_node~set_value( lv_value ).
+
+    UNASSIGN &lt;ls_value&gt;.
+
+  ENDDO.
+
+  lv_value = '출금'.
+
+<font color ="#0000FF">*-- Build series (we need only 1)</font>
+  go_series = go_ixml_docu-&gt;create_simple_element(
+                                                   name = 'Series'
+                                                    parent = go_chartdata ).
+  go_series-&gt;set_attribute( name  = 'label'
+                            value = lv_value ). "'Series1' ).
+
+  CLEAR gs_total.
+  READ TABLE gt_total INTO gs_total WITH KEY ttype = 'W'.
+
+  DO 12 TIMES.
+
+    lv_month = sy-index.
+    lv_value = 'HSL' && lv_month.
+
+    ASSIGN COMPONENT lv_value OF STRUCTURE gs_total TO &lt;ls_value&gt;.
+    IF &lt;ls_value&gt; IS NOT ASSIGNED.
+      EXIT.
+    ENDIF.
+
+    lv_value = &lt;ls_value&gt;.
+
+    go_point = go_ixml_docu-&gt;create_simple_element(
+                                                    name = 'Point'
+                                                    parent = go_series ).  " 라벨
+    go_point-&gt;set_attribute( name  = 'label'
+                             value = lv_value ).
+
+    go_value = go_ixml_docu-&gt;create_simple_element(
+                                                    name = 'Value'
+                                                    parent = go_point ). " 막대기 값
+
+    go_value-&gt;if_ixml_node~set_value( lv_value ).
+
+    UNASSIGN &lt;ls_value&gt;.
+
+  ENDDO.
+
+  go_ixml_ostream = go_ixml_sf-&gt;create_ostream_xstring( gv_xstring ).
+  go_ixml_docu-&gt;render( go_ixml_ostream ). "here f_xstring is filled
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_value .
+
+  pa_gjahr = sy-datum(4).
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

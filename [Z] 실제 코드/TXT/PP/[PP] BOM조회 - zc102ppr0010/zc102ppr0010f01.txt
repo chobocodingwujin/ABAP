@@ -1,0 +1,388 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0010F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form fill_tree_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM fill_tree_info .
+
+  DATA : lt_header TYPE TABLE OF zc102ppt0003,
+         ls_header TYPE zc102ppt0003,
+         lv_tabix  TYPE sy-tabix.
+
+  SELECT DISTINCT bomno matnr
+    INTO CORRESPONDING FIELDS OF TABLE gt_tr_bom
+    FROM zc102ppt0004
+*   WHERE carrid IN so_car
+   ORDER BY bomno matnr ASCENDING.
+
+  SELECT DISTINCT bomno
+    INTO CORRESPONDING FIELDS OF TABLE lt_header
+    FROM zc102ppt0003.
+
+  LOOP AT lt_header INTO ls_header.
+
+    LOOP AT gt_tr_bom INTO gs_tr_bom.
+
+      lv_tabix = sy-tabix.
+
+      IF gs_tr_bom-bomno CP ls_header-bomno && '*'.
+        gs_tr_bom-header_bomno = ls_header-bomno.
+        MODIFY gt_tr_bom FROM gs_tr_bom INDEX sy-tabix TRANSPORTING header_bomno.
+      ENDIF.
+
+      IF gs_tr_bom-bomno = ls_header-bomno.
+        DELETE gt_tr_bom INDEX sy-tabix.
+      ENDIF.
+
+      CLEAR gs_matnr.
+      READ TABLE gt_matnr INTO gs_matnr WITH KEY matnr = gs_tr_bom-matnr
+                                        BINARY SEARCH.
+      gs_tr_bom-maktx = gs_matnr-maktx.
+      MODIFY gt_tr_bom FROM gs_tr_bom INDEX lv_tabix TRANSPORTING maktx.
+
+    ENDLOOP.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form fill_alv_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM fill_alv_info .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  SELECT a~matnr stlno stltype werks labst rabst
+         eisbe b~meins b~bomno
+    INTO CORRESPONDING FIELDS OF TABLE gt_bom
+    FROM zc102mmt0001 AS a INNER JOIN zc102ppt0004 AS b
+      ON a~matnr EQ b~matnr
+   ORDER BY bomno a~matnr.
+
+  LOOP AT gt_bom INTO gs_bom.
+
+    lv_tabix = sy-tabix.
+    CLEAR gs_matnr.
+    READ TABLE gt_matnr INTO gs_matnr WITH KEY matnr = gs_bom-matnr
+                                      BINARY SEARCH.
+    gs_bom-maktx = gs_matnr-maktx.
+    MODIFY gt_bom FROM gs_bom INDEX lv_tabix TRANSPORTING maktx.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen .
+
+  IF go_left_cont IS NOT BOUND.
+
+    PERFORM create_object.
+    PERFORM register_tree_event.
+    PERFORM build_node.
+    PERFORM set_field_catalog USING : 'X' 'BOMNO'   'ZC102PPT0004' ' ' ' ',
+                                      'X' 'MATNR'   'ZC102MMT0001' 'C' ' ',
+                                      ' ' 'MAKTX'   'ZC102MMT0004' ' ' ' ',
+                                      ' ' 'STLNO'   'ZC102MMT0001' ' ' ' ',
+                                      ' ' 'STLTYPE' 'ZC102MMT0001' ' ' ' ',
+                                      ' ' 'WERKS'   'ZC102MMT0001' ' ' ' ',
+                                      ' ' 'LABST'   'ZC102MMT0001' ' ' ' ',
+                                      ' ' 'EISBE'   'ZC102MMT0001' ' ' ' ',
+                                      ' ' 'MEINS'   'ZC102MMT0001' ' ' ' '.
+
+    CALL METHOD go_tree->add_nodes
+      EXPORTING
+        table_structure_name = 'MTREESNODE'
+        node_table           = node_table.
+
+    CALL METHOD go_tree->expand_node
+      EXPORTING
+        node_key = 'ROOT'.
+
+    PERFORM set_layout.
+
+
+    CALL METHOD go_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_bom
+        it_fieldcatalog = gt_fcat.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = cl_gui_docking_container=>dock_at_left
+      extension = 5000.
+
+  CREATE OBJECT go_base_cont
+    EXPORTING
+      parent        = go_container
+      orientation   = 1 " 0 : Vertical, 1 : Horizontal
+      sash_position = 20
+      with_border   = 1.
+
+*-- Assign container
+  go_left_cont   = go_base_cont->top_left_container.
+  go_right_cont  = go_base_cont->bottom_right_container.
+
+  CREATE OBJECT go_tree
+    EXPORTING
+      parent              = go_left_cont
+      node_selection_mode = cl_gui_simple_tree=>node_sel_mode_single.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_right_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_tree_event
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_tree_event .
+
+  event-eventid = cl_gui_simple_tree=>eventid_node_double_click.
+  event-appl_event = 'X'.
+  APPEND event TO events.
+
+  CALL METHOD go_tree->set_registered_events
+    EXPORTING
+      events                    = events
+    EXCEPTIONS
+      cntl_error                = 1
+      cntl_system_error         = 2
+      illegal_event_combination = 3
+      OTHERS                    = 4.
+
+  IF sy-subrc <> 0.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+               WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4.
+  ENDIF.
+
+  SET HANDLER lcl_tree_event_handler=>handle_node_double_click FOR go_tree.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form build_node
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM build_node .
+
+  DATA: node     TYPE mtreesnode,
+        lv_bomno TYPE zc102ppt0003-bomno,
+        lv_matnr TYPE zc102ppt0003-matnr,
+        lv_text  TYPE zc102ppt0003-matnr,
+        lv_tmp   TYPE zc102ppt0003-bomno.
+
+  node-node_key   = 'ROOT'.
+  node-text       = 'BOM Number'.
+  node-isfolder   = 'X'.
+*  node-n_image    = '@06@'.   " 접은 이미지
+*  node-exp_image  = '@07@'.   " 펼친 이미지
+  node-n_image    = '@04@'.   " 접은 이미지
+  node-exp_image  = '@05@'.   " 펼친 이미지
+  APPEND node TO node_table.
+  CLEAR node.
+
+  LOOP AT gt_tr_bom INTO gs_tr_bom .
+    ON CHANGE OF gs_tr_bom-header_bomno.
+*--------------------------------------------------------------------*
+*    MOVE gs_tr_bom-matnr TO lv_matnr.
+      CLEAR gs_bom_master.
+      READ TABLE gt_bom_master INTO gs_bom_master
+                               WITH KEY bomno = gs_tr_bom-header_bomno
+                               BINARY SEARCH.
+
+      CLEAR gs_matnr.
+      READ TABLE gt_matnr INTO gs_matnr
+                          WITH KEY matnr = gs_bom_master-matnr
+                          BINARY SEARCH.
+
+      node-node_key  = gs_tr_bom-header_bomno.
+      node-relatkey  = 'ROOT'.
+      node-isfolder  = 'X'.
+*      node-n_image   = '@06@'.
+*      node-exp_image = '@07@'.
+      node-n_image   = '@04@'. " 접은 이미지
+      node-exp_image = '@05@'. " 펼친 이미지
+      node-text = gs_tr_bom-header_bomno && '-' && gs_matnr-maktx.
+      APPEND node TO node_table.
+      CLEAR node.
+*--------------------------------------------------------------------*
+    ENDON.
+    node-node_key = gs_tr_bom-bomno.
+    node-text = gs_tr_bom-bomno && '-' && gs_tr_bom-maktx.
+    node-relatkey = gs_tr_bom-header_bomno.
+    node-isfolder = ' '.
+    APPEND node TO node_table.
+    CLEAR: node.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout .
+
+  gs_layout = VALUE #( zebra      = abap_true
+                        cwidth_opt = 'A'
+                        sel_mode   = 'D' ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form search_clicked_node_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> NODE_KEY
+*&---------------------------------------------------------------------*
+FORM search_clicked_node_info  USING pv_node_key.
+
+  DATA : lv_bom TYPE string.
+
+  CLEAR gs_bom_master.
+  READ TABLE gt_bom_master INTO gs_bom_master
+                       WITH KEY bomno = pv_node_key.
+
+  IF pv_node_key = 'ROOT'.
+    PERFORM fill_alv_info.
+  ELSEIF gs_bom_master IS INITIAL.
+    CLEAR gt_bom.
+    SELECT a~matnr stlno stltype werks labst rabst
+           eisbe b~meins b~bomno
+      INTO CORRESPONDING FIELDS OF TABLE gt_bom
+      FROM zc102mmt0001 AS a INNER JOIN zc102ppt0004 AS b
+        ON a~matnr EQ b~matnr
+     WHERE b~bomno EQ pv_node_key.
+  ELSE.
+    lv_bom = pv_node_key && '%'.
+    CLEAR gt_bom.
+    SELECT a~matnr, a~stlno, stltype, werks, labst, rabst,
+           eisbe, b~meins, b~bomno
+      INTO CORRESPONDING FIELDS OF TABLE @gt_bom
+      FROM zc102mmt0001 AS a INNER JOIN zc102ppt0004 AS b
+                                     ON a~matnr = b~matnr
+    WHERE b~bomno LIKE @lv_bom
+      ORDER BY b~bomno.
+*    WHERE b~bomno EQ @pv_node_key.
+  ENDIF.
+
+*  SELECT * INTO TABLE gt_bom
+*    FROM ZC102ppT0004
+*   WHERE matnr EQ pv_node_key
+*   ORDER BY bomno ASCENDING.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat-key = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_matnr_master
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_matnr_master .
+
+  CLEAR gt_matnr.
+  SELECT matnr maktx
+    INTO CORRESPONDING FIELDS OF TABLE gt_matnr
+    FROM zc102mmt0004.
+
+  SORT gt_matnr BY matnr ASCENDING.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_bom_master
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_bom_master .
+
+  CLEAR gt_bom_master.
+  SELECT bomno matnr
+    INTO CORRESPONDING FIELDS OF TABLE gt_bom_master
+    FROM zc102ppt0003.
+
+  SORT gt_bom_master BY bomno ASCENDING.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

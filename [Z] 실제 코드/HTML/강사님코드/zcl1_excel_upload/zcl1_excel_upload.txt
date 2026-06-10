@@ -1,0 +1,94 @@
+*&---------------------------------------------------------------------*
+*& Report ZCL1_EXCEL_UPLOAD
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zcl1_excel_uploadtop                    .    " Global Data
+
+INCLUDE zcl1_excel_uploads01                    .  " Selection screen
+INCLUDE zcl1_excel_uploadc01                    .  " ALV Events
+INCLUDE zcl1_excel_uploado01                    .  " PBO-Modules
+INCLUDE zcl1_excel_uploadi01                    .  " PAI-Modules
+INCLUDE zcl1_excel_uploadf01                    .  " FORM-Routines
+
+SELECTION-SCREEN FUNCTION KEY 1.                   " Selection screen button
+
+**********************************************************************
+* INITIALIZATION
+**********************************************************************
+INITIALIZATION.
+  PERFORM set_init_value.
+
+**********************************************************************
+* AT SELECTION-SCREEN
+**********************************************************************
+AT SELECTION-SCREEN.
+  PERFORM button_control.
+
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM modify_screen.
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR p_path.
+  PERFORM f4_filename.
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+
+  CASE p_gbn.
+    WHEN 'E'.
+      PERFORM excel_upload.
+      PERFORM make_body.
+    WHEN 'R'.
+      PERFORM get_base_data.
+  ENDCASE.
+
+  IF gt_body IS NOT INITIAL.
+    CALL SCREEN 100.
+  ELSE.
+    MESSAGE s037 DISPLAY LIKE 'E'.
+  ENDIF.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> [FI] FI Document upload
+
+*Text elements
+*----------------------------------------------------------
+* E01 File conversion failed
+* E02 File open error
+* E03 Top of page event error
+* E04 역분개 할 행을 선택하세요.
+* E05 An error has occured picking a folder
+* L01 정규전표
+* L02 임시전표
+* L03 Excel upload
+* L04 전표생성
+* L05 Display data
+* L06 전체
+* L07 생성완료
+* L08 미완료
+* Q01 저장 하시겠습니까?
+* T01 Condition
+
+
+*Selection texts
+*----------------------------------------------------------
+* P_BUKRS D       .
+* P_GBN         Job
+* P_GJAHR D       .
+* P_PATH D       .
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: K5
+*001   & & & &
+*037   No data found
+*102   Data has been saved
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

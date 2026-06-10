@@ -1,0 +1,143 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102FIR0006F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form deprecation
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM deprecation .
+  FIELD-SYMBOLS : <fs_deppr> TYPE any.
+
+*-- For Depreciation
+  DATA: lv_month     TYPE n LENGTH 2,
+        lv_fieldname TYPE fieldname,
+        lv_deprc     TYPE wrbtr,
+        lv_buypr     TYPE zc102fit0012-buypr,
+        lv_bvalu     TYPE zc102fit0012-bvalu,
+        lv_remvl     TYPE zc102fit0007-remvl,
+        lv_useye     TYPE zc102fit0007-useye,
+        lv_desum     TYPE zc102fit0012-desum,
+        lv_check.
+
+*-- For Create Docu
+  DATA : lv_sum TYPE zc102fit0010-wrbtr.
+
+  SORT gt_body BY werks anln1 ASCENDING.
+
+  CLEAR : gs_master, gs_body, gv_tabix, lv_sum.
+
+  lv_month = sy-datum+4(2).
+
+  CONCATENATE 'DEPPR' lv_month INTO lv_fieldname.
+
+  LOOP AT gt_body INTO gs_body WHERE gjahr = sy-datum(4).
+    gv_tabix = sy-tabix.
+
+    CLEAR : lv_buypr, lv_desum, lv_deprc, gv_deppr,
+            lv_remvl, lv_useye, gs_master.
+
+    READ TABLE gt_master INTO gs_master WITH KEY anln1 = gs_body-anln1.
+
+*    IF gs_body-anln1 = gs_master-anln1.
+    IF sy-subrc = 0.
+      gs_body-gjahr = sy-datum(4).
+
+*-- For Calculation
+      lv_remvl = gs_master-remvl.
+      lv_useye = gs_master-useye.
+      lv_buypr = gs_body-buypr.
+      lv_bvalu = gs_body-bvalu.
+      lv_desum = gs_body-desum.
+
+*-- 월별 감가상각비 계산
+      lv_deprc = ( lv_buypr - lv_remvl ) / lv_useye.
+      gv_deppr = lv_deprc / 12.
+
+*-- 감가상각비가 장부가액 이상이면 감가상각 중단
+      IF gv_deppr > ( lv_buypr - lv_desum ).
+        CLEAR gv_deppr.
+        CONTINUE.
+      ENDIF.
+
+*-- 감가상각 계상 월에 반영
+      ASSIGN COMPONENT lv_fieldname OF STRUCTURE gs_body TO <fs_deppr>.
+      IF <fs_deppr> IS ASSIGNED AND <fs_deppr> IS INITIAL.
+        <fs_deppr> = gv_deppr.
+        lv_check = 'X'.
+      ELSE.
+        EXIT.
+      ENDIF.
+
+      lv_desum = gs_body-desum + gv_deppr.
+      gs_body-desum = lv_desum.
+      gs_body-bvalu = lv_buypr - lv_desum.
+
+      MODIFY gt_body FROM gs_body INDEX gv_tabix.
+
+*-- 전표 생성 금액
+      lv_sum += gv_deppr.
+    ENDIF.
+
+    UNASSIGN <fs_deppr>.
+
+  ENDLOOP.
+
+  SORT gt_body BY werks anln1 ASCENDING.
+
+  MODIFY zc102fit0012 FROM TABLE gt_body.
+
+*-- Create Docu
+  CALL FUNCTION 'ZFM_CL102_FI_03'
+    EXPORTING
+      iv_wrbtr = lv_sum.
+*    IMPORTING
+*      ev_num   = gv_docu_num.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_master_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_master_data .
+  CLEAR : gt_master, gs_master.
+
+  SELECT bukrs anln1 useye remvl
+         depmt waers txt50 erdat
+    INTO CORRESPONDING FIELDS OF TABLE gt_master
+    FROM zc102fit0007
+    WHERE status <> 'X'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_log_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_log_data .
+  CLEAR : gs_body, gt_body.
+
+  SELECT anln1 gjahr werks buypr bvalu desum
+         deppr01 deppr02 deppr03 deppr04 deppr05
+         deppr06 deppr07 deppr08 deppr09 deppr10
+         deppr11 deppr12 waers
+    INTO CORRESPONDING FIELDS OF TABLE gt_body
+    FROM zc102fit0012
+    WHERE gjahr = sy-datum(4)
+      AND status <> 'X'
+      AND bukrs <> ''
+    ORDER BY werks anln1 ASCENDING.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

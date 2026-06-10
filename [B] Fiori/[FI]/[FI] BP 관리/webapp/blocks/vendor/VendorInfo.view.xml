@@ -1,0 +1,22 @@
+<mvc:View xmlns:mvc="sap.ui.core.mvc"
+	xmlns:forms="sap.ui.layout.form"
+	xmlns="sap.m">
+	<forms:SimpleForm editable="false" layout="ColumnLayout">
+
+		<Label text="거래처 번호" />
+		<Text text="{PartnerSet>/to_Vendor/results/0/Venno}"/>
+
+		<Label text="거래 통화키"/>
+		<Text text="KRW"/>
+
+		<Label text="거래처 등급" />
+		<Text text="{PartnerSet>/to_Vendor/results/0/Knkli}"/>
+<!-- 
+		<Label text="고객 할인율"/>
+		<Text text="{PartnerSet>/to_Customer/Kbetr} %"/>
+
+		<Label text="신용 평가" />
+		<Text text="{PartnerSet>/to_Customer/Ctlzl}"/> -->
+
+	</forms:SimpleForm>
+</mvc:View>

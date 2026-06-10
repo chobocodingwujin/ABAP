@@ -1,0 +1,102 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102FIR0023
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102fir0023top                         .    " Global Data
+
+INCLUDE zc102fir0023s01                         .  " Selection screen
+INCLUDE zc102fir0023c01                         .  " Event
+INCLUDE zc102fir0023o01                         .  " PBO-Modules
+INCLUDE zc102fir0023i01                         .  " PAI-Modules
+INCLUDE zc102fir0023f01                         .  " FORM-Routines
+
+**********************************************************************
+* INITIALIZATION
+**********************************************************************
+INITIALIZATION.
+  PERFORM set_init_value.
+
+**********************************************************************`
+* AT SELECTION-SCREEN OUTPUT
+**********************************************************************
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM set_screen.
+
+**********************************************************************
+* AT SELECTION-SCREEN
+**********************************************************************
+AT SELECTION-SCREEN.
+  PERFORM check_value.
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+
+*-- SO_MONDAT-HIGH 조건이 없다면
+  IF ( so_monat-high IS INITIAL ) OR
+     ( so_monat-high > sy-datum+4(2) ).
+    " 회계년도가 해당 년이라면 현재 월까지 아니면 12월
+    IF pa_gjahr = sy-datum(4).
+      so_monat-high = sy-datum+4(2).
+    ELSE.
+      so_monat-high = 12.
+    ENDIF.
+  ENDIF.
+
+*-- 계정 마스터 데이터 가져오기
+  PERFORM get_saknr_data.
+
+*-- P/L 누계 데이터 가져오기
+  PERFORM get_body_data.
+*-- P/L 누계 데이터 총합
+  PERFORM set_sum_data.
+*-- P/L 차액 계산
+  PERFORM calc_remain.
+
+  CASE 'X'.
+    WHEN pa_alv.
+      PERFORM set_month_base.
+      PERFORM set_month_total.
+      CALL SCREEN 100.
+    WHEN pa_tree.
+*-- 수익, 비용 총 합 계산
+      PERFORM calc_sum.
+      CALL SCREEN 200.
+  ENDCASE.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> 손익 계산서 ALV 출력
+* TITLE200 --> 손익 계산서 ALV Tree
+
+*Text elements
+*----------------------------------------------------------
+* Q01 PDF로 출력 하시겠습니까?
+* Q02 PDF출력
+* T01 출력 조건 선택
+* T02 출력 형식 선택
+* T03 손익 계산
+
+
+*Selection texts
+*----------------------------------------------------------
+* PA_ALV         ALV 출력
+* PA_BUKRS D       .
+* PA_GJAHR D       .
+* PA_TREE         TREE 출력
+* SO_MONAT         회계기간
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*000   &
+*001   & &
+*053   폴더 선택에 오류가 발생했습니다.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

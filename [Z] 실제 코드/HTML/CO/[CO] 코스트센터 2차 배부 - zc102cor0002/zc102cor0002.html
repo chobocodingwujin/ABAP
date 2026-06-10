@@ -1,0 +1,74 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102COR0002</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102COR0002</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [CO] 코스트센터 비용 2차 배부</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102COR0002</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zc102cor0002top.html">zc102cor0002top</a>.  " Global Data
+include <a href ="zc102cor0002c01.html">zc102cor0002c01</a>.  " ALV Event
+include <a href ="zc102cor0002o01.html">zc102cor0002o01</a>.  " PBO-Modules
+include <a href ="zc102cor0002i01.html">zc102cor0002i01</a>.  " PAI-Modules
+include <a href ="zc102cor0002f01.html">zc102cor0002f01</a>.  " FORM-Routines
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* INITIALIZATION</font>
+<font color ="#0000FF">**********************************************************************</font>
+INITIALIZATION.
+  PERFORM set_init_value.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+  PERFORM get_acctp.
+  PERFORM get_aunit.
+  PERFORM get_profit_data.
+
+  CALL SCREEN 100.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* TITLE100 --&gt; 코스트센터 비용 2차 배부</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* F01 수신 오브젝트</font>
+<font color ="#0000FF">* F02 송신 오브젝트</font>
+<font color ="#0000FF">* S01 설정 값을 입력해주세요.</font>
+<font color ="#0000FF">* S02 직접 입력 시 지표 값은 100을 넘을 수 없습니다.</font>
+<font color ="#0000FF">* S03 시뮬레이션을 수행해주세요.</font>
+<font color ="#0000FF">* S04 영역과 추적 요인을 설정해주세요.</font>
+<font color ="#0000FF">* S05 효력 기간은 필수 값입니다.</font>
+<font color ="#0000FF">* T01 코스트센터 집계 현황</font>
+<font color ="#0000FF">* T02 SKF</font>
+<font color ="#0000FF">* T03 배부 결과</font>
+<font color ="#0000FF">* W01 지표 값</font>
+<font color ="#0000FF">* W02 총</font>
+<font color ="#0000FF">* W03 비율</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZC102MSG</font>
+<font color ="#0000FF">*000   &</font>
+<font color ="#0000FF">*001   & &</font>
+<font color ="#0000FF">*007   & 전표가 생성되었습니다.</font>
+<font color ="#0000FF">*008   전표 생성에 실패했습니다.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

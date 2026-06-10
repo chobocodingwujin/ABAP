@@ -1,0 +1,7 @@
+/* Enter your custom styles here */
+/* style.css 또는 <style> 태그에 추가 */
+.wideColumnText {
+  max-width: 20rem !important;
+  white-space: normal;
+  overflow-wrap: break-word;
+}

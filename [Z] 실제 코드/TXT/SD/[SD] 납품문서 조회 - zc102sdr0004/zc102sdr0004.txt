@@ -1,0 +1,50 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102SDR0004
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102sdr0004top                         .    " Global Data
+INCLUDE zc102sdr0004o01                         .  " PBO-Modules
+INCLUDE zc102sdr0004c01                         .  " PBO-Modules
+INCLUDE zc102sdr0004i01                         .  " PAI-Modules
+INCLUDE zc102sdr0004f01                         .  " FORM-Routines
+
+**********************************************************************
+*START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+
+*-- FROM 판매오더 조회(BY 소연)
+*-- ABAP Memory로 판매오더 조회 - 자세히 보기에서 선택한 Header 데이터 가져옴
+*-- 가져온 Header 데이터를 gs_header에 담기
+  IMPORT gs_do_h FROM MEMORY ID 'ZC102_DO_HEADER'.
+  MOVE-CORRESPONDING gs_do_h TO gs_input.
+  IF gs_do_h IS NOT INITIAL.
+    gv_from = abap_true.
+    PERFORM auto_enter.
+  ENDIF.
+  FREE MEMORY ID 'ZC102_DO_HEADER'.  " 메모리 자체 제거
+
+  CALL SCREEN 100.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> 납품문서 조회
+
+*Text elements
+*----------------------------------------------------------
+* T01 해당하는 아이템 정보가 없습니다!
+* T02 정보를 불러오는데 실패했습니다!
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*001   & &
+*004   데이터가 존재하지 않습니다
+*010   & 건이 조회되었습니다.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

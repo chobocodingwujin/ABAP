@@ -1,0 +1,31 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+specVersion: "3.1"
+metadata:
+  name: bpcontrol.bpcontrol
+type: application
+builder:
+  resources:
+    excludes:
+      - /test/**
+      - /localService/**
+  customTasks:
+    - name: deploy-to-abap
+      afterTask: generateCachebusterInfo
+      configuration:
+        target:
+          url: http://bgissap1.bgissap.co.kr:8000
+          client: '100'
+        app:
+          name: ZC102_BP_CTRL
+          description: Business Partner Control
+          package: ZC102
+          transport: EFXK901109
+        exclude:
+          - /test/
+        bsp:
+          name: ZC102_BP_CTRL
+          namespace: /sap/bc/ui5_ui5/sap/
+        options:                             # ✅ 이 섹션을 추가하세요
+          csrfProtection: true              # ✅ 반드시 true로 설정
+          verbose: true

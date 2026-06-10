@@ -1,0 +1,27 @@
+FUNCTION zfm_cl102_cm_pop_up.
+*"----------------------------------------------------------------------
+*"*"Local Interface:
+*"  IMPORTING
+*"     REFERENCE(IV_TITLEBAR) TYPE  STRING
+*"     REFERENCE(IV_QUESTION) TYPE  STRING
+*"  EXPORTING
+*"     REFERENCE(EV_ANSWER) TYPE  CHAR1
+*"----------------------------------------------------------------------
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = iv_titlebar
+      text_question         = iv_question
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = ev_answer.
+
+ENDFUNCTION.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

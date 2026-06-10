@@ -1,0 +1,435 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0012F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0012F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0012F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102PPR0012F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      Module  EXIT  INPUT</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*       text</font>
+<font color ="#0000FF">*----------------------------------------------------------------------*</font>
+MODULE exit INPUT.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen .
+
+  IF go_container IS INITIAL.
+
+    PERFORM set_catalog_1 USING:    'X'   'PDONO'   'ZC102PPT0014'  'C'   ' ',
+                                    'X'   'MATNR'   'ZC102PPT0014'  'C'   ' ',
+                                    'X'   'WKCNO'   'ZC102PPT0014'  'C'   ' ',
+                                    'X'   'WERKS'   'ZC102PPT0014'  'C'   ' ',
+<font color ="#0000FF">*                                    ' '   'ROUNO'   'ZC102PPT0014'  ' '   ' ',</font>
+                                    ' '   'MENGE'   'ZC102PPT0014'  ' '   '',
+                                    ' '   'BOMNO'   'ZC102PPT0014'  'C'   ' ',
+                                    ' '   'MEINS'   'ZC102PPT0014'  'C'   'X',
+                                    ' '   'PDSTT'   'ZC102PPT0014'  'C'   ' ',
+<font color ="#0000FF">*                                    ' '   'PDFNS'   'ZC102PPT0014'  ' '   ' ',</font>
+<font color ="#0000FF">*                                    ' '   'MKSTA'   'ZC102PPT0014'  ' '   ' ',</font>
+                                    ' '   'PROG'    'ZC102PPT0014'  ' '   ' ',
+                                    ' '   'P_UNIT'  'ZC102PPT0014'  'C'   'X'.
+
+
+    PERFORM set_catalog_2 USING:    'X'   'PDONO'   'ZC102PPT0014'  'C'   ' ',
+                                    'X'   'MATNR'   'ZC102PPT0014'  'C'   ' ',
+                                    'X'   'WKCNO'   'ZC102PPT0014'  'C'   ' ',
+                                    'X'   'WERKS'   'ZC102PPT0014'  'C'   ' ',
+                                    ' '   'ROUNO'   'ZC102PPT0014'  'C'   ' ',
+                                    ' '   'MENGE'   'ZC102PPT0014'  ' '   '',
+                                    ' '   'BOMNO'   'ZC102PPT0014'  ' '   ' ',
+                                    ' '   'MEINS'   'ZC102PPT0014'  'C'   'X',
+                                    ' '   'PDSTT'   'ZC102PPT0014'  'C'   ' ',
+<font color ="#0000FF">*                                    ' '   'PDFNS'   'ZC102PPT0014'  ' '   ' ',</font>
+<font color ="#0000FF">*                                    ' '   'MKSTA'   'ZC102PPT0014'  ' '   ' ',</font>
+                                    ' '   'PROG'    'ZC102PPT0014'  ' '   ' ',
+                                    ' '   'P_UNIT'  'ZC102PPT0014'  'C'   'X'.
+
+
+
+
+    PERFORM set_layout.
+    PERFORM exclude_toolbar.
+    PERFORM create_object.
+
+    PERFORM display_alv_screen.
+
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_catalog_1</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_catalog_1  USING   pv_key pv_field pv_table pv_just pv_emp.
+
+  gs_fcat_1-key       = pv_key.
+  gs_fcat_1-fieldname = pv_field.
+  gs_fcat_1-ref_table = pv_table.
+  gs_fcat_1-just      = pv_just.
+  gs_fcat_1-emphasize = pv_emp.
+
+  CASE pv_field.
+    WHEN 'MENGE'.
+      gs_fcat_1-coltext = '수량'.
+      gs_fcat_1-qfieldname = 'MEINS'.
+    WHEN 'MEINS'.
+      gs_fcat_1-coltext = '단위'.
+    WHEN 'PROG'.
+      gs_fcat_1-coltext = '총 진행률'.
+  ENDCASE.
+
+  APPEND gs_fcat_1 TO gt_fcat_1.
+  CLEAR gs_fcat_1.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_catalog_2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_catalog_2  USING   pv_key pv_field pv_table pv_just pv_emp.
+
+
+  gs_fcat_2-key       = pv_key.
+  gs_fcat_2-fieldname = pv_field.
+  gs_fcat_2-ref_table = pv_table.
+  gs_fcat_2-just      = pv_just.
+  gs_fcat_2-emphasize = pv_emp.
+
+  CASE pv_field.
+    WHEN 'MENGE'.
+      gs_fcat_2-coltext = '수량'.
+      gs_fcat_2-qfieldname = 'MEINS'.
+    WHEN 'MEINS'.
+      gs_fcat_2-coltext = '단위'.
+    WHEN 'PROG'.
+      gs_fcat_2-coltext = '총 진행률'.
+  ENDCASE.
+
+  APPEND gs_fcat_2 TO gt_fcat_2.
+  CLEAR gs_fcat_2.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+<font color ="#0000FF">*-- Set top_layout</font>
+  gs_layout_1-zebra       = abap_true.
+  gs_layout_1-cwidth_opt  = 'A'.
+  gs_layout_1-sel_mode    = 'D'.
+  gs_layout_1-stylefname = 'CELL_TAB'.
+  gs_layout_1-grid_title = '사료 생산오더 대기 목록'.
+
+
+<font color ="#0000FF">*-- Set bottom_layout</font>
+  gs_layout_2-zebra       = abap_true.
+  gs_layout_2-cwidth_opt  = 'A'.
+  gs_layout_2-sel_mode    = 'D'.
+  gs_layout_2-stylefname = 'CELL_TAB'.
+  gs_layout_2-grid_title = '사료 생산공정 현황'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+<font color ="#0000FF">*-- TAB1</font>
+  CREATE OBJECT go_container1
+    EXPORTING
+      container_name = 'CONT1'.
+
+  CREATE OBJECT go_alv_grid1
+    EXPORTING
+      i_parent = go_container1.
+
+<font color ="#0000FF">*-- TAB2</font>
+  CREATE OBJECT go_container2
+    EXPORTING
+      container_name = 'CONT2'.
+
+  CREATE OBJECT go_alv_grid2
+    EXPORTING
+      i_parent = go_container2.
+
+<font color ="#0000FF">*-- TAB3</font>
+  CREATE OBJECT go_container3
+    EXPORTING
+      container_name = 'CONT3'.
+
+  CREATE OBJECT go_alv_grid3
+    EXPORTING
+      i_parent = go_container3.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_alv_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_alv_screen .
+
+  gs_variant-handle = 'ALV1'.
+
+  CALL METHOD go_alv_grid-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_layout_1
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_fo
+      it_fieldcatalog      = gt_fcat_1.
+
+<font color ="#0000FF">*-- tbstip alv</font>
+  gs_variant-handle = 'ALV2'.
+
+  "tab1
+  CALL METHOD go_alv_grid1-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_layout_2
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_fo1
+      it_fieldcatalog      = gt_fcat_2.
+  "tab2
+  CALL METHOD go_alv_grid2-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_layout_2
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_fo2
+      it_fieldcatalog      = gt_fcat_2.
+
+  "tab3
+  CALL METHOD go_alv_grid3-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_layout_2
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_fo3
+      it_fieldcatalog      = gt_fcat_2.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form exclude_toolbar</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM exclude_toolbar .
+
+
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=&gt;mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_subscreen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_subscreen .
+
+<font color ="#0000FF">*--서브스크린 번호</font>
+  CASE gc_tab-activetab.
+    WHEN 'TAB1'.
+      gv_subscreen = '0101'.
+    WHEN 'TAB2'.
+      gv_subscreen = '0102'.
+    WHEN 'TAB3'.
+      gv_subscreen = '0103'.
+    WHEN OTHERS.
+      gc_tab-activetab = 'TAB1'.
+      gv_subscreen     = '0101'.
+  ENDCASE.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form count_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM count_data .
+
+  DATA : lv_cnt TYPE i.
+  gv_cnt1 = lines( gt_fo1 ).
+  gv_cnt2 = lines( gt_fo2 ).
+  gv_cnt3 = lines( gt_fo3 ).
+
+  CONCATENATE `분쇄 라우팅 (` gv_cnt1 `)건` INTO gv_title1 SEPARATED BY space.  "탭스트립에 데이터 건수 띄움
+  CONCATENATE `건조 라우팅 (` gv_cnt2 `)건` INTO gv_title2 SEPARATED BY space.
+  CONCATENATE `포장 라우팅 (` gv_cnt3 `)건` INTO gv_title3 SEPARATED BY space.
+
+  CONDENSE : gv_title1, gv_title2, gv_title3.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_data .
+
+  CLEAR : gt_fo.
+
+  SELECT pdono matnr wkcno werks rouno menge meins
+         bomno pdstt pdfns mksta prog
+         p_unit
+    INTO CORRESPONDING FIELDS OF TABLE gt_fo
+    FROM zc102ppt0014
+<font color ="#0000FF">*    WHERE mksta &lt;&gt; 'F'.   " 완료된 애들 뺴고</font>
+    WHERE rouno = ' '.
+
+<font color ="#0000FF">*-- 분쇄</font>
+  SELECT pdono matnr wkcno werks rouno menge meins
+         bomno pdstt pdfns mksta prog
+         p_unit
+    INTO CORRESPONDING FIELDS OF TABLE gt_fo1
+    FROM zc102ppt0014
+    WHERE rouno = 'R50'.
+
+
+<font color ="#0000FF">*-- 건조</font>
+  SELECT pdono matnr wkcno werks rouno menge meins
+         bomno pdstt pdfns mksta prog
+         p_unit
+    INTO CORRESPONDING FIELDS OF TABLE gt_fo2
+    FROM zc102ppt0014
+        WHERE rouno = 'R60'.
+
+
+<font color ="#0000FF">*-- 포장</font>
+  SELECT pdono matnr wkcno werks rouno menge meins
+         bomno pdstt pdfns mksta prog
+         p_unit
+    INTO CORRESPONDING FIELDS OF TABLE gt_fo3
+    FROM zc102ppt0014
+            WHERE rouno = 'R40'
+    AND mksta = 'I'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form show_message</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM show_message .
+
+  gv_cnt_total(3) = gv_cnt1 + gv_cnt2 + gv_cnt3.
+  MESSAGE s000 WITH |총 { gv_cnt_total }건이 조회되었습니다.|.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

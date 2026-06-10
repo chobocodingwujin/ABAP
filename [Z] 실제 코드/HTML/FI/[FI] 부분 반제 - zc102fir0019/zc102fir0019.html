@@ -1,0 +1,111 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0019</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0019</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [FI] 부분 반제</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102FIR0019</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zc102fir0019top.html">zc102fir0019top</a>.  " Global Data
+
+include <a href ="zc102fir0019c01.html">zc102fir0019c01</a>.  " Event
+include <a href ="zc102fir0019o01.html">zc102fir0019o01</a>.  " PBO-Modules
+include <a href ="zc102fir0019i01.html">zc102fir0019i01</a>.  " PAI-Modules
+include <a href ="zc102fir0019f01.html">zc102fir0019f01</a>.  " FORM-Routines
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+
+<font color ="#0000FF">*-- ABAP Memory로 ZC102FIR0008에서 선택한 Header 데이터 가져옴</font>
+<font color ="#0000FF">*-- 가져온 Header 데이터를 gs_header에 담기</font>
+  IMPORT gs_header_mm FROM MEMORY ID 'ZC102_GS_HEADER'.
+  MOVE-CORRESPONDING gs_header_mm TO gs_header.
+  FREE MEMORY ID 'ZC102_GS_HEADER'.  " 메모리 자체 제거
+
+<font color ="#0000FF">*-- gs_header가 비어있다면 팝업으로 데이터 받아오기</font>
+  PERFORM check_empty.
+
+<font color ="#0000FF">*-- 미결 전표 아이템 조회</font>
+  PERFORM get_open_data.
+<font color ="#0000FF">*-- 미결 전표에 대한 반제 전표 아이템 조회</font>
+  PERFORM get_clear_data.
+
+<font color ="#0000FF">*-- 전표 유형 마스터 데이터 조회</font>
+  PERFORM get_blart_data.
+<font color ="#0000FF">*-- 전기키 마스터 데이터 조회</font>
+  PERFORM get_bschl_data.
+<font color ="#0000FF">*-- BP 마스터 데이터 조회</font>
+  PERFORM get_partner_data.
+<font color ="#0000FF">*-- 계정과목 마스터 데이터 조회</font>
+  PERFORM get_saknr_data.
+<font color ="#0000FF">*-- BP계정 마스터 데이터 조회</font>
+  PERFORM get_bpact_data.
+<font color ="#0000FF">*-- 계좌 마스터 데이터 조회</font>
+  PERFORM get_account_data.
+
+<font color ="#0000FF">*-- 계정 과목 텍스트 세팅</font>
+  PERFORM set_screen_item.
+<font color ="#0000FF">*-- 미결 금액 계산</font>
+  PERFORM set_open_credit.
+<font color ="#0000FF">*-- 반제 금액 계산</font>
+  PERFORM set_clear_credit.
+<font color ="#0000FF">*-- 잔액 계산</font>
+  PERFORM set_remain_credit.
+<font color ="#0000FF">*-- ALV 출력 틀 설정</font>
+  PERFORM set_basic_color_data.
+
+  CALL SCREEN 100.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* TITLE100 --&gt; [FI] 부분 반제</font>
+<font color ="#0000FF">* TITLE110 --&gt; [FI] 반제 전표 생성</font>
+<font color ="#0000FF">* TITLE120 --&gt; 은행 거래 내역</font>
+<font color ="#0000FF">* TITLE130 --&gt; 미결 전표 정보 입력</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* Q01 반제전표를 생성하시겠습니까?</font>
+<font color ="#0000FF">* Q02 아이템을 초기화하시겠습니까?</font>
+<font color ="#0000FF">* Q03 반제전표 생성</font>
+<font color ="#0000FF">* Q04 아이템 초기화</font>
+<font color ="#0000FF">* T01 미결전표 아이템</font>
+<font color ="#0000FF">* T02 반제전표 아이템</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZC102MSG</font>
+<font color ="#0000FF">*004   데이터가 존재하지 않습니다</font>
+<font color ="#0000FF">*005   조회가 완료되었습니다.</font>
+<font color ="#0000FF">*007   & 전표가 생성되었습니다.</font>
+<font color ="#0000FF">*008   전표 생성에 실패했습니다.</font>
+<font color ="#0000FF">*010   & 건이 조회되었습니다.</font>
+<font color ="#0000FF">*014   대변과 차변의 금액이 일치하지 않습니다.</font>
+<font color ="#0000FF">*015   올바른 아이템을 선택하세요.</font>
+<font color ="#0000FF">*016   차변과 대변은 각각 최소 한 줄 이상 있어야 합니다.</font>
+<font color ="#0000FF">*017   새로고침 되었습니다.</font>
+<font color ="#0000FF">*020   초기화되었습니다.</font>
+<font color ="#0000FF">*022   &을(를) 입력해주세요.</font>
+<font color ="#0000FF">*023   반제가 완료되었습니다.</font>
+<font color ="#0000FF">*024   반제 금액이 미결 금액보다 클 수 없습니다.</font>
+<font color ="#0000FF">*026   &값이 올바르지 않습니다.</font>
+<font color ="#0000FF">*059   전기일이 증빙일보다 빠를 수 없습니다.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

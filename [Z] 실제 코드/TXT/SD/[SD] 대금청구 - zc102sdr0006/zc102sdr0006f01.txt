@@ -1,0 +1,949 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102SDR0006F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form display_main_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_main_screen .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_fcat, gs_fcat.
+    PERFORM set_fcat USING : 'X' 'STATUS'    'ICON'         'C' ' ', " 납품완료 상태
+                             'X' 'VBELN_DEL' 'ZC102SDT0004' ' ' ' ', " 납품오더 번호
+                             ' ' 'VBELN_SO'  'ZC102SDT0004' ' ' ' ', " 판매오더 번호
+                             ' ' 'VBELN_BIL' 'ZC102SDT0004' ' ' ' ', " 송장번호
+                             ' ' 'PARTNER'   'ZC102SDT0004' 'C' 'X', " 비즈니스 파트너
+                             ' ' 'DDONE'     'ZC102SDT0004' 'C' ' ', " 납품완료일
+                             ' ' 'VSBED_NAME' ' '           'C' ' ', " 배송방법
+                             ' ' 'GBSTK_NAME' ' '           ' ' ' ', " 배송상태
+                             ' ' 'FINALSP'   'ZC102SDT0006' ' ' ' ', " 최종 가격
+                             ' ' 'WAERS'     'ZC102SDT0006' 'C' 'X', " 통화키
+                             ' ' 'ICON'      'ICON'         'C' ' '. " 대금청구 버튼
+
+    PERFORM set_layout.
+    PERFORM create_object.
+
+    SET HANDLER : lcl_event_handler=>button_click FOR go_alv_grid.
+
+*-- Display Main ALV
+    CALL METHOD go_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_header
+        it_fieldcatalog = gt_fcat.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat-key       = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+  CASE gs_fcat-fieldname.
+    WHEN 'ICON'.
+      gs_fcat-coltext = '대금청구'.
+      gs_fcat-hotspot = abap_true.
+    WHEN 'STATUS'.
+      gs_fcat-coltext = '납품완료'.
+    WHEN 'FINALSP'.
+      gs_fcat-cfieldname = 'WAERS'.
+    WHEN 'WAERS'.
+      gs_fcat-coltext = '통화키'.
+    WHEN 'GBSTK_NAME'.
+      gs_fcat-coltext = '배송 상태'.
+    WHEN 'VSBED_NAME'.
+      gs_fcat-coltext = '베송 방법'.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout .
+
+  gs_layout-zebra      = abap_true.    " 행 줄무늬 지정
+  gs_layout-cwidth_opt = 'A'.          " 컬럼 폭 자동 조정
+  gs_layout-sel_mode   = 'A'.          " 행 단일 선택
+  gs_layout-stylefname = 'CELL_TAB'.
+  gs_layout-grid_title = '납품 내역'.     " 제목 지정
+
+  gs_variant-report = sy-repid.
+  gs_variant-handle = 'ALV1'.
+
+  gs_playout-zebra      = abap_true.    " 행 줄무늬 지정
+  gs_playout-cwidth_opt = 'A'.          " 컬럼 폭 자동 조정
+  gs_playout-sel_mode   = 'A'.          " 행 단일 선택
+  gs_playout-grid_title = '납품 상세내역'.     " 제목 지정
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+*-- Main
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+*-- Patch ALV
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_data.
+
+  CLEAR : gt_header.
+  SELECT DISTINCT a~vbeln_del a~vbeln_so a~partner d~name1 a~finalsp b~netwr a~waers dreal ddone vdatu
+         leati wadat_ist vsbed f~ddtext AS vsbed_name adrnr gbstk c~ddtext AS gbstk_name del_char iseme stax
+         a~state vbeln_bil dismo
+    FROM zc102sdt0004 AS a
+    INNER JOIN zc102sdt0006 AS b
+    ON a~vbeln_so EQ b~vbeln_so
+    INNER JOIN zc102sdt0011 AS e
+    ON a~vbeln_del EQ e~vbeln_del
+    INNER JOIN zc102sdt0001 AS d
+    ON a~partner EQ d~partner
+    INNER JOIN dd07t AS c
+    ON a~gbstk = c~domvalue_l
+    AND c~domname = 'ZC102D_SD_GBSTK'
+    INNER JOIN dd07t AS f
+    ON vsbed = f~domvalue_l
+    AND f~domname = 'ZC102D_SD_VSBED'
+    INTO CORRESPONDING FIELDS OF TABLE gt_header
+    WHERE a~state = 'X'
+      AND a~vbeln_del IN gr_vbeln_del
+      AND a~partner IN gr_partner
+      AND wadat_ist IN gr_wadat_ist
+    ORDER BY a~vbeln_del DESCENDING.
+
+  IF sy-subrc NE 0.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_alv_grid
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_alv_grid .
+
+  DATA: ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-col = abap_true.
+  ls_stable-row = abap_true.
+
+  IF go_alv_grid IS BOUND.
+    CALL METHOD go_alv_grid->refresh_table_display
+      EXPORTING
+        is_stable = ls_stable.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_data_condition
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_data_condition.
+
+  REFRESH : gr_vbeln_del, gr_partner, gr_wadat_ist.
+  CLEAR : gr_vbeln_del, gr_partner, gr_wadat_ist.
+
+  IF zc102sdt0004-vbeln_del IS NOT INITIAL.
+    gr_vbeln_del-sign = 'I'.
+    gr_vbeln_del-option = 'EQ'.
+    gr_vbeln_del-low = zc102sdt0004-vbeln_del.
+    APPEND gr_vbeln_del.
+  ENDIF.
+
+  IF zc102sdt0004-partner IS NOT INITIAL.
+    gr_partner-sign = 'I'.
+    gr_partner-option = 'EQ'.
+    gr_partner-low = zc102sdt0004-partner.
+    APPEND gr_partner.
+  ENDIF.
+
+  IF zc102sdt0004-wadat_ist IS NOT INITIAL.
+    gr_wadat_ist-sign = 'I'.
+    gr_wadat_ist-option = 'EQ'.
+    gr_wadat_ist-low = zc102sdt0004-wadat_ist.
+    APPEND gr_wadat_ist.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_status
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_status .
+
+  DATA: lv_vbeln TYPE zc102sdt0009-vbeln_bil,
+        ls_style TYPE lvc_s_styl.
+
+*-- 대금청구 송장번호 리스트
+  SELECT vbeln_bil
+    INTO CORRESPONDING FIELDS OF TABLE gt_billing
+    FROM zc102sdt0009.
+
+  LOOP AT gt_header INTO gs_header.
+
+    CLEAR gs_header-cell_tab.  " 셀 스타일 초기화
+
+    lv_vbeln = gs_header-vbeln_bil.
+
+*-- 대금청구 여부 확인
+    READ TABLE gt_billing INTO gs_billing WITH KEY vbeln_bil = lv_vbeln.
+
+    IF sy-subrc = 0.
+      gs_header-icon = icon_checked.
+    ELSE.
+      gs_header-icon = icon_create.
+
+*-- 버튼으로 만들 셀 지정
+      CLEAR ls_style.
+      ls_style-fieldname = 'ICON'.   " 버튼으로 만들 필드명
+      ls_style-style     = cl_gui_alv_grid=>mc_style_button.
+      INSERT ls_style INTO TABLE gs_header-cell_tab.
+    ENDIF.
+
+*-- 상태 아이콘 설정
+    IF gs_header-state = 'X'.
+      gs_header-status = icon_led_green.
+    ELSE.
+      gs_header-status = icon_led_red.
+    ENDIF.
+
+    MODIFY gt_header FROM gs_header.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_button_click
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_ROW_ID
+*&      --> E_COLUMN_ID
+*&---------------------------------------------------------------------*
+FORM handle_button_click USING pv_col_id
+                               ps_row_no TYPE lvc_s_roid.
+
+*-- 선택한 행의 Data 읽기
+  CLEAR gs_header.
+  READ TABLE gt_header INTO gs_header INDEX ps_row_no-row_id.
+
+*-- 선택한 납품오더의 개별항목을 Line item 테이블로부터 조회
+  CLEAR gt_line.
+  SELECT vbeln_del matnr stlno vbeln_so partner stprs waers menge meins
+    FROM zc102sdt0005
+    INTO CORRESPONDING FIELDS OF TABLE gt_line
+    WHERE vbeln_del EQ gs_header-vbeln_del
+      AND vbeln_so EQ gs_header-vbeln_so.
+
+*-- 조회된 Data를 Popup screen으로 출력
+  CALL SCREEN 110 STARTING AT 40 01.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_popup_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_popup_screen .
+
+  IF go_pop_cont IS NOT BOUND.
+
+    CLEAR : gt_pfcat.
+    PERFORM set_popup_field_catalog USING : 'X' 'VBELN_DEL' 'ZC102SDT0005' ' ' ' ',
+                                            'X' 'VBELN_SO'  'ZC102SDT0005' ' ' ' ',
+                                            ' ' 'MATNR'     'ZC102SDT0005' 'C' ' ',
+                                            ' ' 'STLNO'     'ZC102SDT0005' 'C' ' ',
+                                            ' ' 'PARTNER'   'ZC102SDT0005' 'C' ' ',
+                                            ' ' 'STPRS'     'ZC102SDT0005' ' ' ' ',
+                                            ' ' 'WAERS'     'ZC102SDT0005' 'C' ' ',
+                                            ' ' 'MENGE'     'ZC102SDT0005' ' ' ' ',
+                                            ' ' 'MEINS'     'ZC102SDT0005' 'C' ' '.
+
+    PERFORM set_layout.
+    PERFORM create_popup_object.
+
+*-- Display Main ALV
+    CALL METHOD go_pop_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_playout
+      CHANGING
+        it_outtab       = gt_line
+        it_fieldcatalog = gt_pfcat.
+
+    IF go_text_cont IS NOT BOUND.
+
+      PERFORM create_text_object.
+
+    ENDIF.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_popup_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_popup_field_catalog USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_pfcat-key       = pv_key.
+  gs_pfcat-fieldname = pv_field.
+  gs_pfcat-ref_table = pv_table.
+  gs_pfcat-just      = pv_just.
+  gs_pfcat-emphasize = pv_emph.
+
+  CASE gs_pfcat-fieldname.
+    WHEN 'STPRS'.
+      gs_pfcat-cfieldname = 'WAERS'.
+    WHEN 'MENGE'.
+      gs_pfcat-qfieldname = 'MEINS'.
+      gs_pfcat-coltext = '수량'.
+    WHEN 'WAERS'.
+      gs_pfcat-coltext = '통화키'.
+    WHEN 'MEINS'.
+      gs_pfcat-coltext = '단위'.
+  ENDCASE.
+
+  APPEND gs_pfcat TO gt_pfcat.
+  CLEAR gs_pfcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_popup_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_popup_object .
+
+*-- Main
+  CREATE OBJECT go_pop_cont
+    EXPORTING
+      container_name = 'POP_CONT'.
+
+*-- Patch ALV
+  CREATE OBJECT go_pop_grid
+    EXPORTING
+      i_parent = go_pop_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_text_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_text_object .
+
+  CREATE OBJECT go_text_cont
+    EXPORTING
+      container_name = 'TEXT_AREA'.   " SE51에서 만든 Custom Control 명
+
+  CREATE OBJECT go_text_edit
+    EXPORTING
+      wordwrap_mode = cl_gui_textedit=>wordwrap_at_windowborder
+      parent        = go_text_cont.
+
+  CALL METHOD go_text_edit->set_toolbar_mode
+    EXPORTING
+      toolbar_mode = cl_gui_textedit=>false.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_template_krw
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_template_krw .
+
+  DATA : lv_line   TYPE tdline,
+         lt_text   TYPE TABLE OF tline,
+         lv_leati  TYPE char3,
+         lv_amount TYPE char20,
+         lv_dismo  TYPE char20,
+         lv_stax   TYPE char20.
+
+*-- 날짜 포맷 변환
+  DATA(lv_budat)     = |{ gs_header-ddone     DATE = ISO }|.
+  DATA(lv_vdatu)     = |{ gs_header-vdatu     DATE = ISO }|.
+  DATA(lv_wadat_ist) = |{ gs_header-wadat_ist DATE = ISO }|.
+  WRITE gs_header-leati TO lv_leati DECIMALS 0.
+  CONDENSE lv_leati.
+
+*-- 금액 형식 문자열 변환
+  WRITE gs_header-finalsp TO lv_amount CURRENCY gs_header-waers.
+  CONDENSE lv_amount.
+
+  WRITE gs_header-dismo TO lv_dismo CURRENCY gs_header-waers.
+  CONDENSE lv_dismo.
+
+  WRITE gs_header-stax TO lv_stax CURRENCY gs_header-waers.
+  CONDENSE lv_stax.
+
+*-- 텍스트 구성 시작
+  APPEND VALUE #( tdline = |안녕하세요, { gs_header-name1 } 담당자님.| ) TO lt_text.
+  APPEND VALUE #( tdline = '고객님께서 주문해주신 주문건이 납품 완료되어' ) TO lt_text.
+  APPEND VALUE #( tdline = '해당 납품건에 대한 대금 청구 안내드립니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+
+  APPEND VALUE #( tdline = '▣ 납품 정보' ) TO lt_text.
+
+  CONCATENATE ' - 납품오더 번호   :' gs_header-vbeln_del INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - 판매오더 번호   :' gs_header-vbeln_so INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - 송장 번호         :' gs_header-vbeln_bil INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - 배송 담당         :' gs_header-del_char INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - 할인가              :' lv_dismo gs_header-waers INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - 부가세(VAT)     :' lv_stax gs_header-waers INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+
+  CONCATENATE ' - 총 청구금액 (VAT 포함) :' lv_amount gs_header-waers INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+  APPEND VALUE #( tdline = '상세 내역이 필요하시거나, 문의사항이 있으실 경우' ) TO lt_text.
+  APPEND VALUE #( tdline = '본 메일에 회신 부탁드립니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '감사합니다.' ) TO lt_text.
+  APPEND VALUE #( tdline = '푸드온보람 드림' ) TO lt_text.
+
+*-- 결과 저장
+  gt_editor_lines = lt_text.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_text_editor
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_text_editor .
+
+  CALL METHOD go_text_edit->delete_text
+    EXCEPTIONS
+      error_cntl_call_method = 1
+      OTHERS                 = 2.
+
+*-- 텍스트 에디터
+  CALL METHOD go_text_edit->set_selected_text_as_r3table
+    EXPORTING
+      table                         = gt_editor_lines
+      enable_editing_protected_text = go_text_edit->false.
+
+*-- read only 모드로 띄우기
+  CALL METHOD go_text_edit->set_readonly_mode
+    EXPORTING
+      readonly_mode = 1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form send_mail
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form send_mail
+*&---------------------------------------------------------------------*
+FORM send_mail.
+
+  DATA: lv_duedt  TYPE zc102fit0010-duedt,
+        lv_answer,
+        lv_email  TYPE zc102sdt0001-email,
+        lv_msg    TYPE string,
+        doc_chng  TYPE sodocchgi1,
+        reclist   TYPE STANDARD TABLE OF somlreci1,
+        objtxt    TYPE STANDARD TABLE OF soli,
+        objpack   TYPE STANDARD TABLE OF sopcklsti1,
+        wa_rec    TYPE somlreci1,
+        wa_txt    TYPE soli,
+        wa_pack   TYPE sopcklsti1,
+        lt_item   TYPE TABLE OF zc102sdt0005.
+
+  PERFORM popup_to_confirm CHANGING lv_answer.
+  CHECK lv_answer EQ '1'.
+
+*-- 이메일 주소 조회 (partner 기준)
+  SELECT SINGLE email INTO lv_email
+    FROM zc102sdt0001
+    WHERE partner = gs_header-partner.
+
+*-- 텍스트 에디터 내용 다시 생성 (gs_header 기준으로)
+  PERFORM set_template.
+
+*-- 메일 제목
+  doc_chng-obj_name  = 'DELIVERY_BILL'.
+  doc_chng-obj_descr = |[청구안내] 납품오더 { gs_header-vbeln_del }|.
+
+*-----------------------------------------------------------------------
+* 본문 구성
+*-----------------------------------------------------------------------
+  LOOP AT gt_editor_lines INTO DATA(ls_editor_line).
+    wa_txt = ls_editor_line-tdline.
+    APPEND wa_txt TO objtxt.
+  ENDLOOP.
+
+  CLEAR wa_pack.
+  wa_pack-transf_bin = space.
+  wa_pack-head_start = 1.
+  wa_pack-body_start = 1.
+  wa_pack-body_num   = lines( objtxt ).
+  wa_pack-doc_type   = 'RAW'.
+  wa_pack-obj_name   = 'MAILBODY'.
+  wa_pack-obj_descr  = '본문'.
+  APPEND wa_pack TO objpack.
+
+*-----------------------------------------------------------------------
+* 수신자
+*-----------------------------------------------------------------------
+  CLEAR wa_rec.
+  wa_rec-receiver = lv_email.
+  wa_rec-rec_type = 'U'.
+  APPEND wa_rec TO reclist.
+
+*-----------------------------------------------------------------------
+* 전송
+*-----------------------------------------------------------------------
+  CALL FUNCTION 'SO_NEW_DOCUMENT_ATT_SEND_API1'
+    EXPORTING
+      document_data = doc_chng
+      put_in_outbox = 'X'
+      commit_work   = 'X'
+    TABLES
+      packing_list  = objpack
+      contents_txt  = objtxt
+      receivers     = reclist
+    EXCEPTIONS
+      OTHERS        = 1.
+
+*-- 전표 생성
+  CLEAR lv_duedt.
+  lv_duedt = gs_header-vdatu + 30.
+
+  IF gs_header-waers = 'KRW'.
+    CALL FUNCTION 'ZFM_CL102_FI_06'
+      EXPORTING
+        iv_partner   = gs_header-partner  " bp
+        iv_vbeln     = gs_header-vbeln_so " 판매오더 번호
+        iv_ar_wrbtr  = gs_header-finalsp " 총금액 - 할인 금액
+        iv_dc_wrbtr  = gs_header-dismo " 할인 금액
+        iv_wrbtr_vat = gs_header-stax " 부가세
+        iv_wrbtr     = gs_header-netwr " 총 금액
+        iv_duedt     = lv_duedt. " 지급기한
+
+    MOVE-CORRESPONDING gt_line TO lt_item.
+    CALL FUNCTION 'ZFM_CL102_FI_10'
+      EXPORTING
+        iv_vbeln = gs_header-vbeln_so
+      TABLES
+        it_matnr = lt_item.
+
+  ELSE.
+    CALL FUNCTION 'ZFM_CL102_FI_07'
+      EXPORTING
+        iv_waers   = gs_header-waers
+        iv_wrbtr   = gs_header-netwr
+        iv_partner = gs_header-partner
+        iv_vbeln   = gs_header-vbeln_so
+        iv_duedt   = lv_duedt.
+
+    MOVE-CORRESPONDING gt_line TO lt_item.
+    CALL FUNCTION 'ZFM_CL102_FI_10'
+      EXPORTING
+        iv_vbeln = gs_header-vbeln_so
+      TABLES
+        it_matnr = lt_item.
+
+  ENDIF.
+
+  IF sy-subrc = 0.
+    PERFORM save_bill.
+    CLEAR: gs_header-icon, gs_header-cell_tab.
+    MODIFY gt_header FROM gs_header TRANSPORTING icon cell_tab
+                     WHERE vbeln_del = gs_header-vbeln_del.
+
+*-- 메인 ALV 즉시 갱신
+    PERFORM set_status.
+    PERFORM refresh_alv_grid.
+    PERFORM free_text_editor.
+
+    LEAVE TO SCREEN 0.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_bill
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_bill .
+
+  DATA: ls_billing TYPE zc102sdt0009.
+
+  CLEAR ls_billing.
+  ls_billing-vbeln_bil = gs_header-vbeln_bil.
+  ls_billing-netwr     = gs_header-finalsp.
+  ls_billing-waers     = gs_header-waers.
+
+  INSERT zc102sdt0009 FROM ls_billing.
+
+  IF sy-subrc = 0.
+    COMMIT WORK AND WAIT.
+    MESSAGE s080. " 이메일 및 청구 생성 완료
+  ELSE.
+    MESSAGE s032 WITH '대금청구 생성' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form POPUP_TO_CONFIRM
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM popup_to_confirm CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = '대금청구 생성 확인'
+      text_question         = '고객님께 이메일이 발송됩니다. 대금청구를 생성하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니요'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '2'
+      display_cancel_button = ''
+    IMPORTING
+      answer                = pv_answer.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_vbeln_del
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_vbeln_del .
+
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'VBELN_DEL'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_VBELN-VBELN_DEL'
+      window_title = '납풉오더 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_vbeln
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_f4_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_f4_data .
+
+  CLEAR gt_vbeln.
+  SELECT vbeln_del
+    INTO CORRESPONDING FIELDS OF TABLE gt_vbeln
+    FROM zc102sdt0004
+    WHERE state = 'X'
+    ORDER BY vbeln_del.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form free_text_editor
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM free_text_editor .
+
+*-- alv 관련 객체 해제
+  IF go_pop_grid IS BOUND.
+    CALL METHOD go_pop_grid->free.
+    FREE go_pop_grid.
+  ENDIF.
+
+  IF go_pop_cont IS BOUND.
+    CALL METHOD go_pop_cont->free.
+    FREE go_pop_cont.
+  ENDIF.
+
+*-- 텍스트 에디터 관련 객체 해제
+  CALL METHOD:  go_text_edit->free, go_text_cont->free.
+  FREE : go_text_edit, go_text_cont.
+
+  CLEAR gt_editor_lines.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_template
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_template .
+
+  CASE gs_header-waers.
+    WHEN 'KRW'.
+      PERFORM set_template_krw.
+    WHEN 'EUR'.
+      PERFORM set_template_eur.
+    WHEN OTHERS.
+      PERFORM set_template_usd.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_template_usd
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_template_usd .
+
+  DATA : lv_line   TYPE tdline,
+         lt_text   TYPE TABLE OF tline,
+         lv_leati  TYPE char3,
+         lv_amount TYPE char20,
+         lv_dismo  TYPE char20,
+         lv_stax   TYPE char20.
+
+*-- 날짜 포맷 변환
+  DATA(lv_budat)     = |{ gs_header-ddone     DATE = ISO }|.
+  DATA(lv_vdatu)     = |{ gs_header-vdatu     DATE = ISO }|.
+  DATA(lv_wadat_ist) = |{ gs_header-wadat_ist DATE = ISO }|.
+  WRITE gs_header-leati TO lv_leati DECIMALS 0.
+  CONDENSE lv_leati.
+
+*-- 금액 형식 문자열 변환
+  WRITE gs_header-finalsp TO lv_amount CURRENCY gs_header-waers.
+  CONDENSE lv_amount.
+
+  WRITE gs_header-dismo TO lv_dismo CURRENCY gs_header-waers.
+  CONDENSE lv_dismo.
+
+  WRITE gs_header-stax TO lv_stax CURRENCY gs_header-waers.
+  CONDENSE lv_stax.
+
+*-- 텍스트 구성 시작
+  APPEND VALUE #( tdline = |Dear { gs_header-name1 },| ) TO lt_text.
+  APPEND VALUE #( tdline = 'Your order has been successfully delivered.' ) TO lt_text.
+  APPEND VALUE #( tdline = 'Please find the invoice details below.' ) TO lt_text.
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+  APPEND VALUE #( tdline = '▣ Delivery Information' ) TO lt_text.
+  CONCATENATE ' - Delivery No.      :' gs_header-vbeln_del INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+  CONCATENATE ' - Sales Order No.   :' gs_header-vbeln_so INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+  CONCATENATE ' - Invoice No.       :' gs_header-vbeln_bil INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+  CONCATENATE ' - Delivery Manager  :' gs_header-del_char INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+  CONCATENATE ' - Total Amount :' lv_amount gs_header-waers INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+  APPEND VALUE #( tdline = 'If you have any inquiries, please reply to this email.' ) TO lt_text.
+  APPEND VALUE #( tdline = 'Thank you. - FoodOnBoram' ) TO lt_text.
+
+*-- 결과 저장
+  gt_editor_lines = lt_text.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_template_eur
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_template_eur .
+  DATA : lv_line   TYPE tdline,
+         lt_text   TYPE TABLE OF tline,
+         lv_leati  TYPE char3,
+         lv_amount TYPE char20,
+         lv_dismo  TYPE char20,
+         lv_stax   TYPE char20.
+
+*-- 날짜 포맷 변환
+  DATA(lv_budat)     = |{ gs_header-ddone     DATE = ISO }|.
+  DATA(lv_vdatu)     = |{ gs_header-vdatu     DATE = ISO }|.
+  DATA(lv_wadat_ist) = |{ gs_header-wadat_ist DATE = ISO }|.
+  WRITE gs_header-leati TO lv_leati DECIMALS 0.
+  CONDENSE lv_leati.
+
+*-- 금액 형식 문자열 변환
+  WRITE gs_header-finalsp TO lv_amount CURRENCY gs_header-waers.
+  CONDENSE lv_amount.
+
+  WRITE gs_header-dismo TO lv_dismo CURRENCY gs_header-waers.
+  CONDENSE lv_dismo.
+
+  WRITE gs_header-stax TO lv_stax CURRENCY gs_header-waers.
+  CONDENSE lv_stax.
+
+*-- 텍스트 구성 시작
+  APPEND VALUE #( tdline = |Sehr geehrte/r { gs_header-name1 },| ) TO lt_text.
+  APPEND VALUE #( tdline = 'Ihre Bestellung wurde erfolgreich geliefert.' ) TO lt_text.
+  APPEND VALUE #( tdline = 'Nachfolgend finden Sie die Rechnungsdetails.' ) TO lt_text.
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+  APPEND VALUE #( tdline = '▣ Lieferinformationen' ) TO lt_text.
+
+  CONCATENATE ' - Lieferauftragsnummer :' gs_header-vbeln_del INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - Verkaufsauftragsnummer :' gs_header-vbeln_so INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - Rechnungsnummer :' gs_header-vbeln_bil INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - Zuständig :' gs_header-del_char INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  CONCATENATE ' - Gesamtbetrag inkl. MwSt :' lv_amount gs_header-waers INTO lv_line SEPARATED BY space.
+  APPEND VALUE #( tdline = lv_line ) TO lt_text.
+
+  APPEND VALUE #( tdline = '' ) TO lt_text.
+  APPEND VALUE #( tdline = 'Bei Fragen oder Rückmeldungen antworten Sie bitte auf diese E-Mail.' ) TO lt_text.
+  APPEND VALUE #( tdline = 'Mit freundlichen Grüßen, FoodOnBoram' ) TO lt_text.
+
+*-- 결과 저장
+  gt_editor_lines = lt_text.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

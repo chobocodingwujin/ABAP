@@ -1,0 +1,131 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102MMR0007TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102MMR0007TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102MMR0007TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102MMR0007TOP                          - Report ZC102MMR0007</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102mmr0007 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zc102mmt0012, zc102mmt0013.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Declaration area for NODE</font>
+<font color ="#0000FF">**********************************************************************</font>
+TYPES: node_table_type LIKE STANDARD TABLE OF mtreesnode
+                       WITH DEFAULT KEY.
+DATA: node_table TYPE node_table_type.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* CLASS INSTANCE</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_header_cont     TYPE REF TO cl_gui_docking_container,
+       go_header_grid     TYPE REF TO cl_gui_alv_grid,
+       go_line_cont       TYPE REF TO cl_gui_CUSTOM_container,
+       go_line_grid       TYPE REF TO cl_gui_alv_grid,
+
+       go_split_cont      TYPE REF TO cl_gui_splitter_container,
+       go_left_cont       TYPE REF TO cl_gui_container,
+       go_right_cont      TYPE REF TO cl_gui_container,
+
+       go_left_split_cont TYPE REF TO cl_gui_splitter_container,
+       go_left_left_cont  TYPE REF TO cl_gui_container,
+       go_left_right_cont TYPE REF TO cl_gui_container,
+
+       go_tree            TYPE REF TO cl_gui_simple_tree,
+       go_tree_grid       TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">*-- For Chart</font>
+DATA : go_chart    TYPE REF TO cl_gui_chart_engine.
+
+DATA : go_ixml          TYPE REF TO if_ixml,
+       go_ixml_sf       TYPE REF TO if_ixml_stream_factory,
+       go_ixml_docu     TYPE REF TO if_ixml_document,
+       go_ixml_ostream  TYPE REF TO if_ixml_ostream,
+       go_ixml_encoding TYPE REF TO if_ixml_encoding.
+
+DATA : go_chartdata  TYPE REF TO if_ixml_element,
+       go_categories TYPE REF TO if_ixml_element,
+       go_category   TYPE REF TO if_ixml_element,
+       go_series     TYPE REF TO if_ixml_element,
+       go_point      TYPE REF TO if_ixml_element,
+       go_value      TYPE REF TO if_ixml_element.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Declaration area for Tree event</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA: events TYPE cntl_simple_events,
+      event  TYPE cntl_simple_event.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- 자재문서 Header</font>
+DATA : BEGIN OF gs_header.
+         include structure <a href ="zc102mmt0012/dictionary-zc102mmt0012.html">zc102mmt0012</a>.
+DATA : bwart_name(10),
+       END OF gs_header,
+       gt_header LIKE TABLE OF gs_header.
+
+<font color ="#0000FF">*-- 자재문서 Line</font>
+DATA : BEGIN OF gs_line.
+         include structure <a href ="zc102mmt0013/dictionary-zc102mmt0013.html">zc102mmt0013</a>.
+DATA : END OF gs_line,
+gt_line LIKE TABLE OF gs_line.
+
+<font color ="#0000FF">*-- For Chart</font>
+DATA : BEGIN OF gs_chart,
+         bwart TYPE zc102mmt0012-bwart,
+         ryear TYPE zc102mmt0012-ryear,
+         cnt   TYPE i,
+       END OF gs_chart,
+       gt_chart LIKE TABLE OF gs_chart.
+
+<font color ="#0000FF">*-- For F4</font>
+DATA : BEGIN OF gs_mblnr,
+         mblnr TYPE zc102mmt0012-mblnr,
+       END OF gs_mblnr,
+       gt_mblnr LIKE TABLE OF gs_mblnr.
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gs_header_fcat   TYPE lvc_s_fcat,
+       gt_header_fcat   TYPE lvc_t_fcat,
+       gs_header_layout TYPE lvc_s_layo,
+       gs_line_fcat     TYPE lvc_s_fcat,
+       gt_line_fcat     TYPE lvc_t_fcat,
+       gs_line_layout   TYPE lvc_s_layo,
+       gs_variant       TYPE disvariant.
+
+<font color ="#0000FF">*-- For TREE</font>
+DATA : BEGIN OF gs_tree,
+         ryear      TYPE zc102mmt0012-ryear,
+         bwart      TYPE zc102mmt0012-bwart,
+         stlno      TYPE zc102mmt0012-stlno,
+         werks      TYPE zc102mmt0012-werks,
+         bwart_name TYPE dd07t-ddtext,
+       END OF gs_tree,
+       gt_tree LIKE TABLE OF gs_tree.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Global variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode TYPE sy-ucomm.
+
+<font color ="#0000FF">*-- For Chart</font>
+DATA : gv_xstring TYPE xstring.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

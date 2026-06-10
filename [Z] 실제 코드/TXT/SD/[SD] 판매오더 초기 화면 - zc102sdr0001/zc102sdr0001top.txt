@@ -1,0 +1,77 @@
+*&---------------------------------------------------------------------*
+*& Include ZC102SDR0001TOP                          - Report ZC102SDR0001
+*&---------------------------------------------------------------------*
+REPORT zc102sdr0001 MESSAGE-ID zc102msg.
+
+**********************************************************************
+* TABLES
+**********************************************************************
+TABLES : zc102sdt0008.
+
+**********************************************************************
+* Declaration area for NODE
+**********************************************************************
+TYPES: node_table_type LIKE STANDARD TABLE OF mtreesnode
+                       WITH DEFAULT KEY.
+DATA: node_table TYPE node_table_type.
+
+**********************************************************************
+* Declaration area for GUI Class instance
+**********************************************************************
+DATA: go_container  TYPE REF TO cl_gui_docking_container,
+      go_base_cont  TYPE REF TO cl_gui_easy_splitter_container,
+      go_left_cont  TYPE REF TO cl_gui_container,
+      go_right_cont TYPE REF TO cl_gui_container,
+      go_tright_cont TYPE REF TO cl_gui_container,
+      go_alv_grid   TYPE REF TO cl_gui_alv_grid,
+      go_tree       TYPE REF TO cl_gui_simple_tree.
+
+*-- For Chart
+DATA : go_chart    TYPE REF TO cl_gui_chart_engine.
+
+DATA : go_ixml          TYPE REF TO if_ixml,
+       go_ixml_sf       TYPE REF TO if_ixml_stream_factory,
+       go_ixml_docu     TYPE REF TO if_ixml_document,
+       go_ixml_ostream  TYPE REF TO if_ixml_ostream,
+       go_ixml_encoding TYPE REF TO if_ixml_encoding.
+
+DATA : go_chartdata  TYPE REF TO if_ixml_element,
+       go_categories TYPE REF TO if_ixml_element,
+       go_category   TYPE REF TO if_ixml_element,
+       go_series     TYPE REF TO if_ixml_element,
+       go_point      TYPE REF TO if_ixml_element,
+       go_value      TYPE REF TO if_ixml_element.
+
+**********************************************************************
+* Declaration area for Tree event
+**********************************************************************
+DATA: events TYPE cntl_simple_events,
+      event  TYPE cntl_simple_event.
+
+
+**********************************************************************
+* Internal table and work area
+**********************************************************************
+DATA : gt_forcast TYPE TABLE OF zc102sdt0008,
+       gs_forcast TYPE zc102sdt0008.
+
+*-- For ALV
+DATA : gt_fcat    TYPE lvc_t_fcat,
+       gs_fcat    TYPE lvc_s_fcat,
+       gs_layout  TYPE lvc_s_layo,
+       gs_variant TYPE disvariant.
+
+*-- For Chart
+DATA : gv_length  TYPE i,
+       gv_xstring TYPE xstring.
+
+
+**********************************************************************
+* Common variable
+**********************************************************************
+DATA: gv_okcode TYPE sy-ucomm,
+      gv_cprog  TYPE sy-cprog,
+      gv_dynnr  TYPE sy-dynnr.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

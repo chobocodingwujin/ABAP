@@ -1,0 +1,134 @@
+*&---------------------------------------------------------------------*
+*& Include ZC102COR0001TOP                          - Report ZC102COR0001
+*&---------------------------------------------------------------------*
+REPORT zc102cor0001 MESSAGE-ID zc102msg.
+
+**********************************************************************
+* ICON
+**********************************************************************
+INCLUDE <icon>.
+
+**********************************************************************
+* TABLES
+**********************************************************************
+TABLES : zc102cot0005, zvc102co0001.
+
+**********************************************************************
+* CLASS INSTANCE
+**********************************************************************
+* COST CENTER
+DATA : go_base_cont      TYPE REF TO cl_gui_docking_container,
+       go_split_cont     TYPE REF TO cl_gui_splitter_container,
+       go_top_base_cont  TYPE REF TO cl_gui_container,
+       go_top_split_cont TYPE REF TO cl_gui_splitter_container,
+       go_left_cont      TYPE REF TO cl_gui_container,
+       go_right_cont     TYPE REF TO cl_gui_container,
+       go_bot_cont       TYPE REF TO cl_gui_container,
+       go_left_grid      TYPE REF TO cl_gui_alv_grid,
+       go_right_grid     TYPE REF TO cl_gui_alv_grid.
+
+*-- Top-of-page
+DATA : go_top_cont   TYPE REF TO cl_gui_docking_container,
+       go_dyndoc_id  TYPE REF TO cl_dd_document,
+       go_html_cntrl TYPE REF TO cl_gui_html_viewer.
+
+DATA : go_alv_grid TYPE REF TO cl_gui_alv_grid.
+
+*-- Tree
+DATA: go_tree        TYPE REF TO cl_gui_alv_tree,
+      go_tree_cont   TYPE REF TO cl_gui_docking_container,
+      go_change_menu TYPE REF TO cl_ctmenu.
+
+*-- For Chart
+DATA : go_chart    TYPE REF TO cl_gui_chart_engine.
+
+DATA : go_ixml          TYPE REF TO if_ixml,
+       go_ixml_sf       TYPE REF TO if_ixml_stream_factory,
+       go_ixml_docu     TYPE REF TO if_ixml_document,
+       go_ixml_ostream  TYPE REF TO if_ixml_ostream,
+       go_ixml_encoding TYPE REF TO if_ixml_encoding.
+
+DATA : go_chartdata  TYPE REF TO if_ixml_element,
+       go_categories TYPE REF TO if_ixml_element,
+       go_category   TYPE REF TO if_ixml_element,
+       go_series     TYPE REF TO if_ixml_element,
+       go_point      TYPE REF TO if_ixml_element,
+       go_value      TYPE REF TO if_ixml_element.
+
+**********************************************************************
+* ITAB & WA
+**********************************************************************
+DATA : BEGIN OF gs_cost.
+         INCLUDE TYPE zvc102co0001.
+DATA :   diff      TYPE zvc102co0001-wrbtr,
+         perct(10) TYPE c,
+       END OF gs_cost,
+       gt_cost LIKE TABLE OF gs_cost.
+
+DATA : BEGIN OF gs_cel.
+         INCLUDE TYPE zvc102co0002.
+DATA :   diff      TYPE zvc102co0002-wrbtr,
+         perct(10) TYPE c,
+       END OF gs_cel,
+       gt_cel LIKE TABLE OF gs_cel.
+
+DATA : gt_hier TYPE TABLE OF zc102cot0008,
+       gs_hier TYPE zc102cot0008.
+
+DATA : BEGIN OF gs_tree,
+         plan      TYPE zvc102co0001-wrbtr,
+         actual    TYPE zvc102co0001-wrbtr,
+         diff      TYPE zvc102co0001-wrbtr,
+         perct(10) TYPE c,
+         waers     TYPE zvc102co0001-waers,
+       END OF gs_tree,
+       gt_tree LIKE TABLE OF gs_tree.
+
+*-- DOCU DATA
+DATA : BEGIN OF gs_line.
+         INCLUDE STRUCTURE zc102fit0010.
+DATA :   txt20 TYPE zc102fit0002-txt20,
+       END OF gs_line,
+       gt_line LIKE TABLE OF gs_line.
+
+*-- TEXT DATA
+DATA : gt_txt20 TYPE TABLE OF zc102fit0002,
+       gs_txt20 TYPE zc102fit0002.
+
+*-- For ALV
+DATA : gt_body_fcat TYPE lvc_t_fcat,
+       gs_body_fcat TYPE lvc_s_fcat,
+       gt_line_fcat TYPE lvc_t_fcat,
+       gs_line_fcat TYPE lvc_s_fcat,
+       gs_layout    TYPE lvc_s_layo,
+       gs_variant   TYPE disvariant,
+       gt_sort      TYPE lvc_t_sort,
+       gs_sort      TYPE lvc_s_sort.
+
+*-- For Tree
+DATA : gt_tree_fcat TYPE lvc_t_fcat,
+       gs_tree_fcat TYPE lvc_s_fcat.
+
+DATA: gs_hierhdr         TYPE treev_hhdr,
+      gs_tree_variant    TYPE disvariant,
+      gt_list_commentary TYPE slis_t_listheader.
+
+DATA: gt_events TYPE cntl_simple_events,
+      gs_event  TYPE cntl_simple_event.
+
+*-- For Chart
+DATA : gv_length  TYPE i,
+       gv_xstring TYPE xstring.
+
+**********************************************************************
+* COMMON VARIABLE
+**********************************************************************
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_tabix  TYPE sy-tabix,
+       gv_perct  TYPE p DECIMALS 2,
+       gv_answer.
+
+DATA : gv_logo TYPE sdydo_value.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

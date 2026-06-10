@@ -1,0 +1,122 @@
+*&---------------------------------------------------------------------*
+*& Include ZC102PPR0004TOP                          - Report ZC102PPR0004
+*&---------------------------------------------------------------------*
+REPORT zc102ppr0004 MESSAGE-ID zc102msg.
+
+**********************************************************************
+*TABLES
+**********************************************************************
+TABLES : zc102ppt0006, zc102ppt0012.
+**********************************************************************
+*Tap Strip controls
+**********************************************************************
+CONTROLS gc_tab TYPE TABSTRIP.      " TAB Strip object
+
+DATA : gv_subscreen TYPE sy-dynnr.  " Subscreen number
+**********************************************************************
+* CLASS INSTANCE
+**********************************************************************
+DATA : go_tab_cont1 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid1 TYPE REF TO cl_gui_alv_grid,
+       go_tab_cont2 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid2 TYPE REF TO cl_gui_alv_grid,
+       go_tab_cont3 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid3 TYPE REF TO cl_gui_alv_grid.
+
+**********************************************************************
+*internal table and workarea
+**********************************************************************
+
+DATA : BEGIN OF gs_body,                " 본체
+         ostatus  TYPE icon-id.
+         INCLUDE STRUCTURE zc102ppt0012.
+DATA :   cell_tab TYPE lvc_t_styl,
+         modi_yn,
+       END OF gs_body,
+       gt_body LIKE TABLE OF gs_body.
+
+
+DATA : BEGIN OF gs_tab1,                " TAB1
+         ostatus  TYPE icon-id.
+         INCLUDE STRUCTURE zc102ppt0012.
+DATA :   cell_tab TYPE lvc_t_styl,
+         modi_yn,
+       END OF gs_tab1,
+       gt_tab1 LIKE TABLE OF gs_tab1.
+
+
+
+DATA : BEGIN OF gs_tab2,                " TAB2
+         ostatus  TYPE icon-id.
+         INCLUDE STRUCTURE zc102ppt0012.
+DATA :   cell_tab TYPE lvc_t_styl,
+         modi_yn,
+       END OF gs_tab2,
+       gt_tab2 LIKE TABLE OF gs_tab2.
+
+
+DATA : BEGIN OF gs_tab3,                " TAB3
+         ostatus  TYPE icon-id.
+         INCLUDE STRUCTURE zc102ppt0012.
+DATA :   cell_tab TYPE lvc_t_styl,
+         modi_yn,
+       END OF gs_tab3,
+       gt_tab3 LIKE TABLE OF gs_tab3.
+
+
+
+*-- For ALV
+DATA : gs_layout    TYPE lvc_s_layo,
+       gs_style     TYPE lvc_s_styl,
+
+       gt_tab_fcat1 TYPE lvc_t_fcat,   " 탭 1 FCAT
+       gt_tab_fcat2 TYPE lvc_t_fcat,   " 탭 2 FCAT
+       gt_tab_fcat3 TYPE lvc_t_fcat,   " 탭 3 FCAT
+       gs_tab_fcat1 TYPE lvc_s_fcat,
+       gs_tab_fcat2 TYPE lvc_s_fcat,
+       gs_tab_fcat3 TYPE lvc_s_fcat,
+       gs_variant   TYPE disvariant.
+
+
+DATA:gv_title1(20), " 텝 타이틀 변수 선언
+     gv_title2(20),
+     gv_title3(20).
+
+
+*--Search Help 생산오더번호
+DATA : BEGIN OF gs_pdono,
+         pdono TYPE zc102ppt0012-pdono,
+       END OF gs_pdono,
+       gt_pdono LIKE TABLE OF gs_pdono.
+
+
+DATA : gt_ui_functions TYPE ui_functions,
+       gs_button       TYPE stb_button.
+
+**********************************************************************4
+*SCREEN ELEMENT
+**********************************************************************
+DATA : gv_pdstt_fr TYPE zc102ppt0012-pdstt,
+       gv_pdstt_to TYPE zc102ppt0012-pdstt,
+*       gv_cnt1     TYPE i,
+*       gv_cnt2     TYPE i,
+*       gv_cnt3     TYPE i.
+       gv_cnt1(3),
+       gv_cnt2(3),
+       gv_cnt3(3),
+       gv_cnt4(3).   " 메세지 띄울때 총합 한번에 보려고 만듦
+
+
+RANGES gr_pdstt FOR zc102ppt0012-pdstt.
+
+
+**********************************************************************
+* COMMON VARIABLE
+**********************************************************************
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_mode   VALUE 'D',
+       gv_answer, " Mode value
+       gv_pdono  TYPE zc102ppt0012-pdono.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

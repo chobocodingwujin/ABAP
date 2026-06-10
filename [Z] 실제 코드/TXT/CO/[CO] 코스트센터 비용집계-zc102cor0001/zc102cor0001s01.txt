@@ -1,0 +1,30 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102COR0001S01
+*&---------------------------------------------------------------------*
+**********************************************************************
+* Selection Screen
+**********************************************************************
+SELECTION-SCREEN BEGIN OF BLOCK bl1 WITH FRAME TITLE TEXT-t01.
+  PARAMETERS pa_kokrs TYPE zvc102co0001-kokrs.
+
+  SELECT-OPTIONS : so_kostl FOR zvc102co0001-kostl NO INTERVALS.
+
+SELECTION-SCREEN END OF BLOCK bl1.
+
+SELECTION-SCREEN BEGIN OF BLOCK bl2 WITH FRAME TITLE TEXT-t02.
+  SELECTION-SCREEN BEGIN OF LINE.
+
+    PARAMETERS : pa_alv RADIOBUTTON GROUP rb1.
+    SELECTION-SCREEN COMMENT 3(10) TEXT-002.
+
+    PARAMETERS : pa_tree  RADIOBUTTON GROUP rb1.
+    SELECTION-SCREEN COMMENT 16(10) TEXT-001.
+
+  SELECTION-SCREEN END OF LINE.
+
+SELECTION-SCREEN END OF BLOCK bl2.
+
+PARAMETERS pa_check AS CHECKBOX.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

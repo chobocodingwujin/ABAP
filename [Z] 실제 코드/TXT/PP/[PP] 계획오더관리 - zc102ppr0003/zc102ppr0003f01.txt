@@ -1,0 +1,3810 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0003F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form set_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat  USING  pv_key pv_field pv_table pv_just pv_emph.
+  gs_fcat-key       = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+
+
+  CASE pv_field.
+
+    WHEN 'OSTATUS'.
+      gs_fcat-coltext = '계획오더상태'.
+      gs_fcat-icon = 'X'.
+    WHEN 'PLONO'.
+      gs_fcat-coltext = '계획오더번호'.
+*    WHEN 'MRPNO'.
+*      gs_fcat-coltext = 'MRP번호'.
+    WHEN 'MATNR'.
+      gs_fcat-coltext = '자재번호'.
+    WHEN 'STLNO'.
+      gs_fcat-coltext = '창고번호'.
+    WHEN 'WERKS'.
+      gs_fcat-coltext = 'Plant번호'.
+    WHEN 'WKCNO'.
+      gs_fcat-coltext = 'WC번호'.
+    WHEN 'PSTTR'.
+      gs_fcat-coltext = '계획생산일'.
+    WHEN 'PEDTR'.
+      gs_fcat-coltext = '계획생산종료일'.
+    WHEN 'STATUS'.
+      gs_fcat-coltext = '상태'.
+    WHEN 'SORT_KEY'.
+      gs_fcat-no_out = abap_true.
+    WHEN 'REASON_TEXT'.
+      gs_fcat-coltext = '세부사항'.
+    WHEN 'RESONBUTTON'.
+      gs_fcat-coltext = '세부사항'.
+
+
+
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+*-- Main  conatainer
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'CONT'.
+
+  CREATE OBJECT go_tab_cont1
+    EXPORTING
+      container_name = 'TAB1'.
+
+  CREATE OBJECT go_tab_cont2
+    EXPORTING
+      container_name = 'TAB2'.
+
+
+  CREATE OBJECT go_tab_cont3
+    EXPORTING
+      container_name = 'TAB3'.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+  CREATE OBJECT go_tab_grid1
+    EXPORTING
+      i_parent = go_tab_cont1.
+
+  CREATE OBJECT go_tab_grid2
+    EXPORTING
+      i_parent = go_tab_cont2.
+
+  CREATE OBJECT go_tab_grid3
+    EXPORTING
+      i_parent = go_tab_cont3.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen .
+
+*-- Display TOP ALV
+  PERFORM set_variant USING 'ALV1'.
+  CALL METHOD go_alv_grid->set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_top_layout
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_data
+      it_fieldcatalog      = gt_fcat
+      it_sort              = gt_sort_clear.
+
+*-- Display TAB 1,2,3
+
+  PERFORM set_variant USING 'ALV2'.
+  CALL METHOD go_tab_grid1->set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_bottom_layout
+    CHANGING
+      it_outtab       = gt_tab1
+*     it_sort         = gt_sort
+      it_fieldcatalog = gt_tab_fcat1
+      it_sort         = gt_sort_clear.
+
+  PERFORM set_variant USING 'ALV3'.
+  CALL METHOD go_tab_grid2->set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_bottom_layout
+    CHANGING
+*     it_sort         = gt_sort
+      it_outtab       = gt_tab2
+      it_fieldcatalog = gt_tab_fcat2
+      it_sort         = gt_sort_clear.
+
+  PERFORM set_variant USING 'ALV4'.
+  CALL METHOD go_tab_grid3->set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_bottom_layout
+    CHANGING
+*     it_sort         = gt_sort
+      it_outtab       = gt_tab3
+      it_fieldcatalog = gt_tab_fcat3
+      it_sort         = gt_sort_clear.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_data .
+  PERFORM set_range.
+
+  PERFORM set_alv_top.
+  PERFORM set_tab1.
+  PERFORM set_tab2.
+  PERFORM set_tab3.
+  PERFORM set_status.
+*  PERFORM show_message.
+
+*  PERFORM refresh_table.
+*  CLEAR : zc102ppt0006-plono , gv_psttr_fr ,gv_psttr_to.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen1
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen1 .
+
+  IF go_container IS NOT BOUND AND
+     go_tab_cont1 IS NOT BOUND AND
+     go_tab_cont2 IS NOT BOUND AND
+     go_tab_cont3 IS NOT BOUND.
+    CLEAR : gs_fcat, gt_fcat,
+          gt_tab_fcat1, gs_tab_fcat1,
+          gt_tab_fcat2, gs_tab_fcat2,
+          gt_tab_fcat3, gs_tab_fcat3.
+
+    PERFORM set_fcat USING :  'X' 'OSTATUS' 'ICON'         'C'  ' ',
+                              'X' 'PLONO'   'ZC102PPT0006' 'C' ' ',
+*                             'X' 'MRPNO'   'ZC102PPT0006' ' ' ' ',
+*                             ' ' 'BOMNO'   'ZC102PPT0006' ' ' ' ',
+                              ' ' 'MATNR'   'ZC102PPT0006' 'C' ' ',
+                              ' ' 'STLNO'   'ZC102PPT0006' '' ' ',
+                              ' ' 'WERKS' 'zc102ppt0006'  'C' '',
+                              ' ' 'WKCNO' 'zc102ppt0006'  'C' '',
+                              ' ' 'PSTTR'   'ZC102PPT0006' 'C' ' ',
+                              ' ' 'PEDTR'   'ZC102PPT0006' 'C' ' ',
+                              ' ' 'SORT_KEY'        ' '        ' ' ' '.
+*                             ' ' 'RESONBUTTON'    ' '        ' ' ' '.
+*                             ' '  'REASON_TEXT'   ' '  ' '   ' ' .
+
+
+    PERFORM set_tab1_fcat USING : 'X' 'OSTATUS' 'ICON'       'C'  ' ',
+                                  'X' 'PLONO' 'zc102ppt0006'  'C' '',
+                                  ' ' 'MATNR' 'zc102ppt0006'  'C' '',
+                                  ' ' 'STLNO' 'zc102ppt0006'  '' '',
+                                  ' ' 'WERKS' 'zc102ppt0006'  'C' '',
+                                  ' ' 'WKCNO' 'zc102ppt0006'  'C' '',
+                                  ' ' 'PSTTR' 'zc102ppt0006'  'C' '',
+                                  ' ' 'PEDTR' 'zc102ppt0006'  'C' '',
+*                                  ' ' 'ERNAM'   'zc102ppt0006' 'C ' ' ',
+                                  ' ' 'ERDAT'   'zc102ppt0006' 'C' ' ',
+                                  ' ' 'ERZET'   'zc102ppt0006' 'C' ' ',
+                                  ' ' 'REASO'   'zc102ppt0006' ' ' 'X',
+                                  ' ' 'SORT_KEY'    ' '        ' ' ' ',
+                                   ' ' 'RESONBUTTON'    ' '        ' ' ' '.
+*                                  ' '  'REASON_TEXT'   ' '  ' '   ' ' .
+
+
+    PERFORM set_tab2_fcat USING : 'X' 'OSTATUS' 'ICON'       'C'  ' ',
+                                  'X' 'PLONO' 'zc102ppt0006'  'C' '',
+                                  'X' 'MATNR' 'zc102ppt0006'  'C' '',
+                                  ' ' 'STLNO' 'zc102ppt0006'  '' '',
+                                  ' ' 'PSTTR' 'zc102ppt0006'  'C' '',
+                                  ' ' 'PEDTR' 'zc102ppt0006'  'C' '',
+*                                 ' ' 'STATUS' 'zc102ppt0006'  '' '',
+*                                  ' ' 'ERNAM'   'zc102ppt0006' 'C' ' ',
+                                  ' ' 'ERDAT'   'zc102ppt0006' 'C' ' ',
+                                  ' ' 'ERZET'   'zc102ppt0006' 'C' ' ',
+                                  ' ' 'SORT_KEY'    ' '        ' ' ' '.
+
+    PERFORM set_tab3_fcat USING : 'X' 'OSTATUS' 'ICON'       'C'  ' ',
+                                  'X' 'PLONO' 'zc102ppt0006'  'C' '',
+                                  'X' 'MATNR' 'zc102ppt0006'  'C' '',
+                                  ' ' 'STLNO' 'zc102ppt0006'  '' '',
+                                  ' ' 'PSTTR' 'zc102ppt0006'  'C' '',
+                                  ' ' 'PEDTR' 'zc102ppt0006'  'C' '',
+*                                 ' ' 'STATUS' 'zc102ppt0006'  '' '',
+*                                  ' ' 'ERNAM'   'zc102ppt0006' 'C' ' ',
+                                  ' ' 'ERDAT'   'zc102ppt0006' 'C' ' ',
+                                  ' ' 'ERZET'   'zc102ppt0006' 'C' ' ',
+                                  ' ' 'REASO'   'zc102ppt0006' 'C' 'X',
+                                  ' ' 'SORT_KEY'    ' '        ' ' ' ',
+                                   ' ' 'RESONBUTTON'    ' '        ' ' ' '.
+*                                  ' '  'REASON_TEXT'   ' '  ' '   ' '.
+
+    PERFORM set_layout.
+    PERFORM exclude_toolbar.
+    PERFORM create_object.
+
+*-- 전체 테이블 Event 등록
+    SET HANDLER : lcl_event_handler=>edit_toolbar FOR go_alv_grid,
+                  lcl_event_handler=>user_command FOR go_alv_grid,
+                  lcl_event_handler=>modify_value FOR go_alv_grid,
+                  lcl_event_handler=>text_button_click FOR go_tab_grid1.
+
+*-- 반려 테이블 Event 등록
+    SET HANDLER : lcl_event_handler=>text_button_click FOR go_tab_grid3.
+
+    PERFORM set_status.
+    PERFORM display_screen.
+    PERFORM register_event.
+*    PERFORM refresh_table.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_base_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_base_data .
+
+  CLEAR : gs_data, gt_data.
+
+*-- Top ALV
+  SELECT plono  matnr
+         stlno psttr pedtr status
+    INTO CORRESPONDING FIELDS OF TABLE gt_data
+    FROM zc102ppt0006
+WHERE status = 'P'
+  AND status = ' '.
+
+*-- 전체
+  SELECT plono matnr
+         stlno psttr pedtr status
+    INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+    FROM zc102ppt0006
+WHERE status NOT IN ('P', '').
+
+*-- 반려
+  SELECT plono matnr
+         stlno psttr pedtr status
+    INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+    FROM zc102ppt0006
+    WHERE status = 'O'.
+
+*-- 승인
+  SELECT plono  matnr
+         stlno psttr pedtr status
+    INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+    FROM zc102ppt0006
+    WHERE status = 'X'.
+
+  IF gt_data IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_table
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_table .
+  CALL METHOD go_alv_grid->refresh_table_display
+    EXPORTING
+      is_stable      = VALUE lvc_s_stbl( row = 'X' col = 'X' )
+      i_soft_refresh = 'X'.
+
+  CALL METHOD go_tab_grid1->refresh_table_display
+    EXPORTING
+      is_stable      = VALUE lvc_s_stbl( row = 'X' col = 'X' )
+      i_soft_refresh = 'X'.
+
+  CALL METHOD go_tab_grid2->refresh_table_display
+    EXPORTING
+      is_stable      = VALUE lvc_s_stbl( row = 'X' col = 'X' )
+      i_soft_refresh = 'X'.
+
+  CALL METHOD go_tab_grid3->refresh_table_display
+    EXPORTING
+      is_stable      = VALUE lvc_s_stbl( row = 'X' col = 'X' )
+      i_soft_refresh = 'X'.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_edit_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_OBJECT
+*&      --> E_INTERACTIVE
+*&---------------------------------------------------------------------*
+FORM handle_edit_toolbar  USING   po_object TYPE REF TO cl_alv_event_toolbar_set
+                                  pv_interactive..
+
+
+  DATA : lv_disabled.
+
+  IF gv_mode EQ 'D'.
+    lv_disabled = abap_true.
+  ENDIF.
+
+
+  CLEAR gs_button.
+  gs_button-butn_type = '3'.
+  APPEND gs_button TO po_object->mt_toolbar.
+
+  CLEAR gs_button.
+  gs_button-function  = 'TOGL'.
+  gs_button-icon      = icon_change.
+  gs_button-quickinfo = 'Display <-> Change'.
+  gs_button-text = '수정'.
+  APPEND gs_button TO po_object->mt_toolbar.
+  .
+
+
+
+  CLEAR gs_button.
+  gs_button-butn_type = '3'.
+  APPEND gs_button TO po_object->mt_toolbar.
+
+  CLEAR gs_button.
+  gs_button-function = 'APRV'.
+  gs_button-icon     = icon_okay .
+  gs_button-quickinfo = '승인'.
+  gs_button-text = '승인'.
+  APPEND gs_button TO po_object->mt_toolbar.
+
+
+  CLEAR gs_button.
+  gs_button-function = 'DECL'.
+  gs_button-icon     = icon_cancel .
+  gs_button-quickinfo = '반려'.
+  gs_button-text = '반려'.
+  APPEND gs_button TO po_object->mt_toolbar.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_user_command
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_UCOMM
+*&---------------------------------------------------------------------*
+FORM handle_user_command  USING   pv_ucomm.
+
+  CASE pv_ucomm.
+    WHEN 'TOGL'. " Display <-> Change
+      PERFORM toggle_change.
+    WHEN 'APRV'. "승인 버튼 클릭
+      PERFORM aprv_clicked.
+    WHEN 'DECL'. "반려 버튼 클릭
+      PERFORM decl_clicked.
+
+  ENDCASE.
+  PERFORM count_data.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form toggle_change
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM toggle_change .
+
+
+  DATA: lt_roid TYPE lvc_t_roid,
+        ls_roid TYPE lvc_s_roid,
+        lt_styl TYPE lvc_t_styl,
+        ls_styl TYPE lvc_s_styl,
+        ls_row  LIKE LINE OF gt_data.
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+
+  CALL METHOD go_alv_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid.
+
+  IF lt_roid IS INITIAL.
+    MESSAGE '수정할 행을 선택해주세요.' TYPE 'S' DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  CLEAR gs_backup.
+  LOOP AT lt_roid INTO ls_roid.
+    READ TABLE gt_data INTO gs_data INDEX ls_roid-row_id.
+
+    APPEND gs_data TO gt_backup.
+
+    PERFORM set_edit_mode USING 'PSTTR'.
+
+    MODIFY gt_data FROM gs_data INDEX ls_roid-row_id TRANSPORTING cell_tab.
+
+  ENDLOOP.
+
+
+  CALL METHOD go_alv_grid->refresh_table_display
+    EXPORTING
+      is_stable      = VALUE lvc_s_stbl( row = 'X' col = 'X' )
+      i_soft_refresh = 'X'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form exclude_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM exclude_toolbar .
+
+
+
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_event
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_pop_event .
+  CALL METHOD go_pop_grid->set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 1.
+  CALL METHOD go_pop_grid->register_edit_event
+    EXPORTING
+      i_event_id = cl_gui_alv_grid=>mc_evt_modified.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_modify_values
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_MODIFIED
+*&      --> ET_GOOD_CELLS
+*&---------------------------------------------------------------------*
+FORM handle_modify_values  USING  pv_modified
+                                  pt_good_cells TYPE lvc_t_modi.
+  DATA : ls_good_cells TYPE lvc_s_modi.
+
+
+  CHECK pv_modified IS NOT INITIAL.
+
+  CLEAR : gv_tabix.
+  LOOP AT pt_good_cells INTO ls_good_cells.
+    CLEAR : gs_data, gs_pop.
+
+    gv_tabix = ls_good_cells-row_id. " 텍스트 에디터 처리(MODIFY)용 인덱스 저장
+
+    " 현재 행 읽기
+    READ TABLE gt_data INTO gs_data INDEX ls_good_cells-row_id.
+
+    CASE ls_good_cells-fieldname.
+
+      WHEN 'PSTTR'.
+        IF gs_data-psttr < sy-datum.
+          READ TABLE gt_backup INTO gs_backup WITH KEY plono = gs_data-plono.
+          IF sy-subrc = 0.
+            gs_data-psttr = gs_backup-psttr.
+            MODIFY gt_data FROM gs_data INDEX ls_good_cells-row_id
+                                        TRANSPORTING psttr.
+          ENDIF.
+          MESSAGE i068 DISPLAY LIKE 'W'.
+          CONTINUE.
+        ELSE.
+          gs_data-pedtr = gs_data-psttr + 7.
+          gs_data-modi_yn = abap_true.
+          gv_modified = abap_true.  "변경사항 확인
+          MODIFY gt_data FROM gs_data INDEX ls_good_cells-row_id
+                                      TRANSPORTING psttr pedtr.
+        ENDIF.
+
+*        gs_data-pedtr = gs_data-psttr + 7.
+*        gs_data-modi_yn = abap_true.
+*        gv_modified = abap_true.  "변경사항 확인
+
+
+
+      WHEN 'REASO'.  " ✅ 필드명 정확히 확인
+        READ TABLE gt_pop INTO gs_pop INDEX ls_good_cells-row_id.
+        IF sy-subrc = 0 AND gs_pop-reaso = '기타'.
+          gv_from = 'B'.
+          gv_tabix = ls_good_cells-row_id.
+          CALL SCREEN 120 STARTING AT 100 10.
+          CLEAR gv_tabix.
+          gv_modified = abap_true.   "변경사항 확인
+*          PERFORM set_pop_screen .
+
+        ENDIF.
+
+
+*        gv_modified = abap_true.   "변경사항 확인
+
+    ENDCASE.
+
+*    MODIFY gt_data FROM gs_data INDEX ls_good_cells-row_id
+*                                TRANSPORTING pedtr modi_yn.
+
+
+  ENDLOOP.
+
+  PERFORM refresh_table.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_status1 .
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_style TYPE lvc_s_styl,
+         lv_icon  TYPE icon_d.
+
+  CLEAR : gv_cnt1 , gv_cnt2, gv_cnt3, gv_cnt4.
+  LOOP AT gt_data INTO gs_data.
+
+    lv_tabix = sy-tabix.
+
+    CASE gs_data-status.                   " 계획오더 상태 필드
+      WHEN 'O'.
+        gs_data-ostatus = icon_led_green.  " 승인
+      WHEN 'X'.
+        gs_data-ostatus = icon_led_red.    " 반려
+      WHEN 'P'  OR ''.
+        gs_data-ostatus = icon_led_yellow. " 승인대기
+    ENDCASE.
+
+    MODIFY gt_data FROM gs_data INDEX lv_tabix
+                                TRANSPORTING ostatus.
+  ENDLOOP.
+
+  LOOP AT gt_tab1 INTO gs_tab1.
+
+    lv_tabix = sy-tabix.
+
+    CASE gs_tab1-status. " 계획오더 상태 필드
+      WHEN 'O'.
+        gs_tab1-ostatus = icon_led_green.  " 승인
+      WHEN 'X'.
+        gs_tab1-ostatus = icon_led_red.    " 반려
+      WHEN 'P'  OR ''.
+        gs_tab1-ostatus = icon_led_yellow. " 승인대기
+    ENDCASE.
+
+    MODIFY gt_tab1 FROM gs_tab1 INDEX lv_tabix
+                                TRANSPORTING ostatus.
+
+  ENDLOOP.
+
+  LOOP AT gt_tab2 INTO gs_tab2.
+
+    lv_tabix = sy-tabix.
+
+    CASE gs_tab2-status.
+      WHEN 'O'.
+        gs_tab2-ostatus = icon_led_green.  " 승인
+      WHEN 'X'.
+        gs_tab2-ostatus = icon_led_red.    " 반려
+      WHEN 'P'  OR ''.
+        gs_tab2-ostatus = icon_led_yellow. " 승인대기
+    ENDCASE.
+
+    MODIFY gt_tab2 FROM gs_tab2 INDEX lv_tabix
+                                TRANSPORTING ostatus.
+
+  ENDLOOP.
+
+  LOOP AT gt_tab3 INTO gs_tab3.
+
+    lv_tabix = sy-tabix.
+
+    CASE gs_tab3-status. " 계획오더 상태 필드
+      WHEN 'O'.
+        gs_tab3-ostatus = icon_led_green.  " 승인
+      WHEN 'X'.
+        gs_tab3-ostatus = icon_led_red.    " 반려
+      WHEN 'P'  OR ''.
+        gs_tab3-ostatus = icon_led_yellow. " 승인대기
+    ENDCASE.
+
+    MODIFY gt_tab3 FROM gs_tab3 INDEX lv_tabix
+                                TRANSPORTING ostatus.
+
+  ENDLOOP.
+
+  PERFORM count_data.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_data .
+
+  DATA : lt_save  TYPE TABLE OF zc102ppt0006,
+         lt_save2  TYPE TABLE OF zc102ppt0006,
+         ls_save  TYPE zc102ppt0006,
+         lv_tabix TYPE sy-tabix,
+         lv_flag,
+         lv_msg   TYPE string,
+         lv_pno   TYPE zc102ppt0012-pdono,
+         lt_roid  TYPE lvc_t_roid,
+         ls_roid  TYPE lvc_s_roid.
+
+  CLEAR lv_tabix.
+
+  CALL METHOD go_alv_grid->check_changed_data.
+  CALL METHOD go_tab_grid1->check_changed_data.
+
+*--데이터 저장 전 사용자에게 확인
+  PERFORM confirm_save CHANGING gv_answer.
+
+  CHECK gv_answer EQ '1'.
+
+*-- Set Time stamp
+  LOOP AT gt_tab1 INTO gs_tab1 WHERE modi_yn EQ abap_true.
+    CLEAR gs_data.
+    lv_tabix  = sy-tabix.
+
+    READ TABLE gt_data INTO gs_data WITH KEY plono = gs_tab1-plono.
+    gs_tab1-werks = gs_data-werks.
+    gs_tab1-wkcno = gs_data-wkcno.
+
+
+    IF gs_tab1-erdat IS INITIAL.
+      gs_tab1-erdat = sy-datum.
+      gs_tab1-erzet = sy-uzeit.
+
+      gs_tab1-ernam = sy-uname.
+      gs_tab1-psttr = gs_data-psttr.
+      gs_tab1-pedtr = gs_data-pedtr.
+      gs_tab1-werks = gs_data-werks.
+      gs_tab1-wkcno = gs_data-wkcno.
+      gs_tab1-stlno = gs_data-stlno.
+
+    ELSE.
+      gs_tab1-aedat = sy-datum.
+      gs_tab1-aezet = sy-uzeit.
+      gs_tab1-aenam = sy-uname.
+    ENDIF.
+
+
+
+    CLEAR  gs_tab1-modi_yn.
+
+    MODIFY  gt_tab1 FROM gs_tab1 INDEX lv_tabix
+                                TRANSPORTING erdat ernam erzet
+                                             aedat aenam aezet
+*                                             werks wkcno stlno
+*                                             psttr pedtr
+                                             modi_yn.
+  ENDLOOP.
+
+  LOOP AT gt_approved INTO gs_approved.
+    CLEAR: gs_pdono.
+
+*-- 대기-> 승인 생산오더번호 셋팅
+    PERFORM create_ppono.
+    PERFORM set_pdono.
+    PERFORM set_route.
+    PERFORM set_mroute.
+
+
+  ENDLOOP.
+
+  MODIFY zc102ppt0012 FROM TABLE gt_pdono.    "생산오더 테이블에 넘겨주기
+  MODIFY zc102ppt0010 FROM TABLE gt_route.    "라우팅 테이블에 넘겨주기
+  MODIFY zc102ppt0009 FROM TABLE gt_mroute.   "라우팅 마스터 테이블에 넘겨주기
+
+**********************************************************************
+  MOVE-CORRESPONDING gt_data TO lt_save2.        "수정사항만 반영
+  MODIFY zc102ppt0006 FROM TABLE lt_save2.
+**********************************************************************
+
+*  MOVE-CORRESPONDING gt_data TO lt_save.
+  MOVE-CORRESPONDING gt_tab1 TO lt_save.
+*  MODIFY zc102ppt0006 FROM TABLE lt_save.    "수정사항에 대해서 계획오더 테이블에 저장해주기
+
+*-- 삭제대상이 있으면 삭제
+  IF gt_delt IS NOT INITIAL.
+    DELETE zc102ppt0006 FROM TABLE gt_delt.
+  ENDIF.
+
+  CLEAR : gt_delt, gs_delt ,gv_save_flag .
+
+*-- Save data
+  MODIFY zc102ppt0006 FROM TABLE lt_save.
+*  LOOP AT lt_save INTO ls_save.
+*
+*    UPDATE zc102ppt0006
+*      SET psttr       = @ls_save-psttr,
+*          pedtr       = @ls_save-pedtr,
+*          reaso       = @ls_save-reaso,
+*          reason_text = @ls_save-reason_text,
+*          status      = @ls_save-status,
+*          aedat       = @sy-datum,
+*          aenam       = @sy-uname,
+*          aezet       = @sy-uzeit
+*      WHERE plono = @ls_save-plono.
+*
+*  ENDLOOP.
+
+  IF sy-subrc EQ 0.
+    MESSAGE s029.
+    COMMIT WORK AND WAIT.
+
+    CLEAR gv_modified.  " ✅ 변경 플래그 초기화 (저장 성공 시에만)
+
+    MESSAGE s000 WITH '계획오더가 처리가 완료되었습니다.' DISPLAY LIKE 'S'.
+
+
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
+
+  PERFORM refresh_table.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form confirm
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM confirm_save  CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data save dialog'
+      text_question         = '변경사항을 저장하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer. " Yes
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form pbo_execute
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM pbo_execute .
+  CALL METHOD cl_gui_cfw=>set_new_ok_code
+    EXPORTING
+      new_code = 'XXXX'.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_icon_for_status
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_icon_for_status .
+
+
+  LOOP AT gt_data INTO gs_data.
+
+
+    CASE gs_data-status. " 계획오더 상태 필드
+      WHEN 'O'.
+        gs_data-ostatus = icon_led_green.  " 승인
+      WHEN 'X'.
+        gs_data-ostatus = icon_led_red.    " 승인대기
+    ENDCASE.
+
+    MODIFY gt_data FROM gs_data.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form aprv_clicked
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM aprv_clicked .
+
+  DATA: lt_roid       TYPE lvc_t_roid,
+        ls_roid       TYPE lvc_s_roid,
+        lt_roid2      TYPE lvc_t_roid,
+        ls_roid2      TYPE lvc_s_roid,
+        ls_save       LIKE LINE OF gt_data,
+        gs_data       LIKE LINE OF gt_data,
+        lt_delete_idx TYPE STANDARD TABLE OF i WITH DEFAULT KEY.
+
+  CLEAR : gt_save.
+  " 선택한 행 가져오기
+  CALL METHOD go_alv_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid.
+
+  CALL METHOD go_tab_grid1->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid2.
+
+  IF lt_roid IS INITIAL AND lt_roid2 IS INITIAL.
+    MESSAGE s000 WITH '선택된 항목이 없습니다.' DISPLAY LIKE 'E'.
+    EXIT.
+
+  ELSEIF lt_roid IS INITIAL.
+    MESSAGE s000 WITH '승인 대기 건을 선택해주세요.' DISPLAY LIKE 'E'.
+    EXIT.
+
+  ENDIF.
+
+  LOOP AT lt_roid INTO ls_roid.
+    READ TABLE gt_data INTO gs_data INDEX ls_roid-row_id.
+    " 필수 필드 누락 체크
+    IF gs_data-plono IS INITIAL OR
+       gs_data-matnr IS INITIAL OR
+       gs_data-stlno IS INITIAL OR
+       gs_data-psttr IS INITIAL OR
+       gs_data-pedtr IS INITIAL.
+      MESSAGE s000 WITH '필수 정보가 누락된 계획오더는 승인할 수 없습니다.' DISPLAY LIKE 'E'.
+      RETURN.
+    ENDIF.
+
+  ENDLOOP.
+
+  " 종료일이 오늘보다 과거일 경우 승인 불가
+  IF gs_data-pedtr < sy-datum.
+    MESSAGE s000 WITH '계획종료일이 오늘보다 과거입니다. 종료일을 수정해주세요.' DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+
+*-- 사원정보 초기화
+  CLEAR : zc102hrt0002-empnam ,zc102hrt0002-empno, gv_answer.
+
+*--처리자 (=사원명)을 처리할 수 있는 팝업 띄우기
+  CALL SCREEN 140 STARTING AT 100 10.
+  CHECK gv_empno_inserted EQ '1'.
+
+*-- 데이터 저장 전 사용자에게 확인
+  PERFORM confirm_aprv CHANGING gv_answer.
+
+  IF gv_answer EQ 1.
+
+
+    " ✅ 선택한 행 승인 처리
+    LOOP AT lt_roid INTO ls_roid.
+      CLEAR gs_data.
+      READ TABLE gt_data INTO gs_data INDEX ls_roid-row_id.
+      IF sy-subrc = 0.
+
+        gs_data-ostatus  = icon_led_green.
+        gs_data-status   = 'O'.
+        gs_data-modi_yn  = abap_true.
+        gs_data-erdat    = sy-datum.
+*        gs_data-ernam = gv_empnam.
+        gs_data-ernam = sy-uname.
+        gs_data-aenam = sy-uname.
+*        gs_data-aenam = gv_empnam.
+        gs_data-erzet    = sy-uzeit.
+        gv_save_flag     = 'X'.
+        gs_data-sort_key = 'A'.
+
+        gv_modified = abap_true.   "변경사항 확인
+
+
+        MODIFY gt_data FROM gs_data INDEX ls_roid-row_id
+                        TRANSPORTING ostatus status modi_yn
+                                     erdat erzet ernam aenam sort_key.
+      ENDIF.
+
+
+      CLEAR ls_save.
+      MOVE-CORRESPONDING gs_data TO ls_save.
+      APPEND ls_save TO gt_save.
+      MOVE-CORRESPONDING gs_data TO gs_approved.
+
+      INSERT ls_save INTO gt_tab1 INDEX 1.
+*      APPEND ls_save TO gt_tab1.
+      INSERT ls_save INTO gt_tab2 INDEX 1.
+*      APPEND ls_save TO gt_tab2.
+      APPEND gs_approved TO gt_approved.
+
+      " 나중에 삭제할 인덱스를 모아둠
+      APPEND ls_roid-row_id TO lt_delete_idx.
+
+    ENDLOOP.
+
+    " 인덱스를 역순으로 정렬 후 삭제 (꼬임 방지)
+    SORT lt_delete_idx DESCENDING.
+    LOOP AT lt_delete_idx INTO DATA(lv_idx).
+      DELETE gt_data INDEX lv_idx.
+
+    ENDLOOP.
+
+*-- 강제 PBO 메소드
+    CALL METHOD cl_gui_cfw=>set_new_ok_code
+      EXPORTING
+        new_code = 'XXXX'.
+
+
+    PERFORM set_status1.
+    PERFORM refresh_table.
+    CLEAR : gv_answer , zc102hrt0002-empnam ,zc102hrt0002-empno.
+
+  ENDIF.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form decl_clicked
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM decl_clicked .
+
+
+
+  DATA : lv_answer,
+         ls_save       LIKE LINE OF gt_tab1,
+         lv_tabix      TYPE sy-tabix,
+         lt_delete_idx TYPE STANDARD TABLE OF i WITH DEFAULT KEY.
+
+
+
+  " 선택한 행 가져오기
+  CALL METHOD go_alv_grid->get_selected_rows
+    IMPORTING
+      et_row_no = gt_roid.
+
+
+  CALL METHOD go_tab_grid1->get_selected_rows
+    IMPORTING
+      et_row_no = gt_roid2.
+
+  IF gt_roid IS INITIAL AND gt_roid2 IS INITIAL.
+    MESSAGE s000 WITH '선택된 항목이 없습니다.' DISPLAY LIKE 'E'.
+    EXIT.
+
+  ELSEIF gt_roid IS INITIAL.
+    MESSAGE s000 WITH '승인 대기 건을 선택해주세요.' DISPLAY LIKE 'E'.
+    EXIT.
+
+  ENDIF.
+
+
+  PERFORM get_selected_row_data.
+
+
+
+  CALL SCREEN 110 STARTING AT 30 5.      "반려사유에 대해서 적을 팝업 창을 띄운다.
+
+
+*-- 강제 PBO 메소드
+  CALL METHOD cl_gui_cfw=>set_new_ok_code
+    EXPORTING
+      new_code = 'XXXX'.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form confirm_decl
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM confirm_aprv  CHANGING pv_answer.
+
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data approve dialog'
+      text_question         = '선택한 항목을 승인하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer. " Yes
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tabscreen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tabscreen .
+*-- 활성화된 탭에 해당하는 서브스크린 번호를 세팅한다.
+  CASE gc_tab-activetab.
+    WHEN 'TAB1'.
+      gv_button_grid = 'TAB1'.
+      gv_subscreen = '0101'.
+    WHEN 'TAB2'.
+      gv_subscreen = '0102'.
+    WHEN 'TAB3'.
+      gv_button_grid = 'TAB3'.
+      gv_subscreen = '0103'.
+    WHEN OTHERS.
+      gv_button_grid = 'TAB1'.
+      gc_tab-activetab = 'TAB1'.
+      gv_subscreen     = '0101'.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab1_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_tab1_fcat  USING   pv_key pv_field pv_table pv_just pv_emph.
+
+
+
+
+  gs_tab_fcat1-key       = pv_key.
+  gs_tab_fcat1-fieldname = pv_field.
+  gs_tab_fcat1-ref_table = pv_table.
+  gs_tab_fcat1-just      = pv_just.
+  gs_tab_fcat1-emphasize = pv_emph.
+
+
+
+  CASE pv_field.
+
+    WHEN 'OSTATUS'.
+      gs_tab_fcat1-coltext = '계획오더상태'.
+      gs_tab_fcat1-icon = 'X'.
+    WHEN 'PLONO'.
+      gs_tab_fcat1-coltext = '계획오더번호'.
+    WHEN 'MATNR'.
+      gs_tab_fcat1-coltext = '자재번호'.
+    WHEN 'STLNO'.
+      gs_tab_fcat1-coltext = '창고번호'.
+    WHEN 'WERKS'.
+      gs_tab_fcat1-coltext = 'Plant번호'.
+    WHEN 'WKCNO'.
+      gs_tab_fcat1-coltext = 'WC번호'.
+    WHEN 'PSTTR'.
+      gs_tab_fcat1-coltext = '계획생산일'.
+      gs_tab_fcat1-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'PEDTR'.
+      gs_tab_fcat1-coltext = '계획생산종료일'.
+      gs_tab_fcat1-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'STATUS'.
+      gs_tab_fcat1-coltext = '상태'.
+    WHEN 'ERNAM'.
+      gs_tab_fcat1-coltext = '처리자'.
+    WHEN 'ERDAT'.
+      gs_tab_fcat1-coltext = '처리일자'.
+      gs_tab_fcat1-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'ERZET'.
+      gs_tab_fcat1-coltext = '처리시각'.
+      gs_tab_fcat1-datatype = 'TIMS'.      " ← 날짜 타입 지정
+    WHEN 'REASO'.
+      gs_tab_fcat1-coltext = '반려사유'.
+*      gs_tab_fcat1-drdn_field  = 'DROP_DOWN_HANDLE'.
+*      gs_tab_fcat1-drdn_hndl   = '1'.
+*      gs_tab_fcat1-drdn_alias  = 'X'.
+      gs_tab_fcat1-outputlen   = 20.
+      gs_tab_fcat1-just        = 'C'.
+    WHEN 'SORT_KEY'.
+      gs_tab_fcat1-no_out = abap_true.
+    WHEN 'REASON_TEXT'.
+      gs_tab_fcat1-coltext = '세부사항'.
+    WHEN 'RESONBUTTON'.
+      gs_tab_fcat1-coltext = '세부사항보기'.
+
+
+  ENDCASE.
+
+  APPEND gs_tab_fcat1 TO gt_tab_fcat1.
+  CLEAR gs_tab_fcat1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab2_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_tab2_fcat  USING    pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_tab_fcat2-key       = pv_key.
+  gs_tab_fcat2-fieldname = pv_field.
+  gs_tab_fcat2-ref_table = pv_table.
+  gs_tab_fcat2-just      = pv_just.
+  gs_tab_fcat2-emphasize = pv_emph.
+
+
+
+  CASE pv_field.
+
+
+    WHEN 'OSTATUS'.
+      gs_tab_fcat2-coltext = '계획오더상태'.
+      gs_tab_fcat2-icon = 'X'.
+    WHEN 'PLONO'.
+      gs_tab_fcat2-coltext = '계획오더번호'.
+    WHEN 'MATNR'.
+      gs_tab_fcat2-coltext = '자재번호'.
+    WHEN 'STLNO'.
+      gs_tab_fcat2-coltext = '창고번호'.
+    WHEN 'PSTTR'.
+      gs_tab_fcat2-coltext = '계획생산일'.
+      gs_tab_fcat2-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'PEDTR'.
+      gs_tab_fcat2-coltext = '계획생산종료일'.
+      gs_tab_fcat2-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'STATUS'.
+      gs_tab_fcat2-coltext = '상태'.
+    WHEN 'ERNAM'.
+      gs_tab_fcat2-coltext = '처리자'.
+    WHEN 'ERDAT'.
+      gs_tab_fcat2-coltext = '처리일자'.
+      gs_tab_fcat2-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'ERZET'.
+      gs_tab_fcat2-coltext = '처리시각'.
+      gs_tab_fcat2-datatype = 'TIMS'.
+    WHEN 'SORT_KEY'.
+      gs_tab_fcat2-no_out = abap_true.
+
+
+  ENDCASE.
+
+  APPEND gs_tab_fcat2 TO gt_tab_fcat2.
+  CLEAR gs_tab_fcat2.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab3_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_tab3_fcat  USING    pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_tab_fcat3-key       = pv_key.
+  gs_tab_fcat3-fieldname = pv_field.
+  gs_tab_fcat3-ref_table = pv_table.
+  gs_tab_fcat3-just      = pv_just.
+  gs_tab_fcat3-emphasize = pv_emph.
+
+
+
+  CASE pv_field.
+
+
+    WHEN 'OSTATUS'.
+      gs_tab_fcat3-coltext = '계획오더상태'.
+      gs_tab_fcat3-icon = 'X'.
+    WHEN 'PLONO'.
+      gs_tab_fcat3-coltext = '계획오더번호'.
+    WHEN 'MATNR'.
+      gs_tab_fcat3-coltext = '자재번호'.
+    WHEN 'STLNO'.
+      gs_tab_fcat3-coltext = '창고번호'.
+    WHEN 'PSTTR'.
+      gs_tab_fcat3-coltext = '계획생산일'.
+      gs_tab_fcat3-datatype = 'DATS'.
+    WHEN 'PEDTR'.
+      gs_tab_fcat3-coltext = '계획생산종료일'.
+      gs_tab_fcat3-datatype = 'DATS'.
+    WHEN 'STATUS'.
+      gs_tab_fcat3-coltext = '상태'.
+    WHEN 'ERNAM'.
+      gs_tab_fcat3-coltext = '처리자'.
+    WHEN 'ERDAT'.
+      gs_tab_fcat3-coltext = '처리일자'.
+      gs_tab_fcat3-datatype = 'DATS'.
+    WHEN 'ERZET'.
+      gs_tab_fcat3-coltext = '처리시각'.
+      gs_tab_fcat3-datatype = 'TIMS'.
+    WHEN 'REASO'.
+      gs_tab_fcat3-coltext = '반려사유'.
+    WHEN 'SORT_KEY'.
+      gs_tab_fcat3-no_out = abap_true.
+    WHEN 'REASON_TEXT'.
+      gs_tab_fcat3-coltext = '세부사항'.
+    WHEN 'RESONBUTTON'.
+      gs_tab_fcat3-coltext = '세부사항보기'.
+
+
+
+
+  ENDCASE.
+
+  APPEND gs_tab_fcat3 TO gt_tab_fcat3.
+  CLEAR gs_tab_fcat3.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_variant
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_variant  USING    pv_handle.
+  gs_variant-report = sy-repid.
+  gs_variant-handle = pv_handle.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form confirm_decl
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM confirm_decl  CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data save dialog'
+      text_question         = '해당항목을 반려하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer. " Yes
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_pop_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_pop_screen .
+
+
+  DATA : ls_variant TYPE disvariant,
+         ls_layout  TYPE lvc_s_layo.
+
+
+  gv_button_grid = 'POP'. " POP업 창이면 gv_button_grid = 'POP'
+  IF go_pop_cont IS NOT BOUND.
+
+    CLEAR : gt_pop_fcat, gs_pop_fcat.
+
+*-- 검수 POP-UP 리스트
+    PERFORM set_pop_fcat USING :    'X' 'PLONO' 'zc102ppt0006'  'C' '',
+                                    ' ' 'MATNR'   'ZC102PPT0006' 'C' ' ',
+                                    ' ' 'STLNO'   'ZC102PPT0006' ' ' ' ',
+                                    ' ' 'PSTTR'   'ZC102PPT0006' 'C' ' ',
+                                    ' ' 'PEDTR'   'ZC102PPT0006' 'C' ' ',
+                                    ' ' 'REASO'   'zc102ppt0006' ' ' ' ',
+                                    ' ' 'RESONBUTTON'   'zc102ppt0006' ' ' ' '.
+*                                    ' '  'REASON_TEXT'   ' '  ' '   ' ' .
+
+
+
+    PERFORM set_variant USING 'POP1'.
+    PERFORM set_layout.
+    PERFORM exclude_toolbar.
+    PERFORM create_popup_object.
+    PERFORM set_alv_listbox.
+
+    SET HANDLER : lcl_event_handler=>modify_value FOR go_pop_grid,
+                  lcl_event_handler=>text_button_click FOR go_pop_grid.
+
+    PERFORM display_pop.
+    PERFORM register_pop_event.
+*    PERFORM set_pop_icon.
+
+  ELSE.
+    PERFORM refresh_pop_table.
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_popup_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_popup_object .
+
+
+  DATA: go_container TYPE REF TO cl_gui_custom_container,
+        go_textedit  TYPE REF TO cl_gui_textedit.
+
+
+  CREATE OBJECT go_pop_cont
+    EXPORTING
+      container_name = 'POP_CONT'.
+
+  CREATE OBJECT go_pop_grid
+    EXPORTING
+      i_parent = go_pop_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_pop_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_pop_fcat  USING   pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_pop_fcat-key        = pv_key.
+  gs_pop_fcat-fieldname  = pv_field.
+  gs_pop_fcat-ref_table  = pv_table.
+  gs_pop_fcat-just       = pv_just.
+  gs_pop_fcat-emphasize  = pv_emph.
+
+  CASE pv_field.
+
+    WHEN 'PLONO'.
+      gs_pop_fcat-coltext = '계획오더번호'.
+*    WHEN 'MRPNO'.
+*      gs_pop_fcat-coltext = 'MRP번호'.
+*    WHEN 'BOMNO'.
+*      gs_pop_fcat-coltext = 'BOM번호'.
+    WHEN 'MATNR'.
+      gs_pop_fcat-coltext = '자재번호'.
+    WHEN 'STLNO'.
+      gs_pop_fcat-coltext = '저장위치'.
+    WHEN 'PSTTR'.
+      gs_pop_fcat-coltext = '계획생산일'.
+    WHEN 'PEDTR'.
+      gs_pop_fcat-coltext = '계획종료일'.
+    WHEN 'REASO'.
+      gs_pop_fcat-coltext = '반려사유'.
+      gs_pop_fcat-drdn_field  = 'DROP_DOWN_HANDLE'.
+      gs_pop_fcat-drdn_hndl   = '1'.
+      gs_pop_fcat-drdn_alias  = 'X'.
+      gs_pop_fcat-outputlen   = 20.
+      gs_pop_fcat-just        = 'C'.
+    WHEN 'REASON_TEXT'.
+      gs_pop_fcat-coltext = '세부사항'.
+    WHEN 'RESONBUTTON'.
+      gs_pop_fcat-coltext = '세부사항보기'.
+  ENDCASE.
+
+  APPEND gs_pop_fcat TO gt_pop_fcat.
+  CLEAR gs_pop_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form confirm_delete
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM confirm_delete  CHANGING pv_answer.
+
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data approve dialog'
+      text_question         = '선택한 항목을 삭제하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer. " Yes
+
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form set_tab_move
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tab_move .
+
+  CASE gc_tab-activetab.
+    WHEN 'TAB1'.
+*      PERFORM split_data_by_status.  " → 여기서 gt_tab1 채워주기
+      CALL METHOD go_tab_grid1->refresh_table_display.
+      CALL METHOD go_alv_grid->refresh_table_display.
+
+    WHEN 'TAB2'.
+*      PERFORM split_data_by_status.
+      CALL METHOD go_tab_grid2->refresh_table_display.
+
+    WHEN 'TAB3'.
+*      PERFORM split_data_by_status.
+      CALL METHOD go_tab_grid3->refresh_table_display.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_range
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_range .
+
+  IF ( gv_psttr_fr IS NOT INITIAL ) AND
+      ( gv_psttr_to IS NOT INITIAL ).
+    PERFORM set_date_value USING 'I' 'BT' gv_psttr_fr gv_psttr_to.
+  ELSEIF ( gv_psttr_fr IS NOT INITIAL ).
+    PERFORM set_date_value USING 'I' 'EQ' gv_psttr_fr gv_psttr_to.
+  ELSEIF ( gv_psttr_to IS NOT INITIAL ).
+    " 종료일만 입력된 경우는 허용하지 않음
+    MESSAGE i000 WITH '조회일을 하나만 입력할 경우 시작일로 입력해주세요.'.
+    EXIT.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_date_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> GV_PSTTR_FR
+*&      --> GV_PSTTR_TO
+*&---------------------------------------------------------------------*
+FORM set_date_value USING pv_sign pv_option pv_from pv_to.
+  CLEAR gr_psttr.
+  REFRESH gr_psttr.
+
+  gr_psttr-sign   = pv_sign.
+  gr_psttr-option = pv_option.
+  gr_psttr-low    = pv_from.
+  gr_psttr-high   = pv_to.
+  APPEND gr_psttr.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab1
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tab1 .
+  CLEAR : gs_data.
+
+  IF ( zc102ppt0006-plono IS NOT INITIAL ) AND
+     ( gv_psttr_fr IS NOT INITIAL ).
+    SELECT plono matnr werks wkcno
+           stlno psttr pedtr reaso reason_text status
+           menge meins ref_no
+           erdat ernam erzet aenam
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+      FROM zc102ppt0006
+     WHERE plono = zc102ppt0006-plono
+       AND psttr IN gr_psttr
+       AND status NOT IN ( 'P', '' )
+      ORDER BY plono.
+
+  ELSEIF ( zc102ppt0006-plono IS INITIAL ) AND
+         ( gv_psttr_fr IS NOT INITIAL ).
+    SELECT  plono  matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet aenam
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+      FROM zc102ppt0006
+    WHERE psttr IN gr_psttr
+    AND status NOT IN ( 'P', '' )
+        ORDER BY plono.
+
+  ELSEIF ( zc102ppt0006-plono IS NOT INITIAL ) AND
+         ( gv_psttr_fr IS INITIAL ).
+    SELECT  plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet aenam
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+      FROM zc102ppt0006
+       WHERE plono = zc102ppt0006-plono
+     AND status NOT IN ( 'P', '' )
+            ORDER BY plono.
+
+  ELSE.
+    SELECT  plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+             erdat ernam erzet aenam
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+      FROM zc102ppt0006
+      WHERE status  NOT IN ( 'P', '' )
+            ORDER BY plono.
+
+  ENDIF.
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form SET_TAB2
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tab2 .
+  CLEAR : gs_data.
+
+  IF ( zc102ppt0006-plono IS NOT INITIAL ) AND
+   ( gv_psttr_fr IS NOT INITIAL ).
+    SELECT plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0006
+     WHERE plono = zc102ppt0006-plono
+       AND psttr IN gr_psttr
+       AND status = 'O'.
+
+  ELSEIF ( zc102ppt0006-plono IS INITIAL ) AND
+         ( gv_psttr_fr IS NOT INITIAL ).
+    SELECT plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0006
+    WHERE psttr IN gr_psttr
+      AND status = 'O'.
+
+  ELSEIF ( zc102ppt0006-plono IS NOT INITIAL ) AND
+         ( gv_psttr_fr IS INITIAL ).
+    SELECT  plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0006
+       WHERE plono = zc102ppt0006-plono
+         AND status = 'O'.
+
+  ELSE.
+    SELECT  plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+           erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0006
+     WHERE status = 'O'.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_alv_top
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_alv_top .
+  DATA  :  lv_tabix TYPE sy-tabix.
+
+  CLEAR : gs_data, gt_data.
+
+
+
+  IF ( zc102ppt0006-plono IS NOT INITIAL ) AND
+   ( gv_psttr_fr IS NOT INITIAL ).
+    SELECT plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_data
+      FROM zc102ppt0006
+     WHERE plono = zc102ppt0006-plono
+       AND psttr IN gr_psttr
+      AND  status = 'P'
+      ORDER BY plono.
+
+  ELSEIF ( zc102ppt0006-plono IS INITIAL ) AND
+         ( gv_psttr_fr IS NOT INITIAL ).
+    SELECT  plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_data
+      FROM zc102ppt0006
+    WHERE psttr IN gr_psttr
+      AND  status = 'P'
+            ORDER BY plono.
+
+  ELSEIF ( zc102ppt0006-plono IS NOT INITIAL ) AND
+         ( gv_psttr_fr IS INITIAL ).
+    SELECT  plono  matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_data
+      FROM zc102ppt0006
+       WHERE plono = zc102ppt0006-plono
+         AND  status = 'P'
+            ORDER BY plono.
+
+  ELSE.
+    SELECT  plono  matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_data
+      FROM zc102ppt0006
+     WHERE status = 'P'
+            ORDER BY plono.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab3
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tab3 .
+  CLEAR : gs_data.
+
+  IF ( zc102ppt0006-plono IS NOT INITIAL ) AND
+   ( gv_psttr_fr IS NOT INITIAL ).
+    SELECT plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+      FROM zc102ppt0006
+     WHERE plono = zc102ppt0006-plono
+       AND psttr IN gr_psttr
+       AND status = 'X'
+        ORDER BY plono.
+
+
+  ELSEIF ( zc102ppt0006-plono IS INITIAL ) AND
+         ( gv_psttr_fr IS NOT INITIAL ).
+    SELECT  plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+      FROM zc102ppt0006
+    WHERE psttr IN gr_psttr
+      AND status = 'X'
+        ORDER BY plono.
+
+
+  ELSEIF ( zc102ppt0006-plono IS NOT INITIAL ) AND
+         ( gv_psttr_fr IS INITIAL ).
+    SELECT  plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+      FROM zc102ppt0006
+     WHERE plono = zc102ppt0006-plono
+       AND status = 'X'
+        ORDER BY plono.
+
+
+  ELSE.
+    SELECT  plono matnr werks wkcno
+            stlno psttr pedtr reaso reason_text status
+            menge meins ref_no
+          erdat ernam erzet
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+      FROM zc102ppt0006
+     WHERE status = 'X'
+        ORDER BY plono.
+
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form popup_to_confirm_back
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- GV_ANSWER
+*&---------------------------------------------------------------------*
+FORM popup_to_confirm_back  CHANGING pv_answer.
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data save'
+      text_question         = TEXT-q01
+      text_button_1         = 'Yes'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = 'No'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form tab_row_select
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM tab_row_select .
+
+
+  DATA : lv_invalid_selected TYPE abap_bool VALUE abap_false.
+  DATA: lt_roid TYPE lvc_t_roid,
+        ls_roid TYPE lvc_s_roid.
+
+  " 선택된 행이 gt_tab1/2/3에 있는지 확인
+  LOOP AT lt_roid INTO ls_roid.
+
+    READ TABLE gt_data INTO gs_data INDEX ls_roid-row_id.
+    IF sy-subrc <> 0.
+      CONTINUE.
+    ENDIF.
+
+    " 이미 승인된 항목이거나 gt_tab1/2/3에 있는 경우 필터링
+    READ TABLE gt_tab1 WITH KEY plono = gs_data-plono TRANSPORTING NO FIELDS.
+    IF sy-subrc = 0.
+      lv_invalid_selected = abap_true.
+      EXIT.
+    ENDIF.
+
+    READ TABLE gt_tab2 WITH KEY plono = gs_data-plono TRANSPORTING NO FIELDS.
+    IF sy-subrc = 0.
+      lv_invalid_selected = abap_true.
+      EXIT.
+    ENDIF.
+
+    READ TABLE gt_tab3 WITH KEY plono = gs_data-plono TRANSPORTING NO FIELDS.
+    IF sy-subrc = 0.
+      lv_invalid_selected = abap_true.
+      EXIT.
+    ENDIF.
+
+  ENDLOOP.
+
+  " 오류 메시지 출력
+  IF lv_invalid_selected = abap_true.
+    MESSAGE s000 WITH '계획 승인 대기 건에 대해 선택해주세요' DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form count_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form count_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM count_data .
+*  DATA : lv_cnt TYPE i.
+*  lv_cnt  = lines( gt_data ).
+  gv_cnt1 = lines( gt_data ) + lines( gt_tab1 ).
+  gv_cnt2 = lines( gt_tab2 ).
+  gv_cnt3 = lines( gt_data ).
+  gv_cnt4 = lines( gt_tab3 ).
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form init_screen_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM init_screen_value .
+
+  gv_name  = sy-uname.
+  gv_date = sy-datum.
+  gv_time = sy-uzeit.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_pop
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_pop .
+
+
+  CALL METHOD go_pop_grid->set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 1.
+
+
+  CALL METHOD go_pop_grid->set_table_for_first_display
+    EXPORTING
+      is_variant           = gs_variant
+      i_save               = 'A'
+      i_default            = 'X'
+      is_layout            = gs_pop_layout
+      it_toolbar_excluding = gt_ui_functions
+    CHANGING
+      it_outtab            = gt_pop
+      it_fieldcatalog      = gt_pop_fcat.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form plono_set
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM plono_set .
+
+  DATA:  lv_selected_index TYPE sy-tabix.
+
+  lv_selected_index = sy-tabix.
+
+  " ALV에서 사용자가 선택한 행의 인덱스 번호를 알고 있다면
+  READ TABLE gt_data INTO gs_data INDEX lv_selected_index.
+  IF sy-subrc = 0.
+    zc102ppt0006-plono = gs_data-plono.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_row_edit
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_row_edit .
+  DATA: lt_roid TYPE lvc_t_roid,
+        ls_roid TYPE lvc_s_roid,
+        lt_styl TYPE lvc_t_styl,
+        ls_styl TYPE lvc_s_styl,
+        ls_row  LIKE LINE OF gt_data.
+
+*  IF go_alv_grid IS BOUND.
+  CALL METHOD go_alv_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid.
+*  ENDIF.
+
+  IF lt_roid IS INITIAL.
+    MESSAGE '수정할 행을 선택해주세요.' TYPE 'E'.
+  ENDIF.
+
+  LOOP AT lt_roid INTO ls_roid.
+
+
+    READ TABLE gt_data INTO gs_data INDEX ls_roid-row_id.
+
+    PERFORM set_read_mode USING ' '.
+    PERFORM set_edit_mode USING 'PSTTR'.
+
+    MODIFY gt_data FROM gs_data INDEX ls_roid-row_id TRANSPORTING cell_tab.
+
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_read_mode
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_read_mode  USING pv_field.
+  CLEAR gs_style.
+  gs_style-fieldname = pv_field.
+  gs_style-style     = cl_gui_alv_grid=>mc_style_disabled.
+  INSERT gs_style INTO TABLE gs_data-cell_tab.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_alv_listbox
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_alv_listbox .
+  CLEAR : gs_pop, gt_drop.
+  LOOP AT gt_list INTO gs_list.
+    gs_drop-handle = 1.
+    gs_drop-value = gs_list-reaso.
+    IF sy-subrc = 0.
+      APPEND gs_drop TO gt_drop.
+    ENDIF.
+
+  ENDLOOP.
+*  DELETE ADJACENT DUPLICATES FROM gt_data COMPARING reaso.
+
+  CALL METHOD go_pop_grid->set_drop_down_table
+    EXPORTING
+      it_drop_down = gt_drop.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_pop
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_pop .
+
+
+  CLEAR : gs_data.
+
+  SELECT plono matnr
+         stlno psttr pedtr reaso
+    INTO CORRESPONDING FIELDS OF TABLE gt_pop
+    FROM zc102ppt0006.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_selected_row_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_selected_row_data .
+
+
+  DATA: lt_roid TYPE lvc_t_roid,
+        ls_roid TYPE lvc_s_roid,
+        ls_data LIKE LINE OF gt_data,
+        ls_pop  LIKE LINE OF gt_pop.  " 팝업용 테이블 구조
+*  CLEAR: gt_pop.
+
+  CALL METHOD go_alv_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid.
+
+  LOOP AT lt_roid INTO ls_roid.
+    READ TABLE gt_data INTO ls_data INDEX ls_roid-row_id.
+    IF sy-subrc = 0.
+      MOVE-CORRESPONDING ls_data TO ls_pop.
+      APPEND ls_pop TO gt_pop. " ← 팝업 테이블에 누적
+    ENDIF.
+  ENDLOOP.
+
+  PERFORM set_pop_screen.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_decl_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_decl_data .
+
+  DATA : lv_answer. " 저장시 사용자 동의
+
+  CALL METHOD go_pop_grid->check_changed_data.
+
+*--반품 사유를 선택/작성하지 않고 나가려고 하면 반품 사유를 작성 메시지 처리
+  PERFORM check_data.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_data .
+
+  LOOP AT gt_pop INTO gs_pop.
+    IF gs_pop-reaso IS INITIAL.
+      MESSAGE e044 DISPLAY LIKE 'I'.
+      RETURN.  " 또는 EXIT
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_pop_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_pop_screen .
+
+
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_style TYPE lvc_s_styl.
+
+  LOOP AT gt_pop INTO gs_pop.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR : ls_style, gs_pop-cell_tab.
+
+    CLEAR ls_style.
+    ls_style-fieldname = 'REASO'.
+    ls_style-style     = cl_gui_alv_grid=>mc_style_enabled. " 편집모드
+    INSERT ls_style INTO TABLE gs_pop-cell_tab.
+
+    MODIFY gt_pop FROM gs_pop INDEX lv_tabix TRANSPORTING cell_tab.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_event
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_event .
+  CALL METHOD go_alv_grid->set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 1.
+  CALL METHOD go_alv_grid->register_edit_event
+    EXPORTING
+      i_event_id = cl_gui_alv_grid=>mc_evt_modified.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout .
+
+*-- Set top_layout
+  gs_top_layout-zebra       = abap_true.
+  gs_top_layout-cwidth_opt  = 'A'.
+  gs_top_layout-sel_mode    = 'D'.
+  gs_top_layout-stylefname = 'CELL_TAB'.
+  gs_top_layout-grid_title = '계획오더 대기 목록'.
+
+
+*-- 새로 생긴 아이템 맨 위로
+  CLEAR : gt_sort_clear, gs_sort_clear.
+  gs_sort_clear-spos = 1.
+  gs_sort_clear-fieldname = 'SORT_KEY'.
+  gs_sort_clear-up = abap_false.
+  APPEND gs_sort_clear TO gt_sort_clear.
+
+*-- Set bottom_layout
+  gs_bottom_layout-zebra       = abap_true.
+  gs_bottom_layout-cwidth_opt  = 'A'.
+  gs_bottom_layout-sel_mode    = 'D'.
+  gs_bottom_layout-stylefname = 'CELL_TAB'.
+  gs_bottom_layout-grid_title = '계획오더 처리 목록'.
+
+
+*-- Set pop layout
+  gs_pop_layout-zebra       = abap_true.
+  gs_pop_layout-cwidth_opt  = 'A'.
+  gs_pop_layout-sel_mode    = 'D'.
+  gs_pop_layout-stylefname = 'CELL_TAB'.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_list
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_list .
+
+  IF gt_list IS INITIAL.
+    CLEAR : gs_list, gt_list.
+
+    gs_list-reaso = '재료 부족'.
+    APPEND gs_list TO gt_list.
+
+    gs_list-reaso = '생산 능력 초과'.
+    APPEND gs_list TO gt_list.
+
+    gs_list-reaso = '유통기한 문제'.
+    APPEND gs_list TO gt_list.
+
+    gs_list-reaso = '기타'.
+    APPEND gs_list TO gt_list.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_pop_table
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_pop_table .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  CALL METHOD go_pop_grid->refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_reason
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_reason .
+
+  DATA: lt_save       TYPE TABLE OF zc102ppt0006,
+        ls_save       LIKE LINE OF gt_tab1,
+        lv_tabix      TYPE sy-tabix,
+        lv_flag,
+        lv_valid      TYPE abap_bool,
+        lt_delete_idx TYPE STANDARD TABLE OF i WITH DEFAULT KEY.
+
+
+  CALL METHOD go_pop_grid->check_changed_data.
+
+*-- 유효성 검사                   "일단
+*  PERFORM check_so_input_validity CHANGING lv_valid.
+*  IF lv_valid = abap_false.
+*    RETURN.
+*  ENDIF.
+
+*--사유를 선택했는지 확인 / 사원정보 입력했는지 확인
+*  PERFORM check_valid_data.
+
+
+  LOOP AT gt_pop INTO gs_pop.
+    IF
+*      zc102hrt0002-empnam IS INITIAL.
+*      MESSAGE i078 .
+*      RETURN.
+*    ELSEIF
+       gs_pop-reaso IS INITIAL.
+      MESSAGE i044.
+      RETURN.
+    ENDIF.
+  ENDLOOP.
+
+
+*-- 데이터 저장 전 사용자에게 확인
+  PERFORM confirm_reason_save CHANGING gv_answer.
+
+  CHECK gv_answer EQ '1'.
+
+
+  LOOP AT gt_pop INTO gs_pop.
+
+    CLEAR gs_data.
+    READ TABLE gt_data INTO gs_data WITH KEY plono = gs_pop-plono.
+*                                             mrpno = gs_pop-mrpno
+*                                             bomno = gs_pop-bomno.
+    IF sy-subrc = 0.
+      " 팝업 데이터로부터 필요한 필드 복사
+      gs_data-ostatus = icon_led_red.
+      gs_data-status = 'X'.
+      gs_data-modi_yn = abap_true.
+      gs_data-erdat = sy-datum.
+      gs_data-erzet = sy-uzeit.
+      gs_data-reaso = gs_pop-reaso. " 반려사유도 옮김
+      gs_data-reason_text = gs_pop-reason_text.
+      gs_data-resonbutton = gs_pop-resonbutton .
+      gs_data-sort_key = 'A'.
+*      gs_data-ernam = zc102hrt0002-empnam.
+      gs_data-ernam = sy-uname..
+
+      " 메인 테이블에 반영
+      MODIFY gt_data FROM gs_data INDEX sy-tabix
+                     TRANSPORTING ostatus status modi_yn reason_text resonbutton
+                                 erdat erzet ernam  reaso sort_key.
+
+
+
+      CLEAR ls_save.
+      MOVE-CORRESPONDING gs_data TO ls_save.
+      MOVE-CORRESPONDING gs_data TO gs_reject.
+
+
+      ls_save-cell_tab = gs_pop-cell_tab.
+
+*      APPEND ls_save TO gt_tab1.
+*      APPEND ls_save TO gt_tab3.
+      INSERT ls_save INTO gt_tab1 INDEX 1.
+      INSERT ls_save INTO gt_tab3 INDEX 1.
+      APPEND gs_reject TO gt_reject.
+
+
+    ENDIF.
+
+  ENDLOOP.
+
+
+*-- Move data for save
+  MOVE-CORRESPONDING gt_pop TO lt_save.
+
+
+
+  " 인덱스를 역순으로 정렬 후 삭제 (꼬임 방지)
+  SORT gt_roid BY row_id DESCENDING.
+
+*-- Delete row
+  LOOP AT gt_roid INTO gs_roid.
+
+    DELETE gt_data INDEX gs_roid-row_id.
+  ENDLOOP.
+
+
+*  MESSAGE s000 WITH '계획오더가 반려되었습니다.' DISPLAY LIKE 'S'.
+
+  CLEAR gt_pop.
+  PERFORM refresh_table.
+  PERFORM refresh_pop_table.
+
+  gv_save_flag = abap_true.
+
+*-- 사원정보 초기화
+  CLEAR : zc102hrt0002-empnam ,zc102hrt0002-empno, gv_lock.
+  LEAVE TO SCREEN 0.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form confirm_reason_save
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- GV_ANSWER
+*&---------------------------------------------------------------------*
+FORM confirm_reason_save  CHANGING pv_answer.
+
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data save dialog'
+      text_question         = '반려사유를 확정하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer. " Yes
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_valid_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_valid_data .
+
+
+
+  LOOP AT gt_pop INTO gs_pop.
+    IF gs_pop-reaso IS INITIAL.
+      MESSAGE i044.
+      RETURN.
+    ENDIF.
+  ENDLOOP.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form edit_ctrl
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM edit_ctrl  USING   pv_field.
+  CLEAR : gs_style.
+  gs_style-fieldname = pv_field.
+  gs_style-style     = cl_gui_alv_grid=>mc_style_enabled.
+  INSERT gs_style INTO TABLE gs_data-cell_tab.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form read_mode
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM read_mode  USING   pv_field.
+  CLEAR : gs_style.
+  gs_style-fieldname = pv_field.
+  gs_style-style     = cl_gui_alv_grid=>mc_style_disabled.
+  INSERT gs_style INTO TABLE gs_data-cell_tab.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_edit_read
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_edit_read .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_style TYPE lvc_s_styl.
+
+  LOOP AT gt_data INTO gs_data.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR : ls_style, gs_data-cell_tab.
+
+    ls_style-fieldname = 'PSTTR'.
+    ls_style-style = cl_gui_alv_grid=>mc_style_enabled.
+    INSERT ls_style INTO TABLE gs_data-cell_tab.
+
+
+    MODIFY gt_data FROM gs_data INDEX lv_tabix TRANSPORTING cell_tab.
+
+  ENDLOOP.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_ppono
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_ppono .
+
+  DATA: gv_number    TYPE n LENGTH 10,
+        gv_prefix(3),
+        gv_full_code TYPE string,
+        gv_range_nr  TYPE inri-nrrangenr,
+        gv_quantity  TYPE inri-quantity.
+
+  DATA: ls_nriv TYPE nriv.
+
+  gv_prefix = 'PDO'.
+  gv_range_nr = '01'. " 원하는 번호 - 도메인 정의서에 있음!!!
+  gv_quantity = 1.    " 원하는 증가량 사용
+
+**********************************************************************
+* 순번 호출
+**********************************************************************
+  CALL METHOD zclc102cm_auto_sequence=>get_next_value
+    EXPORTING
+      pv_range_nr = gv_range_nr
+      pv_prefix   = gv_prefix
+      pv_quantity = gv_quantity
+    IMPORTING
+      pv_result   = gv_full_code.
+
+  gv_pdono = CONV zc102ppt0012-pdono( gv_full_code ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_pdono
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_pdono .
+  CLEAR gs_pdono.
+
+
+  gs_pdono-pdono = gv_pdono.
+  gs_pdono-plono = gs_approved-plono.
+  gs_pdono-wkcno = gs_approved-wkcno.
+  gs_pdono-menge = gs_approved-menge.
+  gs_pdono-meins = gs_approved-meins.
+  gs_pdono-werks = gs_approved-werks.
+  gs_pdono-stlno = gs_approved-stlno.
+*  gs_pdono-mrpno = gs_approved-mrpno.
+*  gs_pdono-bomno = gs_approved-bomno.
+  gs_pdono-pdstt = gs_approved-psttr.
+  gs_pdono-pdfns = gs_approved-pedtr.
+*  gs_pdono-pdstt = sy-datum.                 "일단 이렇게 넣어주기
+*  gs_pdono-pdfns = sy-datum + 4.
+  gs_pdono-matnr = gs_approved-matnr.
+  gs_pdono-rouno = 'R10'.
+  gs_pdono-mksta = 'R'.
+
+  " Time stamp
+  IF gs_pdono-erdat IS INITIAL.
+
+    " 최초 생성 정보 (작성일시/작성자)
+    gs_pdono-erdat = sy-datum.
+    gs_pdono-erzet = sy-uzeit.
+    gs_pdono-ernam = sy-uname.
+
+  ENDIF.
+
+  " 항상 최신 수정 정보 (수정일시/수정자)
+  gs_pdono-aedat = sy-datum.
+  gs_pdono-aezet = sy-uzeit.
+  gs_pdono-aenam = sy-uname.
+  IF NOT gs_pdono IS INITIAL.
+    APPEND gs_pdono TO gt_pdono.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_plono
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_plono .
+
+
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'PLONO'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_PLONO-PLONO'
+      window_title = '계획 오더 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_plono
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form show_message
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM show_message .
+
+  " 조회 결과 메시지 출력
+  IF gv_cnt1 = 0 AND gv_cnt2 = 0 AND gv_cnt3 = 0 AND gv_cnt4 = 0.
+    MESSAGE s000 WITH '조회되는 데이터가 없습니다.' DISPLAY LIKE 'E'.
+  ELSE.
+    MESSAGE s000 WITH |총 { gv_cnt1 }건이 조회되었습니다. (대기: { gv_cnt2 }, 승인: { gv_cnt3 }, 반려: { gv_cnt4 })|.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_sort_b
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_sort_b .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  LOOP AT gt_data INTO gs_data.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR :  gs_data-sort_key.
+
+    gs_data-sort_key = 'B'.
+    MODIFY gt_data FROM gs_data INDEX lv_tabix TRANSPORTING
+                                                  sort_key .
+
+  ENDLOOP.
+
+
+  LOOP AT gt_tab1 INTO gs_tab1.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR :  gs_tab1-sort_key.
+
+    gs_tab1-sort_key = 'B'.
+    MODIFY gt_tab1 FROM gs_tab1 INDEX lv_tabix TRANSPORTING
+                                                  sort_key .
+
+  ENDLOOP.
+
+
+
+  LOOP AT gt_tab2 INTO gs_tab2.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR :  gs_tab2-sort_key.
+
+    gs_tab2-sort_key = 'B'.
+    MODIFY gt_tab2 FROM gs_tab2 INDEX lv_tabix TRANSPORTING
+                                                  sort_key .
+
+  ENDLOOP.
+
+
+
+  LOOP AT gt_tab3 INTO gs_tab3.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR :  gs_tab3-sort_key.
+
+    gs_tab3-sort_key = 'B'.
+    MODIFY gt_tab3 FROM gs_tab3 INDEX lv_tabix TRANSPORTING
+                                                  sort_key .
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_all_data_in
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_all_data_in .
+
+
+  "필수 필드 누락 체크
+  IF gs_data-plono IS INITIAL OR
+     gs_data-matnr IS INITIAL OR
+     gs_data-stlno IS INITIAL OR
+     gs_data-psttr IS INITIAL OR
+     gs_data-pedtr IS INITIAL.
+    MESSAGE s000 WITH '필수 정보가 누락된 계획오더는 승인할 수 없습니다.' DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_delete_count
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&-------------------------------------------------------------------
+*&---------------------------------------------------------------------*
+*& Form set_status
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_status .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_style TYPE lvc_s_styl,
+         lv_icon  TYPE icon_d.
+
+
+  LOOP AT gt_data INTO gs_data.
+
+    lv_tabix = sy-tabix.
+
+    CASE gs_data-status.                   " 계획오더 상태 필드
+      WHEN 'O'.
+        gs_data-ostatus = icon_led_green.  " 승인
+      WHEN 'X'.
+        gs_data-ostatus = icon_led_red.    " 반려
+      WHEN 'P'  OR ''.
+        gs_data-ostatus = icon_led_yellow. " 승인대기
+    ENDCASE.
+
+    MODIFY gt_data FROM gs_data INDEX lv_tabix
+                                TRANSPORTING ostatus.
+  ENDLOOP.
+
+  LOOP AT gt_tab1 INTO gs_tab1.
+
+    lv_tabix = sy-tabix.
+
+    CASE gs_tab1-status. " 계획오더 상태 필드
+      WHEN 'O'.
+        gs_tab1-ostatus = icon_led_green.  " 승인
+      WHEN 'X'.
+        gs_tab1-ostatus = icon_led_red.    " 반려
+      WHEN 'P'  OR ''.
+        gs_tab1-ostatus = icon_led_yellow. " 승인대기
+    ENDCASE.
+
+**--셀 버튼 아이콘
+*    gs_tab1-reason_text = gs_text-text.
+*    gs_tab1-resonbutton = icon_create_text.
+*  ENDIF.
+*
+*  MODIFY gt_pop FROM gs_pop INDEX gv_tabix
+*                            TRANSPORTING resonbutton
+*                                         reason_text
+*                                         cell_tab.
+*--셀 버튼 세팅
+    IF gs_tab1-reaso = '기타'.
+      CLEAR: ls_style.
+      ls_style-fieldname = 'RESONBUTTON'.
+      ls_style-style = cl_gui_alv_grid=>mc_style_button.
+      INSERT ls_style INTO TABLE gs_tab1-cell_tab.
+      gs_tab1-resonbutton = icon_create_text.
+
+      "icon_create_text.
+    ENDIF.
+    MODIFY gt_tab1 FROM gs_tab1 INDEX lv_tabix
+                                TRANSPORTING ostatus
+                                             cell_tab
+                                             resonbutton.
+
+  ENDLOOP.
+
+  LOOP AT gt_tab2 INTO gs_tab2.
+
+    lv_tabix = sy-tabix.
+
+    CASE gs_tab2-status. " 계획오더 상태 필드
+      WHEN 'O'.
+        gs_tab2-ostatus = icon_led_green.  " 승인
+    ENDCASE.
+
+    MODIFY gt_tab2 FROM gs_tab2 INDEX lv_tabix
+                                TRANSPORTING ostatus.
+
+  ENDLOOP.
+
+  LOOP AT gt_tab3 INTO gs_tab3.
+
+    lv_tabix = sy-tabix.
+
+    CASE gs_tab3-status. " 계획오더 상태 필드
+      WHEN 'X'.
+        gs_tab3-ostatus = icon_led_red.    " 반려
+    ENDCASE.
+
+*--셀 버튼 세팅
+    IF gs_tab3-reaso = '기타'.
+      CLEAR: ls_style.
+      ls_style-fieldname = 'RESONBUTTON'.
+      ls_style-style = cl_gui_alv_grid=>mc_style_button.
+      INSERT ls_style INTO TABLE gs_tab3-cell_tab.
+      gs_tab3-resonbutton = icon_create_text.
+*    MODIFY gt_tab1 FROM gs_tab1 INDEX lv_tabix
+*                                TRANSPORTING ostatus
+*                                             cell_tab
+*                                             resonbutton
+*                                             icon_create_text.
+    ENDIF.
+    MODIFY gt_tab3 FROM gs_tab3 INDEX lv_tabix
+                                TRANSPORTING ostatus
+                                             cell_tab
+                                             resonbutton.
+    "icon_create_text.
+
+  ENDLOOP.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_plant_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_plant_data .
+
+  CLEAR : gt_plant, gs_plant.
+  SELECT stlno werks wkcno
+    INTO CORRESPONDING FIELDS OF TABLE gt_plant
+    FROM zc102ppt0002.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form make_display_body
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM make_display_body .
+
+  DATA : lv_tabix TYPE sy-tabix.
+  CLEAR lv_tabix.
+
+*-- Make display body
+  LOOP AT gt_data INTO gs_data.
+
+    lv_tabix = sy-tabix.
+
+*-- Get plant name
+    CLEAR gs_plant.
+    READ TABLE gt_plant INTO gs_plant WITH KEY stlno = gs_data-stlno.
+    IF sy-subrc EQ 0.
+      gs_data-werks = gs_plant-werks.
+      gs_data-wkcno = gs_plant-wkcno.
+    ENDIF.
+
+    MODIFY gt_data FROM gs_data INDEX lv_tabix
+                                TRANSPORTING werks  wkcno.
+
+  ENDLOOP.
+
+
+
+  LOOP AT gt_tab1 INTO gs_tab1.
+
+    lv_tabix = sy-tabix.
+
+*-- Get plant name
+    CLEAR gs_plant.
+    READ TABLE gt_plant INTO gs_plant WITH KEY stlno = gs_tab1-stlno.
+    IF sy-subrc EQ 0.
+      gs_tab1-werks = gs_plant-werks.
+      gs_tab1-wkcno = gs_plant-wkcno.
+    ENDIF.
+
+    MODIFY gt_tab1 FROM gs_tab1 INDEX lv_tabix
+                                TRANSPORTING werks  wkcno.
+
+  ENDLOOP.
+
+*  PERFORM refresh_table.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_edit_toolbar_pop
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_OBJECT
+*&      --> E_INTERACTIVE
+*&---------------------------------------------------------------------*
+FORM handle_edit_toolbar_pop USING   po_object TYPE REF TO cl_alv_event_toolbar_set
+                                     pv_interactive
+
+
+  data : lv_disabled.
+
+
+  CLEAR gs_button.
+  gs_button-butn_type = '3'.
+  APPEND gs_button TO po_object->mt_toolbar.
+
+  CLEAR gs_button.
+  gs_button-function  = 'OKAY'.
+  gs_button-icon      = icon_okay.
+  gs_button-quickinfo = '반려사유 확정'.
+  gs_button-text = '확정'.
+  APPEND gs_button TO po_object->mt_toolbar.
+  .
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_button_click_reject
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> ES_COL_ID
+*&      --> ES_ROW_NO
+*&---------------------------------------------------------------------*
+FORM handle_button_click_reject  USING   ps_col_id TYPE lvc_s_col
+                                         ps_row_no TYPE lvc_s_roid.
+
+  gv_from = 'C'. "버튼에서 클릭함을 플래그 삼음
+*-- 클릭된 버튼이 몇 행인지 읽기
+  READ TABLE gt_data INTO gs_data INDEX ps_row_no-row_id.
+  CHECK sy-subrc = 0.
+
+*--텍스트 에디터 호출
+  CALL SCREEN 120 STARTING AT 5 15.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_text_editor
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_text_editor .
+
+  CREATE OBJECT go_text_cont
+    EXPORTING
+      container_name = 'TEXT_AREA'.
+
+  CREATE OBJECT go_text_edit
+    EXPORTING
+      wordwrap_mode = cl_gui_textedit=>wordwrap_at_windowborder
+      parent        = go_text_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_text_editor
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_text_editor .
+
+  " 기존에 생성된 객체가 있다면 먼저 해제
+  IF go_text_cont IS INITIAL.
+    PERFORM create_text_editor.
+
+    IF gv_from = 'B'.
+      CLEAR : gt_text, gs_text.
+      CALL METHOD go_text_edit->set_autoindent_mode
+        EXPORTING
+          auto_indent            = 1
+        EXCEPTIONS
+          error_cntl_call_method = 1
+          OTHERS                 = 2.
+
+      CALL METHOD go_text_edit->delete_text
+        EXCEPTIONS
+          error_cntl_call_method = 1
+          OTHERS                 = 2.
+
+      CALL METHOD go_text_edit->set_selected_text_as_r3table
+        EXPORTING
+          table                         = gt_text
+          enable_editing_protected_text = go_text_edit->false
+        EXCEPTIONS
+          error_dp                      = 1
+          error_dp_create               = 2
+          OTHERS                        = 3.
+
+
+
+    ELSEIF gv_from = 'C'.
+
+      SPLIT gs_text-text AT cl_abap_char_utilities=>newline
+                              INTO TABLE gt_text.
+
+      CALL METHOD go_text_edit->delete_text
+        EXCEPTIONS
+          error_cntl_call_method = 1
+          OTHERS                 = 2.
+
+      CALL METHOD go_text_edit->set_selected_text_as_r3table
+        EXPORTING
+          table                         = gt_text
+          enable_editing_protected_text = go_text_edit->false
+        EXCEPTIONS
+          error_dp                      = 1
+          error_dp_create               = 2
+          OTHERS                        = 3.
+
+      CALL METHOD go_text_edit->set_readonly_mode
+        EXPORTING
+          readonly_mode          = 1
+        EXCEPTIONS
+          error_cntl_call_method = 1
+          invalid_parameter      = 2
+          OTHERS                 = 3.
+
+      CLEAR gv_from.
+    ENDIF.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0120  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0120 INPUT.
+
+
+  CASE gv_okcode.
+    WHEN 'REJC'.
+      PERFORM save_text.     " 원본
+
+    WHEN 'XXXX'.
+      PERFORM check_no.
+    WHEN OTHERS.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Form SAVE_TEXT
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_text .
+
+  DATA : ls_style TYPE lvc_s_styl.
+
+
+  CALL METHOD go_text_edit->get_text_as_r3table
+    IMPORTING
+      table                  = gt_text
+    EXCEPTIONS
+      error_dp               = 1
+      error_cntl_call_method = 2
+      error_dp_create        = 3
+      potential_data_loss    = 4
+      OTHERS                 = 5.
+
+  CLEAR gv_from.
+
+  PERFORM confirm_save_pop CHANGING gv_answer.
+
+
+  CHECK gv_answer EQ '1'.
+
+  LOOP AT gt_text INTO gs_text.
+
+    CONCATENATE gs_pop-reason_text gs_text-text
+                cl_abap_char_utilities=>newline
+                INTO gs_pop-reason_text.
+    IF gs_text-text IS NOT INITIAL.
+*--셀 버튼 세팅
+      CLEAR: ls_style.
+      ls_style-fieldname = 'RESONBUTTON'.
+      ls_style-style = cl_gui_alv_grid=>mc_style_button.
+      INSERT ls_style INTO TABLE gs_pop-cell_tab.
+
+**--셀 버튼 아이콘
+      gs_pop-reason_text = gs_text-text.
+      gs_pop-resonbutton = icon_create_text.
+    ENDIF.
+
+    MODIFY gt_pop FROM gs_pop INDEX gv_tabix
+                              TRANSPORTING resonbutton
+                                           reason_text
+                                           cell_tab.
+
+  ENDLOOP.
+
+  PERFORM refresh_pop_table.
+
+  CALL METHOD : go_text_edit->free,
+                  go_text_cont->free.
+
+  FREE : go_text_edit, go_text_cont.
+
+*-- 사원정보 초기화
+  CLEAR : zc102hrt0002-empnam ,zc102hrt0002-empno, gt_text, gs_text.
+
+  LEAVE TO SCREEN 0.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_no
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_no .
+
+  gv_answer = '3'.
+
+*-- 사원정보 초기화
+  CLEAR : zc102hrt0002-empnam ,zc102hrt0002-empno.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form confirm_save_POP
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- GV_ANSWER
+*&---------------------------------------------------------------------*
+FORM confirm_save_pop  CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data approve dialog'
+      text_question         = '반려 사유를 저장하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer. " Yes
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form make_button_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM make_button_screen .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_style TYPE lvc_s_styl.
+
+
+  CALL METHOD go_text_edit->get_text_as_r3table
+    IMPORTING
+      table                  = gt_text
+    EXCEPTIONS
+      error_dp               = 1
+      error_cntl_call_method = 2
+      error_dp_create        = 3
+      potential_data_loss    = 4
+      OTHERS                 = 5.
+
+  CLEAR gv_from.
+
+  PERFORM confirm_save_pop CHANGING gv_answer.
+
+
+  CHECK gv_answer EQ '1'.
+
+  CLEAR gs_pop-reason_text.
+  LOOP AT gt_text INTO gs_text.
+    CONCATENATE gs_pop-reason_text gs_text-text
+                cl_abap_char_utilities=>newline
+                INTO gs_pop-reason_text.
+
+
+    CLEAR: ls_style.
+    ls_style-fieldname = 'RESONBUTTON'.
+    ls_style-style = cl_gui_alv_grid=>mc_style_button.
+    INSERT ls_style INTO TABLE gs_pop-cell_tab.
+    INSERT ls_style INTO TABLE gs_tab1-cell_tab.
+    INSERT ls_style INTO TABLE gs_tab3-cell_tab.
+
+**--셀 버튼 아이콘
+    gs_pop-resonbutton = icon_create_text.
+    MODIFY gt_pop FROM gs_pop INDEX gv_tabix TRANSPORTING resonbutton reason_text cell_tab.
+
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_f4_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_f4_data .
+
+
+
+  CLEAR gt_empno.
+  SELECT empno empnam
+    INTO CORRESPONDING FIELDS OF TABLE gt_empno
+    FROM zc102hrt0002
+    ORDER BY empno.
+
+  CLEAR gt_plono.
+  SELECT plono
+    INTO CORRESPONDING FIELDS OF TABLE gt_plono
+    FROM zc102ppt0006
+    ORDER BY plono.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_empnam
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_empnam .
+
+  DATA: lt_return TYPE TABLE OF ddshretval,
+        ls_return TYPE ddshretval,
+        ls_empno  LIKE gs_empno.
+
+  " F4 도움말 팝업 표시
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'EMPNO'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_EMPNO-ENPNO'
+      window_title = '사원명'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_empno
+      return_tab   = lt_return.
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form WRITE_WHO
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM write_who .
+
+  DATA : lv_valid TYPE abap_bool.
+
+* 사원정보가 비어있는지 확인
+  IF zc102hrt0002-empnam IS INITIAL.
+
+    gv_empno_inserted = '0'.  " 사원 정보가 비어있다면 0 설정
+    MESSAGE s000 WITH '사원정보를 입력해주세요.' DISPLAY LIKE 'E'.
+    EXIT.
+  ELSE.
+    gv_empno_inserted = '1'.  " 사원 정보가 비어있지 않으면 1 설정
+*-- 유효성 검사
+    PERFORM check_so_input_validity CHANGING lv_valid.
+    IF lv_valid = abap_false.
+      RETURN.
+    ENDIF.
+    CLEAR : gv_lock, zc102hrt0002-empnam, zc102hrt0002-empno.
+    LEAVE TO SCREEN 0.  " 예시로 화면을 종료하는 코드
+  ENDIF.
+
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_button_click
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> ES_COL_ID
+*&      --> ES_ROW_NO
+*&---------------------------------------------------------------------*
+FORM handle_button_click  USING ps_col_id TYPE lvc_s_col
+                                ps_row_no TYPE lvc_s_roid.
+
+  CLEAR : gv_tabix.
+  DATA : lv_answer.
+
+*--팝업창 내부 버튼 설치 (텍스트 에디터 저장시에)
+  CASE gv_button_grid.
+    WHEN 'POP'.
+      READ TABLE gt_pop INTO gs_pop INDEX ps_row_no-row_id.
+      gs_text-text = gs_pop-reason_text.
+    WHEN 'TAB1'.
+      READ TABLE gt_tab1 INTO gs_tab1 INDEX ps_row_no-row_id.
+      gs_text-text = gs_tab1-reason_text.
+    WHEN 'TAB3'.
+      READ TABLE gt_tab3 INTO gs_tab3 INDEX ps_row_no-row_id.
+      gs_text-text = gs_tab3-reason_text.
+  ENDCASE.
+
+  gv_tabix = ps_row_no-row_id. " 인덱스 저장
+
+  IF sy-subrc = 0.
+    CASE ps_col_id-fieldname.
+      WHEN 'RESONBUTTON'.     " 텍스트 에디터 팝업 호출
+        gv_from = 'C'. " 읽기 모드 출력
+        CALL SCREEN 130 STARTING AT 25 10.
+    ENDCASE.
+  ENDIF.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_screen .
+
+
+
+  DATA: lv_answer TYPE c.
+
+  IF gv_modified = abap_true.
+
+    CALL FUNCTION 'POPUP_TO_CONFIRM'
+      EXPORTING
+        titlebar              = '새로고침 확인'
+        text_question         = '변경된 내용이 있습니다. 저장하지 않고 새로고침하면 작성한 내용이 모두 초기화됩니다. 계속하시겠습니까?'
+        text_button_1         = '예'
+        text_button_2         = '아니오'
+        default_button        = '2'
+        display_cancel_button = ' '
+      IMPORTING
+        answer                = lv_answer.
+
+    IF lv_answer <> '1'.
+      RETURN. " '아니오'면 중단
+    ENDIF.
+
+  ENDIF.
+
+
+
+  " 다시 세팅 해주기
+  CLEAR : zc102ppt0006-plono , gv_psttr_fr ,gv_psttr_to.
+  PERFORM set_data.
+  PERFORM get_plant_data.
+  PERFORM make_display_body.
+  PERFORM count_data.
+  " ALV 갱신
+  PERFORM refresh_table.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_text_editor_read
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_text_editor_read .
+
+*-- read only 모드로 띄우기
+  CALL METHOD go_text_edit->set_readonly_mode
+    EXPORTING
+      readonly_mode = 1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_button_click2
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> ES_COL_ID
+*&      --> ES_ROW_NO
+*&---------------------------------------------------------------------*
+FORM handle_button_click2  USING ps_col_id TYPE lvc_s_col ps_row_no TYPE lvc_s_roid.
+
+  gv_from = 'C'.
+  READ TABLE gt_data INTO gs_data INDEX ps_row_no-row_id.
+  CHECK sy-subrc = 0.
+
+
+  CALL SCREEN 130 STARTING AT 100 10.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_text_editor_icon
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_text_editor_icon .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_style TYPE lvc_s_styl.
+
+
+
+  LOOP AT gt_tab1 INTO gs_tab1.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR : ls_style, gs_tab1-cell_tab.
+
+
+**-- 셀 버튼 생성
+    CLEAR: ls_style.
+    ls_style-fieldname = 'RESONBUTTON'.
+    ls_style-style = cl_gui_alv_grid=>mc_style_button.
+    INSERT ls_style INTO TABLE gs_tab1-cell_tab.
+
+
+
+*--셀 버튼 아이콘
+    gs_tab1-resonbutton = icon_create_text.
+
+
+    MODIFY gt_tab1 FROM gs_tab1 INDEX lv_tabix TRANSPORTING cell_tab.
+
+  ENDLOOP.
+
+
+
+  LOOP AT gt_tab3 INTO gs_tab3.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR : ls_style, gs_tab1-cell_tab.
+
+
+**-- 셀 버튼 생성
+    CLEAR: ls_style.
+    ls_style-fieldname = 'RESONBUTTON'.
+    ls_style-style = cl_gui_alv_grid=>mc_style_button.
+    INSERT ls_style INTO TABLE gs_tab3-cell_tab.
+
+
+
+*--셀 버튼 아이콘
+    gs_tab3-resonbutton = icon_create_text.
+
+
+    MODIFY gt_tab3 FROM gs_tab3 INDEX lv_tabix TRANSPORTING cell_tab.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_text_2
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_text_2 .
+  DATA : ls_style TYPE lvc_s_styl.
+
+  DATA : lt_roid TYPE lvc_t_roid,
+         ls_roid TYPE lvc_s_roid.
+
+  CALL METHOD go_text_edit->get_text_as_r3table
+    IMPORTING
+      table                  = gt_text
+    EXCEPTIONS
+      error_dp               = 1
+      error_cntl_call_method = 2
+      error_dp_create        = 3
+      potential_data_loss    = 4
+      OTHERS                 = 5.
+
+  CALL METHOD go_pop_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid.
+
+  PERFORM confirm_save_pop CHANGING gv_answer.
+  CHECK gv_answer EQ '1'.
+
+  LOOP AT lt_roid INTO ls_roid.
+    CLEAR : gs_pop.
+
+    CONCATENATE gs_pop-reason_text gs_text-text
+                cl_abap_char_utilities=>newline
+                INTO gs_pop-reason_text.
+
+    READ TABLE gt_pop INTO gs_pop INDEX ls_roid-row_id.
+    IF sy-subrc = 0.
+*--셀 버튼 세팅
+      CLEAR: ls_style.
+      ls_style-fieldname = 'RESONBUTTON'.
+      ls_style-style = cl_gui_alv_grid=>mc_style_button.
+      INSERT ls_style INTO TABLE gs_pop-cell_tab.
+
+**--셀 버튼 아이콘
+      gs_pop-reason_text = gs_text-text.
+      gs_pop-resonbutton = icon_create_text.
+
+      MODIFY gt_pop FROM gs_pop INDEX ls_roid-row_id TRANSPORTING resonbutton reason_text cell_tab.
+    ENDIF.
+
+  ENDLOOP.
+
+  PERFORM refresh_pop_table.
+
+  " 7. 에디터/컨테이너 정리
+  CALL METHOD: go_text_edit->free,
+               go_text_cont->free.
+  FREE: go_text_edit, go_text_cont.
+
+  " 8. 사원정보 초기화 후 종료
+  CLEAR: zc102hrt0002-empnam, zc102hrt0002-empno.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form confirm_refresh
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- GV_ANSWER
+*&---------------------------------------------------------------------*
+FORM confirm_refresh  CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data refresh dialog'
+      text_question         = '변경 사항이 있을 시 새로고침하면 작성한 내용이 모두 초기화됩니다. 계속하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer. " Yes
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_so_input_validity
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_VALID
+*&---------------------------------------------------------------------*
+FORM check_so_input_validity  CHANGING  pv_valid TYPE abap_bool.
+
+  DATA: lv_valid_line TYPE abap_bool VALUE abap_false.
+
+  CLEAR pv_valid.
+
+*-- 필수 필드 체크
+  IF  zc102hrt0002-empno IS INITIAL OR
+     zc102hrt0002-empnam IS INITIAL.
+    MESSAGE i081 DISPLAY LIKE 'E'. " 필수 항목이 입력되지 않았습니다.
+    RETURN.
+  ENDIF.
+
+  pv_valid = abap_true.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_edit_mode
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_edit_mode  USING  pv_field.
+  CLEAR gs_style.
+  gs_style-fieldname = pv_field.
+  gs_style-style     = cl_gui_alv_grid=>mc_style_enabled.
+  INSERT gs_style INTO TABLE gs_data-cell_tab.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_route
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_route .
+
+  gs_route-rouno = 'R10'.
+  gs_route-pdono = gv_pdono.
+  gs_route-wctno = gs_approved-wkcno.
+  gs_route-werks = gs_approved-werks.
+  gs_route-matnr = gs_approved-matnr.
+  gs_route-menge = gs_approved-menge.
+  gs_route-meins = gs_approved-meins.
+  gs_route-rstda = sy-datum.
+*  gs_route-rstda = gs_approved-psttr.
+  gs_route-renda = sy-datum.
+*  gs_route-renda = sy-datum + 1.
+
+  gs_route-remac = '3'. "절단 공정 인원 3 추가
+
+  " 예외 처리: 자재번호가 'M0002'인 경우만 다른 납기 및 인원
+*  IF gs_route-matnr = 'M0002'.
+*    gs_route-renda = sy-datum + 14.
+*    gs_route-reman = '7'.
+*    gs_route-remac = '7'.
+*  ELSE.
+*    gs_route-renda = sy-datum + 7.
+*    gs_route-reman = '5'.
+*    gs_route-remac = '5'.
+*  ENDIF.
+
+  gs_route-status = '△'.
+  gs_route-erdat = sy-datum.
+  gs_route-ernam = sy-uname.
+  gs_route-erzet = sy-uzeit.
+
+  IF NOT gs_route IS INITIAL.
+    APPEND gs_route TO gt_route.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_empno
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_empno .
+
+
+  DATA: lt_return TYPE TABLE OF ddshretval,
+        ls_return TYPE ddshretval,
+        ls_empno  LIKE gs_empno.
+
+  " F4 도움말 팝업 표시
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'EMPNO'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_EMPNO-ENPNO'
+      window_title = '사원명'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_empno
+      return_tab   = lt_return.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_screen .
+  CLEAR : gv_empnam, gs_empno.
+
+  READ TABLE gt_empno INTO gs_empno WITH KEY empno = zc102hrt0002-empno.
+  zc102hrt0002-empnam = gs_empno-empnam.
+  gv_empnam = zc102hrt0002-empnam.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Module INIT_PROCESS_CONTROL_140 OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE init_process_control_140 OUTPUT.
+  IF gv_lock = abap_true.
+    PERFORM set_screen.
+  ENDIF.
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Form set_mroute
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_mroute .
+
+  gs_mroute-pdono = gv_pdono.
+  gs_mroute-rouno = 'R10'.
+  gs_mroute-wctno = gs_approved-wkcno.
+  gs_mroute-werks = gs_approved-werks.
+
+  IF NOT gs_mroute IS INITIAL.
+    APPEND gs_mroute TO gt_mroute.
+  ENDIF.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

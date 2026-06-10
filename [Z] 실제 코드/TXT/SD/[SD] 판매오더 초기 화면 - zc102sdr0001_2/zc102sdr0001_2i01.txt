@@ -1,0 +1,89 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102SDR0001_2I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+
+  CALL METHOD : go_alv_grid->free,
+                go_left_cont->free,
+                go_right_cont->free,
+                go_split_cont->free,
+                go_container->free.
+
+  FREE : go_alv_grid, go_left_cont, go_right_cont,
+         go_split_cont, go_container.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CUST_F4_YEAR_SD  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE year_sd_f4 INPUT.
+
+  IF gs_period-year_sd IS INITIAL.
+    PERFORM set_search_help_year.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  QUART_SD_F4  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE quart_sd_f4 INPUT.
+
+  IF gs_period-quart_sd IS INITIAL.
+    PERFORM set_search_help_quater.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MONTH_SD_F4  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE month_sd_f4 INPUT.
+  IF gs_period-month_sd IS INITIAL.
+    PERFORM set_search_help_month.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  MATNR_F4  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE matnr_f4 INPUT.
+
+  IF gs_period-matnr IS INITIAL.
+    PERFORM set_search_help_matnr.
+  ENDIF.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE gv_okcode.
+    WHEN 'SRCH'.
+      PERFORM get_base_data.
+    WHEN 'CREA'.
+      CALL TRANSACTION 'ZC102SDR0002'.
+    WHEN 'DISP'.
+      CALL TRANSACTION 'ZMC102SD0003'.
+  ENDCASE.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

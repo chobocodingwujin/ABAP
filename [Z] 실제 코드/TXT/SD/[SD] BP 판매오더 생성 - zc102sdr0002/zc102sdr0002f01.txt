@@ -1,0 +1,2088 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102SDR0002F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form set_all_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_so_header .
+
+*-- 판매오더 Header 조회
+  CLEAR gt_so_header.
+  SELECT vbeln_so cusno b~partner ortype audat netwr waers menge state
+         finalsp kbetr dismo delid a~erdat
+         a~erzet a~ernam a~aedat a~aenam a~aezet " Timestamp
+         ddtext AS ortype_name isreg
+    INTO CORRESPONDING FIELDS OF TABLE gt_so_header
+    FROM zc102sdt0006 AS a
+    INNER JOIN zc102bpt0001 AS b
+    ON a~partner = b~partner
+    INNER JOIN dd07t AS c
+    ON a~ortype = c~domvalue_l
+    WHERE a~partner EQ gv_partner2
+    AND c~domname = 'ZC102D_SD_ORTYPE'
+    AND ortype = 'G'  " 일반 판매오더
+    ORDER BY audat DESCENDING vbeln_so DESCENDING.
+
+  DATA(lv_cnt) = lines( gt_so_header ).
+
+  MESSAGE s010 WITH lv_cnt.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_main_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_main_screen .
+
+  IF go_main_cont IS NOT BOUND.
+
+*--좌측 ALV
+    CLEAR : gt_fcat_left, gs_fcat_left.
+    PERFORM set_fcat_left USING : 'X' 'STATUS'   'ICON'         'C' ' ',  " 납품문서 생성
+                                  'X' 'VBELN_SO' 'ZC102SDT0006' ' ' ' ',  " 판매오더 번호
+                                  ' ' 'ORTYPE_NAME'   ' '       'C' ' ',  " 판매오더 유형
+                                  ' ' 'AUDAT'    'ZC102SDT0006' 'C' ' ',  " 주문 일자
+                                  ' ' 'DELID'    'ZC102SDT0006' 'C' ' ',  " 납품일
+                                  ' ' 'MENGE'    'ZC102SDT0006' ' ' ' ',  " 총 주문수량
+                                  ' ' 'FINALSP'  'ZC102SDT0006' ' ' ' ',  " 총 판매가
+                                  ' ' 'WAERS'    'ZC102SDT0006' ' ' 'X'.  " 통화키
+    PERFORM set_layout_left.
+
+*--우측 ALV
+    CLEAR : gt_fcat_right, gs_fcat_right.
+    PERFORM set_fcat_right USING : 'X' 'MATNR'    'ZC102SDT0007' ' ' ' ',  " 자재 번호
+                                   'X' 'VBELN_SO' 'ZC102SDT0007' ' ' ' ',  " 판매오더 번호
+                                   ' ' 'MAKTX'    'ZC102MMT0004' ' ' ' ',  " 자재명
+                                   ' ' 'SCOST'    'ZC102SDT0007' ' ' ' ',  " 판매가
+                                   ' ' 'PEQUAN'   'ZC102SDT0007' ' ' ' ',  " 수량
+                                   ' ' 'MEINS'    'ZC102SDT0007' ' ' 'X',  " 단위
+                                   ' ' 'NETWR'    'ZC102SDT0007' ' ' ' ',  " 총 판매가
+                                   ' ' 'WAERS'    'ZC102SDT0007' ' ' 'X'.  " 통화키
+    PERFORM set_layout_right.
+    PERFORM exclude_toolbar.
+
+**********************************************************************
+    PERFORM create_main_object.
+
+    SET HANDLER : lcl_event_handler=>hotspot_click FOR go_left_grid,
+                  lcl_event_handler=>edit_toolbar  FOR go_left_grid,
+                  lcl_event_handler=>user_command  FOR go_left_grid,
+                  lcl_event_handler=>modify_value  FOR go_left_grid.
+
+*-- Display Main ALV
+    CALL METHOD go_left_grid->set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant_left
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_layout_left
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_so_header
+        it_fieldcatalog      = gt_fcat_left.
+
+    CALL METHOD go_right_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant_right
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_right
+      CHANGING
+        it_outtab       = gt_so_item
+        it_fieldcatalog = gt_fcat_right.
+
+    PERFORM register_event.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat_main
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat_left USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_left-key       = pv_key.
+  gs_fcat_left-fieldname = pv_field.
+  gs_fcat_left-ref_table = pv_table.
+  gs_fcat_left-just      = pv_just.
+  gs_fcat_left-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'FINALSP'.
+      gs_fcat_left-cfieldname = 'WAERS'.
+    WHEN 'VBELN_SO'.
+      gs_fcat_left-hotspot = abap_true.
+    WHEN 'STATUS'.
+      gs_fcat_left-coltext = '상태'.
+    WHEN 'MENGE'.
+      gs_fcat_left-coltext = '주문 건수'.
+    WHEN 'WAERS'.
+      gs_fcat_left-coltext = '통화키'.
+    WHEN 'DELID'.
+      gs_fcat_left-edit = abap_true.
+    WHEN 'ORTYPE_NAME'.
+      gs_fcat_left-coltext = '판매오더 유형'.
+  ENDCASE.
+
+  APPEND gs_fcat_left TO gt_fcat_left.
+  CLEAR gs_fcat_left.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout_main
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_left .
+
+  gs_layout_left-zebra      = abap_true.    " 행 줄무늬 지정
+  gs_layout_left-cwidth_opt = 'A'.          " 컬럼 폭 자동 조정
+  gs_layout_left-sel_mode   = 'A'.          " 행 단일 선택
+  gs_layout_left-grid_title = '주문 내역'.     " 제목 지정
+  gs_layout_left-stylefname = 'CELL_TAB'.
+
+  gs_variant_left-report = sy-repid.
+  gs_variant_left-handle = 'ALV1'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_main_object .
+
+*-- Main
+  CREATE OBJECT go_main_cont
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+*-- Splitter (좌우)
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_main_cont
+      rows    = 1
+      columns = 2.
+
+  go_split_cont->get_container( EXPORTING row = 1 column = 1
+                                RECEIVING container = go_left_cont ).
+  go_split_cont->get_container( EXPORTING row = 1 column = 2
+                                RECEIVING container = go_right_cont ).
+
+*-- Patch ALV
+  CREATE OBJECT go_left_grid
+    EXPORTING
+      i_parent = go_left_cont.
+
+  CREATE OBJECT go_right_grid
+    EXPORTING
+      i_parent = go_right_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_customer_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_data .
+
+  IF gv_partner2 IS INITIAL.
+    MESSAGE s021 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  PERFORM set_customer_info.
+
+  PERFORM set_so_header.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_alv_grid
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_alv_grid .
+
+  DATA: ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-col = abap_true.
+  ls_stable-row = abap_true.
+
+  IF go_left_grid IS BOUND.
+    CALL METHOD go_left_grid->refresh_table_display
+      EXPORTING
+        is_stable = ls_stable.
+  ENDIF.
+
+  IF go_right_grid IS BOUND.
+    CALL METHOD go_right_grid->refresh_table_display
+      EXPORTING
+        is_stable = ls_stable.
+  ENDIF.
+
+  IF go_pop_grid1 IS BOUND.
+    CALL METHOD go_pop_grid1->refresh_table_display
+      EXPORTING
+        is_stable = ls_stable.
+  ENDIF.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form so_popup
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM so_popup .
+
+*-- 고객 번호 미입력
+  IF gv_partner IS INITIAL.
+    MESSAGE s021 DISPLAY LIKE 'E'.   " 고객 번호를 입력해주세요.
+    EXIT.
+  ENDIF.
+
+*-- 고객 조회 미완료
+  IF gv_cusno_checked = abap_false.
+    MESSAGE s042 DISPLAY LIKE 'E'.   " 고객 정보 조회 후 생성해주세요.
+    EXIT.
+  ENDIF.
+
+  PERFORM clear_popup_data.
+
+  CALL SCREEN 110 STARTING AT 30 01.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_popup_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_create_popup_screen .
+
+  IF go_pop_cont1 IS NOT BOUND.
+
+    CLEAR : gt_fcat_pop1, gs_fcat_pop1.
+    PERFORM set_fcat_pop1 USING : 'X' 'MATNR'    'ZC102SDT0007' ' ' ' ',  " 자재 번호
+                                  'X' 'MAKTX'    'ZC102MMT0004' ' ' ' ',  " 자재명
+                                  ' ' 'SCOST'    'ZC102SDT0007' ' ' ' ',  " 판매가
+                                  ' ' 'PEQUAN'   'ZC102SDT0007' ' ' ' ',  " 수량
+                                  ' ' 'MEINS'    'ZC102SDT0007' 'C' ' ',  " 단위
+                                  ' ' 'NETWR'    'ZC102SDT0007' ' ' ' ',  " 총 판매가
+                                  ' ' 'WAERS'    'ZC102SDT0007' ' ' ' '.  " 통화키
+    PERFORM set_layout_pop1.
+
+    PERFORM create_popup1_object.
+
+    SET HANDLER : lcl_event_handler=>edit_toolbar        FOR go_pop_grid1,
+                  lcl_event_handler=>user_command        FOR go_pop_grid1,
+                  lcl_event_handler=>modify_value        FOR go_pop_grid1,
+                  lcl_event_handler=>handle_search_help  FOR go_pop_grid1.
+
+*-- Display Popup ALV
+    CALL METHOD go_pop_grid1->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant_pop1
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout_pop1
+      CHANGING
+        it_outtab       = gt_popup
+        it_fieldcatalog = gt_fcat_pop1.
+
+    PERFORM register_pop_event.
+    PERFORM register_f4_fields.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat_pop
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat_pop1 USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_pop1-key       = pv_key.
+  gs_fcat_pop1-fieldname = pv_field.
+  gs_fcat_pop1-ref_table = pv_table.
+  gs_fcat_pop1-just      = pv_just.
+  gs_fcat_pop1-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'MATNR'.
+      gs_fcat_pop1-coltext = '제품 번호'.
+    WHEN 'MAKTX'.
+      gs_fcat_pop1-coltext = '제품명'.
+    WHEN 'MEINS'.
+      gs_fcat_pop1-coltext = '단위'.
+    WHEN 'WAERS'.
+      gs_fcat_pop1-coltext = '통화키'.
+    WHEN 'PEQUAN'.
+      gs_fcat_pop1-qfieldname = 'MEINS'.
+    WHEN 'NETWR'.
+      gs_fcat_pop1-cfieldname = 'WAERS'.
+      gs_fcat_pop1-do_sum     = abap_true.  " 총합
+    WHEN 'SCOST'.
+      gs_fcat_pop1-cfieldname = 'WAERS'.
+  ENDCASE.
+
+  APPEND gs_fcat_pop1 TO gt_fcat_pop1.
+  CLEAR gs_fcat_pop1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout_pop
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_pop1 .
+
+  gs_layout_pop1-zebra      = abap_true.               " 행 줄무늬 지정
+  gs_layout_pop1-cwidth_opt = 'A'.                     " 컬럼 폭 자동 조정
+  gs_layout_pop1-sel_mode   = 'A'.                     " 행 단일 선택
+  gs_layout_pop1-grid_title = '개별 항목'.                " 제목 지정
+  gs_layout_pop1-stylefname = 'CELL_TAB'.
+
+  gs_variant_pop1-report = sy-repid.
+  gs_variant_pop1-handle = 'ALV2'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_popup_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_popup1_object .
+
+*-- Popup Container
+  CREATE OBJECT go_pop_cont1
+    EXPORTING
+      container_name = 'POP_CONT1'.
+
+*-- Patch ALV
+  CREATE OBJECT go_pop_grid1
+    EXPORTING
+      i_parent = go_pop_cont1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_user_command
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_UCOMM
+*&---------------------------------------------------------------------*
+FORM handle_user_command  USING  pv_ucomm.
+
+  CASE pv_ucomm.
+    WHEN 'DROW'.
+      PERFORM delete_row.
+    WHEN 'IROW'.
+      PERFORM insert_row.
+    WHEN 'EDIT'.
+      PERFORM edit_so.
+    WHEN 'SAVE'.
+      PERFORM save_data.
+    WHEN 'DELETE'.
+      PERFORM delete_so.
+  ENDCASE.
+
+  PERFORM refresh_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_f4_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_f4_data .
+
+*-- 자재 번호 탐색도움말
+  CLEAR gt_maktx.
+  SELECT matnr maktx
+    INTO CORRESPONDING FIELDS OF TABLE gt_maktx
+    FROM zc102mmt0004
+    WHERE mtart = 'P'
+     AND waers = gv_waers
+    ORDER BY matnr.
+
+*-- 고객 번호 탐색도움말
+  CLEAR gt_partner.
+  SELECT partner name1
+    INTO CORRESPONDING FIELDS OF TABLE gt_partner
+    FROM zc102bpt0001
+    WHERE bp_role EQ 'C' OR bp_role EQ 'D'
+    ORDER BY partner.
+
+*-- 사원명 탐색도움말
+  CLEAR gt_empnam.
+  SELECT empno empnam
+    INTO CORRESPONDING FIELDS OF TABLE gt_empnam
+    FROM zc102hrt0002
+    ORDER BY empno.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_customer_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_customer .
+
+*--  상세 주문내역, 가격 정보 초기화
+  CLEAR : gt_so_item, gv_finalsp, gv_total_sp, gv_tax,
+          gv_dcrate, gv_dcprice, gv_vbeln_so.
+
+*-- 고객 번호 미입력
+  IF gv_partner2 IS INITIAL.
+    CLEAR : gt_so_header, gv_name, gv_knkli, gv_telf,
+            gv_stras, gv_partner, gv_ctlzl.
+    gv_cusno_checked = abap_false.
+    PERFORM refresh_alv_grid.
+    MESSAGE s021 DISPLAY LIKE 'E'. " 고객 번호를 입력해주세요.
+    EXIT.
+  ENDIF.
+
+*-- 고객 조회
+  PERFORM set_customer_info.
+
+*-- 고객 조회 실패
+  IF sy-subrc NE 0.
+    CLEAR : gt_so_header, gv_name, gv_knkli, gv_telf,
+             gv_stras, gv_partner, gv_ctlzl.
+    gv_cusno_checked = abap_false.
+    PERFORM refresh_alv_grid.
+    MESSAGE s041 DISPLAY LIKE 'E'.  " 해당 고객 정보를 찾을 수 없습니다.
+    EXIT.
+  ENDIF.
+
+*-- 해당 고객 주문 내역 조회
+  PERFORM set_so_header.
+  PERFORM make_header_body.
+
+  gv_cusno_checked = abap_true.      " 고객 조회 성공 (주문 생성 시 체크)
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_customer_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_customer_info .
+
+*-- 고객 정보 조회
+  SELECT SINGLE a~name1 knkli telf1 stras b~partner ctlzl waers cusno
+    INTO (gv_name, gv_knkli, gv_telf, gv_stras, gv_partner2, gv_ctlzl, gv_waers, gv_cusno)
+    FROM zc102sdt0001 AS a
+    INNER JOIN zc102bpt0001 AS b
+    ON a~partner = b~partner
+    WHERE a~partner = gv_partner2.
+
+  gv_partner = gv_partner2.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_cusno
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_cusno .
+
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'PARTNER'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_PARTNER-PARTNER'
+      window_title = '고객명'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_partner
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form clear_popup_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM clear_popup_data .
+
+  CLEAR gs_popup.
+  CLEAR gt_popup[].
+
+  PERFORM refresh_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_edit_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_OBJECT
+*&      --> E_INTERACTIVE
+*&---------------------------------------------------------------------*
+FORM handle_edit_toolbar USING po_object TYPE REF TO cl_alv_event_toolbar_set
+                                     pv_interactive
+                                     po_sender TYPE REF TO cl_gui_alv_grid.
+
+  CASE po_sender.
+    WHEN go_pop_grid1.
+      po_object->mt_toolbar = VALUE #(
+        ( function = 'IROW' icon = icon_insert_row text = '추가' )
+        ( function = 'DROW' icon = icon_delete_row text = '삭제' )
+        ).
+
+    WHEN go_left_grid.
+
+      CLEAR gs_button.
+      gs_button-butn_type = '3'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+      CLEAR gs_button.
+      gs_button-function  = 'EDIT'.
+      gs_button-icon      = icon_change.
+      gs_button-text      = '수정'.
+      gs_button-quickinfo = '판매오더 수정'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+      CLEAR gs_button.
+      gs_button-function  = 'SAVE'.
+      gs_button-icon      = icon_system_save.
+      gs_button-text      = '저장'.
+      gs_button-quickinfo = '수정사항 저장'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+      CLEAR gs_button.
+      gs_button-butn_type = '3'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+      CLEAR gs_button.
+      gs_button-function  = 'DELETE'.
+      gs_button-icon      = icon_delete_row.
+      gs_button-text      = '삭제'.
+      gs_button-quickinfo = '판매오더 삭제'.
+      APPEND gs_button TO po_object->mt_toolbar.
+
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form delete_row
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM delete_row .
+
+  DATA : lt_roid TYPE lvc_t_roid,
+         ls_roid TYPE lvc_s_roid.
+
+*-- 선택된 행 정보
+  CALL METHOD go_pop_grid1->get_selected_rows
+    IMPORTING
+      et_row_no = lt_roid.
+
+  IF lt_roid IS INITIAL.
+    MESSAGE s009 DISPLAY LIKE 'E'. " 행을 선택해주세요.
+    EXIT.
+  ENDIF.
+
+*-- 내림차순 정렬
+  SORT lt_roid BY row_id DESCENDING.
+
+*-- 선택된 행 삭제
+  LOOP AT lt_roid INTO ls_roid.
+    IF ls_roid-row_id <= 0 OR ls_roid-row_id > lines( gt_popup ).
+      MESSAGE s054 DISPLAY LIKE 'E'.
+      CONTINUE.
+    ENDIF.
+
+    DELETE gt_popup INDEX ls_roid-row_id.
+  ENDLOOP.
+
+  PERFORM refresh_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_so
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_so_popup .
+
+  DATA: lv_valid  TYPE abap_bool,
+        lv_answer TYPE c.
+
+*-- 유효성 검사
+  PERFORM check_so_input_validity CHANGING lv_valid.
+  IF lv_valid = abap_false.
+    RETURN.
+  ENDIF.
+
+*-- 사용자에게 팝업 확인 요청
+  PERFORM create_so_confirm CHANGING lv_answer.
+  CHECK lv_answer EQ '1'.
+
+*-- 판매오더 생성
+  PERFORM create_so.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form create_so_confirm
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM create_so_confirm  CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = '판매오더 생성 확인'
+      text_question         = '판매오더가 생성됩니다. 저장하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니요'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '2'
+      display_cancel_button = ''
+    IMPORTING
+      answer                = pv_answer.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_sono
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- PV_SONO
+*&---------------------------------------------------------------------*
+FORM create_sono  CHANGING pv_sono TYPE string.
+
+  DATA: lv_range_nr TYPE inri-nrrangenr,
+        lv_prefix   TYPE char3,
+        lv_quantity TYPE inri-quantity.
+
+  lv_prefix = 'SO'.   " 판매오더 번호 prefix
+  lv_range_nr = '01'. " 번호 범위
+  lv_quantity = 1.
+
+**********************************************************************
+* 순번 호출
+**********************************************************************
+  CALL METHOD zclc102cm_auto_sequence=>get_next_value
+    EXPORTING
+      pv_range_nr = lv_range_nr
+      pv_prefix   = lv_prefix
+      pv_quantity = lv_quantity
+    IMPORTING
+      pv_result   = pv_sono.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_so_header
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> GV_SONO
+*&---------------------------------------------------------------------*
+FORM create_so_header  USING pv_sono.
+
+*-- 저장용 임시 테이블
+  DATA : ls_save_so_header TYPE zc102sdt0006,
+         ls_save_so_item   TYPE zc102sdt0007.
+
+*-- 계산용 필드 총 수량, 총 판매가
+  DATA: lv_total_sp TYPE zc102sdt0006-netwr,
+        lv_waers    TYPE zc102sdt0006-waers.
+
+  CLEAR: lv_total_sp, lv_waers, gv_finalsp, gv_tax.
+
+*-- Line item
+  LOOP AT gt_popup INTO gs_popup.
+
+    gs_popup-vbeln_so = pv_sono.    " 채번한 판매오더 번호
+    gs_popup-cusno    = gv_cusno.   " 고객 번호
+    gs_popup-partner  = gv_partner. " BP 번호
+
+    lv_total_sp  += gs_popup-netwr. " 총 판매가
+    lv_waers      = gs_popup-waers. " 통화키
+
+    ls_save_so_item = CORRESPONDING #( gs_popup ).
+
+*-- 타임스탬프 추가
+    ls_save_so_item-erdat = sy-datum.
+    ls_save_so_item-ernam = sy-uname.
+    ls_save_so_item-erzet = sy-uzeit.
+
+*-- 저장 전 PK값 체크
+    IF ls_save_so_item-matnr IS INITIAL OR
+       ls_save_so_item-vbeln_so IS INITIAL OR
+       ls_save_so_item-partner IS INITIAL OR
+       ls_save_so_item-cusno IS INITIAL.
+
+      MESSAGE s032 WITH '판매오더 생성' DISPLAY LIKE 'E'.  " 판매오더 생성중 오류가 발생했습니다.
+      sy-subrc = 4.
+      RETURN.
+
+    ENDIF.
+
+*-- DB 저장
+    MODIFY zc102sdt0007 FROM ls_save_so_item.
+
+  ENDLOOP.
+
+*-- 할인율 및 부가세 적용
+  IF gv_waers = 'KRW'.
+    PERFORM apply_discount_policy
+      USING    gv_knkli
+               gv_ctlzl
+               lv_total_sp
+      CHANGING gv_dcrate
+               gv_dcprice
+               gv_finalsp.
+  ELSE.
+    CLEAR : gv_dcrate, gv_dcprice, gv_tax.
+    gv_finalsp = lv_total_sp.
+  ENDIF.
+
+*-- Header
+  CLEAR gs_so_header.
+  gs_so_header-vbeln_so = pv_sono.            " 채번된 판매오더 번호
+  gs_so_header-partner  = gv_partner.         " BP 번호
+  gs_so_header-cusno    = gv_cusno.           " 고객 번호
+  gs_so_header-ortype   = 'G'.                " 기본 오더유형
+  gs_so_header-menge    = lines( gt_popup ).  " 주문 건수
+  gs_so_header-audat    = sy-datum.           " 오늘 날짜
+  gs_so_header-delid    = zc102sdt0006-delid. " 납품일
+  gs_so_header-netwr    = lv_total_sp.        " 총 판매가 (할인 및 부가세 전)
+  gs_so_header-waers    = lv_waers.           " 통화키
+  gs_so_header-kbetr    = gv_dcrate.          " 할인율
+  gs_so_header-dismo    = gv_dcprice.         " 할인가
+  gs_so_header-stax     = gv_tax.             " 부가세
+  gs_so_header-finalsp  = gv_finalsp.         " 최종 가격 (할인 및 부가세 반영)
+  gs_so_header-state    = 'N'.                " 납품문서 생성 여부
+  gs_so_header-isreg    = 'I'.                " 정기/비정기
+  APPEND gs_so_header TO gt_so_header.
+
+  ls_save_so_header = CORRESPONDING #( gs_so_header ).
+
+*-- 타임스탬프 추가
+  ls_save_so_header-erdat = sy-datum.
+  ls_save_so_header-ernam = sy-uname.
+  ls_save_so_header-erzet = sy-uzeit.
+
+*-- 저장 전 PK값 체크
+  IF ls_save_so_header-vbeln_so IS INITIAL OR
+     ls_save_so_header-partner IS INITIAL OR
+     ls_save_so_header-cusno IS INITIAL.
+
+    MESSAGE s032 WITH '판매오더 생성' DISPLAY LIKE 'E'. " 판매오더 생성중 오류가 발생했습니다.
+    sy-subrc = 4.
+    RETURN.
+  ENDIF.
+
+*-- DB 저장
+  MODIFY zc102sdt0006 FROM ls_save_so_header.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form create_so
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_so .
+
+*-- 판매오더 번호 채번
+  PERFORM create_sono CHANGING gv_sono.
+
+*-- Header에 데이터 생성 및 저장
+  PERFORM create_so_header USING gv_sono.
+
+  IF sy-subrc = 0.
+    COMMIT WORK.
+    MESSAGE s031 WITH '판매오더'.     " 판매오더가 생성되었습니다.
+
+    CLEAR : gs_popup, gt_popup[].
+    CLEAR : zc102hrt0002-empnam, zc102sdt0006-delid.
+
+*-- 상태 아이콘 반영
+    PERFORM set_so_header.
+    PERFORM make_header_body.
+
+*-- ALV 갱신
+    PERFORM refresh_alv_grid.
+
+    LEAVE TO SCREEN 0.
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_hotspot_click
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_ROW_ID
+*&      --> E_COLUMN_ID
+*&---------------------------------------------------------------------*
+FORM handle_hotspot_click  USING pv_rowid pv_column_id.
+
+  READ TABLE gt_so_header INTO gs_so_header INDEX pv_rowid.
+
+  IF sy-subrc = 0.
+
+    gv_vbeln_so = gs_so_header-vbeln_so.
+    gv_mode = 'D'.
+
+*-- 판매오더 Line item (오른쪽 ALV) 띄우기
+    PERFORM set_selected_so_line.
+
+    PERFORM refresh_alv_grid.
+
+    CALL METHOD cl_gui_cfw=>set_new_ok_code
+      EXPORTING
+        new_code = 'XXXX'.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_fcat_pop2
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_fcat_right  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat_right-key       = pv_key.
+  gs_fcat_right-fieldname = pv_field.
+  gs_fcat_right-ref_table = pv_table.
+  gs_fcat_right-just      = pv_just.
+  gs_fcat_right-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'PEQUAN'.
+      gs_fcat_right-qfieldname = 'MEINS'.
+    WHEN 'SCOST'.
+      gs_fcat_right-cfieldname = 'WAERS'.
+    WHEN 'NETWR'.
+      gs_fcat_right-cfieldname = 'WAERS'.
+      gs_fcat_right-do_sum     = abap_true.
+    WHEN 'WAERS'.
+      gs_fcat_right-coltext = '통화키'.
+    WHEN 'MEINS'.
+      gs_fcat_right-coltext = '단위'.
+    WHEN 'MATNR'.
+      gs_fcat_right-coltext = '제품번호'.
+    WHEN 'MAKTX'.
+      gs_fcat_right-coltext = '제품명'.
+  ENDCASE.
+
+  APPEND gs_fcat_right TO gt_fcat_right.
+  CLEAR gs_fcat_right.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout_pop2
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout_right .
+
+  gs_layout_right-zebra      = abap_true.                 " 행 줄무늬 지정
+  gs_layout_right-cwidth_opt = 'A'.                     " 컬럼 폭 자동 조정
+  gs_layout_right-sel_mode   = 'A'.                        " 행 단일 선택
+  gs_layout_right-grid_title = '개별 항목'.     " 제목 지정
+
+  gs_variant_right-report = sy-repid.
+  gs_variant_right-handle = 'ALV3'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_selected_so_line
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_selected_so_line .
+
+*-- 판매오더 Line item 조회
+  CLEAR gt_so_item.
+  SELECT a~matnr a~pequan a~meins a~scost a~netwr
+         a~waers a~partner a~cusno a~vbeln_so maktx
+         a~aedat a~aenam a~aezet a~erdat a~ernam a~erzet " Timestamp
+    INTO CORRESPONDING FIELDS OF TABLE gt_so_item
+    FROM zc102sdt0007 AS a
+    INNER JOIN zc102mmt0004 AS b
+    ON a~matnr = b~matnr
+    WHERE a~vbeln_so = gv_vbeln_so. " 선택한 판매오더 Header
+
+  IF gt_so_item IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.  " 데이터가 존재하지 않습니다.
+  ENDIF.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form insert_row
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM insert_row .
+*-- 행 추가
+  DATA : ls_style TYPE lvc_s_styl.
+
+  CLEAR gs_popup.
+  gs_popup-cell_tab = VALUE #(
+     ( fieldname = 'MATNR'  style = cl_gui_alv_grid=>mc_style_enabled )
+     ( fieldname = 'PEQUAN' style = cl_gui_alv_grid=>mc_style_enabled )
+     ).
+
+  APPEND gs_popup TO gt_popup.
+
+  PERFORM refresh_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Module SET_SCREEN_ELEMENT OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE set_screen_element OUTPUT.
+
+*-- 가격 정보 초기화
+  CLEAR: gv_total_sp, gv_dcprice, gv_dcrate, gv_finalsp,
+         gv_cuky1, gv_cuky2, gv_cuky3, gv_cuky4, gv_tax.
+
+*-- 판매오더 가격 정보 조회
+  IF gv_vbeln_so IS NOT INITIAL.
+
+    SELECT SINGLE netwr dismo kbetr finalsp waers stax
+      INTO (gv_total_sp, gv_dcprice, gv_dcrate, gv_finalsp, gv_cuky1, gv_tax)
+      FROM zc102sdt0006
+      WHERE vbeln_so = gv_vbeln_so.
+
+    IF sy-subrc = 0.
+      gv_cuky2 = gv_cuky1.
+      gv_cuky3 = gv_cuky1.
+      gv_cuky4 = gv_cuky1.
+    ELSE.
+      MESSAGE s004 DISPLAY LIKE 'E'.   " 데이터가 존재하지 않습니다.
+    ENDIF.
+
+  ENDIF.
+
+ENDMODULE.
+
+*&---------------------------------------------------------------------*
+*& Form apply_discount_policy
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> GV_KNKLI
+*&      --> GV_CTLZL
+*&      --> LV_TOTAL_SP
+*&      <-- GV_FINALSP
+*&      <-- LV_DISMO
+*&---------------------------------------------------------------------*
+FORM apply_discount_policy
+    USING    iv_knkli     TYPE zc102sdt0001-knkli
+             iv_ctlzl     TYPE zc102sdt0001-ctlzl
+             iv_total_sp  TYPE zc102sdt0006-netwr
+    CHANGING ev_dcrate    TYPE zc102sdt0006-kbetr
+             ev_dcprice   TYPE zc102sdt0006-dismo
+             ev_finalsp   TYPE zc102sdt0006-finalsp.
+
+  DATA: lv_kbetr       TYPE zc102sdt0003-kbetr,
+        lv_extra_rate  TYPE zc102sdt0006-kbetr,
+        lv_total_raw   TYPE i,  " 정수로 변환된 총액
+        lv_subrc_kbetr TYPE sy-subrc.
+
+  CLEAR: ev_dcrate, ev_dcprice, ev_finalsp, gv_tax.
+
+*-- 부가세 계산
+  gv_tax = iv_total_sp * '0.10'.
+
+*-- 1단계: 고객 정책 할인율 조회
+  SELECT SINGLE kbetr
+    INTO lv_kbetr
+    FROM zc102sdt0003
+   WHERE knkli = iv_knkli
+     AND ctlzl = iv_ctlzl.
+
+  lv_subrc_kbetr = sy-subrc.
+
+*-- 2단계: 총 판매가 기준 할인율
+  CLEAR lv_extra_rate.
+
+  lv_total_raw = iv_total_sp * 100.   " 자릿수 맞추기
+
+  IF lv_total_raw >= 5000000.        " 500만원 이상
+    lv_extra_rate = 7.
+  ELSEIF lv_total_raw >= 3000000.    " 300만원 이상
+    lv_extra_rate = 5.
+  ELSEIF lv_total_raw >= 2000000.    " 200만원 이상
+    lv_extra_rate = 3.
+  ELSEIF lv_total_raw >= 1000000.    " 100만원 이상
+    lv_extra_rate = 2.
+  ENDIF.
+
+*-- 3단계: 최종 할인율 계산
+  IF lv_subrc_kbetr = 0 AND lv_kbetr IS NOT INITIAL.
+    ev_dcrate = lv_kbetr + lv_extra_rate.
+  ELSE.
+    ev_dcrate = lv_extra_rate.  " 고객 정책이 없으면 금액 기준만 적용
+  ENDIF.
+
+*-- 4단계: 할인금액 및 최종 금액 계산
+  ev_dcprice = iv_total_sp * ev_dcrate / 100.         " 할인가 = 총 판매가 * 할인율 / 100
+  ev_finalsp = ( iv_total_sp - ev_dcprice ) + gv_tax. " 최종가격 = 총 판매가 - 할인가 + 부가세
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_modify_pop
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_MODIFIED
+*&      --> ET_GOOD_CELLS
+*&---------------------------------------------------------------------*
+FORM handle_modify_value USING pv_modified
+                               pt_good_cells TYPE lvc_t_modi
+                               po_sender TYPE REF TO cl_gui_alv_grid.
+
+  DATA : ls_good_cells TYPE lvc_s_modi.
+
+  CHECK pv_modified IS NOT INITIAL.
+  LOOP AT pt_good_cells INTO ls_good_cells.
+
+    CASE po_sender.
+      WHEN go_pop_grid1.
+        " 현재 입력 행 읽기
+        READ TABLE gt_popup INTO gs_popup INDEX ls_good_cells-row_id.
+        IF sy-subrc <> 0.
+          CONTINUE.
+        ENDIF.
+
+        CASE ls_good_cells-fieldname.
+          WHEN 'MATNR'.
+            PERFORM matnr_change USING ls_good_cells-row_id.
+          WHEN 'PEQUAN'.
+            PERFORM pequan_change USING ls_good_cells-row_id. " 수량 입력 시 총액 계산
+        ENDCASE.
+
+      WHEN go_left_grid.
+        READ TABLE gt_so_header INTO gs_so_header INDEX ls_good_cells-row_id.
+        IF sy-subrc <> 0.
+          CONTINUE.
+        ENDIF.
+
+        CASE ls_good_cells-fieldname.
+          WHEN 'DELID'.
+            PERFORM delid_change USING ls_good_cells-row_id.
+        ENDCASE.
+    ENDCASE.
+
+  ENDLOOP.
+
+  PERFORM refresh_alv_grid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form onf4
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_FIELDNAME
+*&      --> E_FIELDVALUE
+*&      --> ES_ROW_NO
+*&      --> ER_EVENT_DATA
+*&      --> ET_BAD_CELLS
+*&      --> E_DISPLAY
+*&---------------------------------------------------------------------*
+FORM onf4  USING    p_fieldname   TYPE lvc_fname
+                    p_fieldvalue  TYPE lvc_value
+                    ps_row_no     TYPE lvc_s_roid
+                    pi_event_data TYPE REF TO cl_alv_event_data
+                    pt_bad_cells  TYPE lvc_t_modi
+                    p_display     TYPE char01.
+
+  PERFORM get_f4_data.
+
+  " 팝업창에서 자재번호를 서치헬프를 통해 입력하도록 한다
+  DATA: dynprog          LIKE sy-repid,
+        dynnr            LIKE sy-dynnr,
+        window_title(30) TYPE c,
+        l_row            TYPE p.
+
+  DATA : ls_popup LIKE gs_popup,
+         lv_field TYPE dfies-fieldname,
+         lv_text  TYPE help_info-dynprofld,  " 필드명
+         lv_flag.
+
+  READ TABLE gt_popup INTO ls_popup INDEX ps_row_no-row_id.
+
+  DATA : lt_return LIKE TABLE OF ddshretval WITH HEADER LINE.
+  CLEAR : dynprog, dynnr, window_title.", ls_itab.
+
+  dynprog  = sy-repid.
+  dynnr    = sy-dynnr.
+  lv_field = 'MATNR'.
+  lv_text  = 'MAKTX'.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = lv_field
+      dynpprog     = dynprog
+      dynpnr       = dynnr
+      dynprofield  = lv_text
+      window_title = window_title
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_maktx
+      return_tab   = lt_return.
+
+  pi_event_data->m_event_handled = abap_true.
+
+  FIELD-SYMBOLS: <fs> TYPE lvc_t_modi.
+
+  ASSIGN pi_event_data->m_data->* TO <fs>.
+
+  READ TABLE lt_return INDEX 1.
+  <fs> = VALUE #( ( row_id = ps_row_no-row_id
+                    fieldname = p_fieldname
+                    value = lt_return-fieldval ) ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_f4_fields
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_f4_fields .
+
+  DATA : lt_f4 TYPE lvc_t_f4.
+
+  lt_f4 = VALUE #( ( fieldname   = 'MATNR'
+                     register    = abap_true
+                     getbefore   = abap_true
+                     chngeafter  = abap_true ) ).
+
+  CALL METHOD go_pop_grid1->register_f4_for_fields
+    EXPORTING
+      it_f4 = lt_f4.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_pop_event
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_pop_event .
+
+  CALL METHOD : go_pop_grid1->set_ready_for_input( EXPORTING i_ready_for_input = 1 ),
+                go_pop_grid1->register_edit_event( EXPORTING i_event_id = go_pop_grid1->mc_evt_modified ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_init_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_init_value .
+
+*-- 입력 기본값 지정
+  zc102sdt0006-audat = sy-datum.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_empnam
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_empnam .
+
+  DATA: lt_return TYPE TABLE OF ddshretval,
+        ls_return TYPE ddshretval.
+
+  " F4 도움말 팝업 표시
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'EMPNAM'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_EMPNAM-ENPNAM'
+      window_title = '사원명'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_empnam
+      return_tab   = lt_return.
+
+  " 선택한 사원번호로 내부 테이블에서 사원명 조회
+  READ TABLE lt_return INTO ls_return INDEX 1.
+  IF sy-subrc = 0 AND ls_return-fieldval IS NOT INITIAL.
+
+    zc102hrt0002-empnam = ls_return-fieldval.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_so_input_validity
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_VALID
+*&---------------------------------------------------------------------*
+FORM check_so_input_validity CHANGING pv_valid TYPE abap_bool.
+
+  DATA: lv_valid_line TYPE abap_bool VALUE abap_false.
+
+  CLEAR pv_valid.
+
+*-- 필수 필드 체크
+  IF zc102sdt0006-audat IS INITIAL OR
+     zc102hrt0002-empnam IS INITIAL.
+    MESSAGE s063 DISPLAY LIKE 'E'. " 필수 항목이 입력되지 않았습니다.
+    RETURN.
+  ENDIF.
+
+*-- 납품일 체크
+  IF zc102sdt0006-delid < sy-datum.
+    MESSAGE s065 WITH '납품' DISPLAY LIKE 'E'.
+    CLEAR zc102sdt0006-delid.
+    RETURN.
+  ENDIF.
+
+*-- 사원명 체크
+  SELECT SINGLE empno
+    FROM zc102hrt0002
+    WHERE empnam = @zc102hrt0002-empnam
+    INTO @DATA(lv_empno).
+
+  IF sy-subrc NE 0.
+    MESSAGE s087 DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+*-- ALV 입력 행 체크
+  LOOP AT gt_popup INTO DATA(ls_popup).
+    IF ls_popup-matnr IS NOT INITIAL AND ls_popup-pequan > 0.
+      lv_valid_line = abap_true.
+    ENDIF.
+  ENDLOOP.
+
+  IF lv_valid_line = abap_false.
+    MESSAGE s066 DISPLAY LIKE 'E'.   " 유효하지 않은 주문항목이 있습니다.
+    RETURN.
+  ENDIF.
+
+  pv_valid = abap_true.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form delete_so
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM delete_so .
+
+  DATA: lt_rows  TYPE lvc_t_roid,
+        lv_index TYPE sy-tabix.
+
+*-- 좌측 ALV(판매오더 헤더)에서 선택된 행 가져오기
+  CALL METHOD go_left_grid->get_selected_rows
+    IMPORTING
+      et_row_no = lt_rows.
+
+  IF lt_rows IS INITIAL.
+    MESSAGE s009 DISPLAY LIKE 'E'.   " 행을 선택해주세요.
+    RETURN.
+  ENDIF.
+
+  PERFORM delete_so_confirm CHANGING lv_answer.
+  CHECK lv_answer EQ '1'.
+
+  SORT lt_rows BY row_id DESCENDING.
+
+*-- 선택한 판매오더의 Line item
+  LOOP AT lt_rows INTO DATA(ls_row).
+    READ TABLE gt_so_header INTO gs_so_header INDEX ls_row-row_id.
+
+    IF gs_so_header-status EQ icon_led_green.
+      MESSAGE s070 DISPLAY LIKE 'E'. " 삭제 불가능한 판매오더 입니다.
+      RETURN.
+    ENDIF.
+
+*-- 해당 판매오더 아이템 삭제
+    DELETE FROM zc102sdt0007 WHERE vbeln_so = gs_so_header-vbeln_so.
+  ENDLOOP.
+
+*-- 판매오더 헤더 삭제
+  DELETE FROM zc102sdt0006 WHERE vbeln_so = gs_so_header-vbeln_so.
+
+*-- ALV 내부 테이블에서도 삭제
+  DELETE gt_so_header WHERE vbeln_so = gs_so_header-vbeln_so.
+
+*-- Line itme 초기화
+  CLEAR gt_so_item.
+
+  MESSAGE s093. " 판매오더가 삭제되었습니다.
+
+  PERFORM refresh_alv_grid.
+
+  PERFORM make_header_body.
+
+*-- 강제 PBO 메소드
+  CALL METHOD cl_gui_cfw=>set_new_ok_code
+    EXPORTING
+      new_code = 'XXXX'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form delete_so_confirm
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM delete_so_confirm CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = '판매오더 삭제 확인'
+      text_question         = '판매오더 헤더 및 아이템이 모두 삭제됩니다. 삭제하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니요'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '2'
+      display_cancel_button = ''
+    IMPORTING
+      answer                = pv_answer.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form matnr_change
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> LS_GOOD_CELLS_ROW_ID
+*&---------------------------------------------------------------------*
+FORM matnr_change USING pv_row_id TYPE i.
+
+  DATA : lv_valid TYPE abap_bool VALUE abap_false.
+
+  IF gs_popup-matnr IS INITIAL.
+    RETURN.
+  ENDIF.
+
+  READ TABLE gt_maktx WITH KEY matnr = gs_popup-matnr TRANSPORTING NO FIELDS.
+  IF sy-subrc = 0.
+    lv_valid = abap_true.
+  ENDIF.
+
+  IF lv_valid = abap_false.
+    MESSAGE s083 DISPLAY LIKE 'E'.
+    CLEAR : gs_popup-matnr, gs_popup-pequan.
+    MODIFY gt_popup FROM gs_popup INDEX pv_row_id TRANSPORTING matnr maktx scost meins.
+    EXIT.
+  ENDIF.
+
+  SELECT SINGLE maktx price meins
+    INTO (gs_popup-maktx, gs_popup-scost, gs_popup-meins)
+    FROM zc102mmt0004
+    WHERE matnr = gs_popup-matnr.
+
+  gs_popup-waers = gv_waers.
+
+  IF gs_popup-pequan IS INITIAL.
+    gs_popup-pequan = 1.
+  ENDIF.
+
+  gs_popup-netwr = gs_popup-scost * gs_popup-pequan.
+
+  MODIFY gt_popup FROM gs_popup INDEX pv_row_id
+                  TRANSPORTING maktx scost waers meins pequan netwr.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form pequan_change
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> LS_GOOD_CELLS_ROW_ID
+*&---------------------------------------------------------------------*
+FORM pequan_change USING pv_row_id TYPE i.
+
+  " 수량이 숫자가 아닌 값이거나 0 또는 음수일 경우
+  IF gs_popup-pequan <= 0 .
+    gs_popup-pequan = 1.  " 수량을 1로 초기화
+    " 메시지 출력
+    MESSAGE s048 DISPLAY LIKE 'E'.
+
+  ENDIF.
+
+  IF gs_popup-scost IS NOT INITIAL AND gs_popup-pequan IS NOT INITIAL.
+    gs_popup-netwr = gs_popup-scost * gs_popup-pequan.
+
+    MODIFY gt_popup FROM gs_popup INDEX pv_row_id
+                    TRANSPORTING netwr.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form make_header_body
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM make_header_body .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_style TYPE lvc_s_styl.
+
+  CLEAR : gv_cnt1, gv_cnt2.
+
+*-- 조회된 판매오더 내역에서 납품오더 생성 여부에 따라 아이콘 표시 및 카운트
+  LOOP AT gt_so_header INTO gs_so_header.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR : ls_style, gs_so_header-cell_tab.
+
+    CASE gs_so_header-state.
+      WHEN 'N'. " 납품오더 생성 미완료
+        gs_so_header-status = icon_led_red. " 아이콘 설정
+        gv_cnt2 += 1. " 갯수 카운트
+        ls_style-fieldname = 'DELID'. " 납품일
+        ls_style-style     = cl_gui_alv_grid=>mc_style_enabled. " 납품일 수정 가능
+        INSERT ls_style INTO TABLE gs_so_header-cell_tab.
+
+      WHEN 'P' OR 'Y'. "
+        gs_so_header-status = icon_led_green.
+        gv_cnt1 += 1.
+        ls_style-fieldname = 'DELID'.
+        ls_style-style     = cl_gui_alv_grid=>mc_style_disabled. " 납품일 수정 불가
+        INSERT ls_style INTO TABLE gs_so_header-cell_tab.
+
+      WHEN OTHERS.
+        CLEAR gs_so_header-status.
+    ENDCASE.
+
+    MODIFY gt_so_header FROM gs_so_header INDEX lv_tabix TRANSPORTING status cell_tab.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form edit_so
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM edit_so .
+
+*-- 고객 조회 미완료
+  IF gv_cusno_checked = abap_false.
+    MESSAGE s092 DISPLAY LIKE 'E'. " 고객 정보 조회 후 이용해주세요.
+    EXIT.
+  ENDIF.
+
+*-- 판매오더 데이터 없음
+  IF gv_cnt1 EQ 0 AND gv_cnt2 EQ 0.
+    MESSAGE s004 DISPLAY LIKE 'E'. " 데이터가 존재하지 않습니다.
+    EXIT.
+  ENDIF.
+
+*-- 이미 수정 모드라면 메시지 출력 또는 무시 가능
+  IF gv_mode = 'E'.
+    MESSAGE s088 DISPLAY LIKE 'E'. " 이미 수정 모드입니다.
+    RETURN.
+  ENDIF.
+
+*-- 수정 모드로 전환
+  gv_mode = 'E'.
+
+  CALL METHOD go_left_grid->set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_event
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_event .
+
+  CALL METHOD go_left_grid->set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 0.
+
+  CALL METHOD go_left_grid->register_edit_event
+    EXPORTING
+      i_event_id = go_left_grid->mc_evt_modified.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form exclude_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM exclude_toolbar .
+
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_data .
+
+  IF gv_mode EQ 'D'.
+    MESSAGE s071 DISPLAY LIKE 'E'.   " 수정 상태에서 이용 바랍니다.
+    RETURN.
+  ENDIF.
+
+  CALL SCREEN 120 STARTING AT 130 10.
+
+  CLEAR : zc102hrt0002-empnam.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form confirm_save
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM confirm_save  CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = '판매오더 수정'
+      text_question         = '판매오더 수정사항을 저장하시겠습니까?'
+      text_button_1         = '예'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '1'
+      display_cancel_button = ' '
+    IMPORTING
+      answer                = pv_answer.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form save_update
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_update .
+
+  DATA : lt_save   TYPE TABLE OF zc102sdt0006,
+         lv_answer TYPE c,
+         lv_tabix  TYPE sy-tabix.
+
+*-- 사원명 유효성 검사
+  SELECT SINGLE empno
+    FROM zc102hrt0002
+    WHERE empnam = @zc102hrt0002-empnam
+    INTO @DATA(lv_empno).
+
+  IF sy-subrc NE 0.
+    MESSAGE s087 DISPLAY LIKE 'E'.
+    RETURN.
+  ENDIF.
+
+*-- 사용자 확인
+  PERFORM confirm_save CHANGING lv_answer.
+  CHECK lv_answer EQ '1'.
+
+*-- 변경된 데이터 저장
+  CALL METHOD go_left_grid->check_changed_data.
+
+  LOOP AT gt_so_header INTO gs_so_header WHERE modi_yn EQ abap_true.
+
+    lv_tabix = sy-tabix.
+
+    IF gs_so_header-erdat IS INITIAL.
+      gs_so_header-erdat = sy-datum.
+      gs_so_header-ernam = sy-uname.
+      gs_so_header-erzet = sy-uzeit.
+    ELSE.
+      gs_so_header-aedat = sy-datum.
+      gs_so_header-aenam = sy-uname.
+      gs_so_header-aezet = sy-uzeit.
+    ENDIF.
+
+    CLEAR gs_so_header-modi_yn.
+
+    MODIFY gt_so_header FROM gs_so_header INDEX lv_tabix
+                                          TRANSPORTING erdat ernam erzet
+                                                       aedat aenam aezet
+                                                       modi_yn.
+  ENDLOOP.
+
+  MOVE-CORRESPONDING gt_so_header TO lt_save.
+
+*-- DB 저장
+  MODIFY zc102sdt0006 FROM TABLE lt_save.
+
+  IF sy-subrc = 0.
+    gv_mode = 'D'.
+    CALL METHOD go_left_grid->set_ready_for_input
+      EXPORTING
+        i_ready_for_input = 0.
+    MESSAGE s029. " 저장되었습니다.
+    COMMIT WORK AND WAIT.
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+
+
+*&---------------------------------------------------------------------*
+*& Form display_popup_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_popup_screen .
+
+  zc102sdt0007-aedat = sy-datum.
+  zc102sdt0007-aezet = sy-uzeit.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form delid_change
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> LS_GOOD_CELLS_ROW_ID
+*&---------------------------------------------------------------------*
+FORM delid_change USING pv_row_id TYPE i.
+
+  IF gs_so_header-delid < sy-datum.
+    MESSAGE s065 WITH '납품' DISPLAY LIKE 'E'.   " 납품일자는 과거일 수 없습니다.
+    CLEAR gs_so_header-delid.
+
+  ELSE.
+    gs_so_header-modi_yn = abap_true.
+
+    MODIFY gt_so_header FROM gs_so_header INDEX pv_row_id
+                        TRANSPORTING delid modi_yn.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_batch_so
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_batch_so USING pv_field.
+
+  DATA: lt_plan    TYPE TABLE OF zc102mmt0019,
+        lt_partner TYPE SORTED TABLE OF zc102mmt0019-partner WITH UNIQUE KEY table_line,
+        lt_item    TYPE STANDARD TABLE OF zc102sdt0007,
+        lv_total   TYPE zc102e_sd_netwr,
+        lv_qty_sum TYPE zc102e_sd_menge,
+        lv_delid   TYPE zc102sdt0006-delid,
+        lv_dismo   TYPE zc102sdt0006-dismo,
+        lv_stax    TYPE zc102sdt0006-stax,
+        lv_finalsp TYPE zc102sdt0006-finalsp.
+
+*-- 저장용 임시 테이블
+  DATA : ls_save_so_header TYPE zc102sdt0006,
+         ls_save_so_item   TYPE zc102sdt0007.
+
+  FIELD-SYMBOLS: <fs_qty>  TYPE any,
+                 <fs_plan> TYPE zc102mmt0019.
+
+*-- Step 1: 해당 월 필드가 있는 계획만 필터링
+  LOOP AT gt_batch ASSIGNING <fs_plan>.
+    ASSIGN COMPONENT pv_field OF STRUCTURE <fs_plan> TO <fs_qty>.
+    IF sy-subrc = 0 AND <fs_qty> IS NOT INITIAL.
+      APPEND <fs_plan> TO lt_plan.
+      COLLECT <fs_plan>-partner INTO lt_partner.
+    ENDIF.
+  ENDLOOP.
+
+*-- Step 2: 파트너 기준으로 아이템 모아서 헤더 생성
+  LOOP AT lt_partner INTO DATA(lv_partner).
+
+*-- 판매오더 번호 채번
+    PERFORM create_sono CHANGING gv_sono.
+
+    CLEAR: lt_item, lv_total, lv_qty_sum.
+
+    LOOP AT lt_plan ASSIGNING <fs_plan> WHERE partner = lv_partner.
+      ASSIGN COMPONENT pv_field OF STRUCTURE <fs_plan> TO <fs_qty>.
+      IF <fs_qty> IS INITIAL.
+        CONTINUE.
+      ENDIF.
+
+      CLEAR  gs_cusmaster.
+      READ TABLE gt_cusmaster INTO gs_cusmaster WITH KEY partner = lv_partner BINARY SEARCH.
+
+*-- 아이템 생성
+      CLEAR gs_so_item.
+      gs_so_item-vbeln_so = gv_sono.
+      gs_so_item-matnr    = <fs_plan>-matnr.
+      gs_so_item-partner  = lv_partner.
+      gs_so_item-cusno    = gs_cusmaster-cusno.
+      gs_so_item-pequan   = <fs_qty>.
+      gs_so_item-meins    = <fs_plan>-meins.
+      gs_so_item-waers    = <fs_plan>-waers.
+      gs_so_item-scost    = <fs_plan>-stprs.
+      gs_so_item-netwr    = <fs_qty> * <fs_plan>-stprs.
+      APPEND gs_so_item TO gt_so_item.
+
+      lv_total    = lv_total + gs_so_item-netwr.
+
+      CLEAR : ls_save_so_item.
+      ls_save_so_item = CORRESPONDING #( gs_so_item ).
+      ls_save_so_item = VALUE #( BASE ls_save_so_item
+                                    erdat = sy-datum
+                                    ernam = sy-uname
+                                    erzet = sy-uzeit
+                                    ).
+      MODIFY zc102sdt0007 FROM ls_save_so_item.
+
+    ENDLOOP.
+
+*-- Step 3: 아이템이 있는 경우에만 헤더 생성
+    IF lines( gt_so_item ) > 0.
+
+      READ TABLE gt_kbetr INTO gs_kbetr WITH KEY knkli = gs_cusmaster-knkli
+                                                 ctlzl = gs_cusmaster-ctlzl
+                                                 BINARY SEARCH.
+
+      PERFORM apply_discount_policy_batch USING    lv_total gs_kbetr-kbetr
+                                          CHANGING lv_dismo
+                                                   lv_stax
+                                                   lv_finalsp.
+
+      lv_qty_sum = lines( gt_so_item ).
+      lv_delid = sy-datum + 15.
+
+      CLEAR gs_so_header.
+      gs_so_header-vbeln_so = gv_sono.
+      gs_so_header-partner  = lv_partner.
+      gs_so_header-cusno    = gs_cusmaster-cusno.
+      gs_so_header-ortype   = 'G'.
+      gs_so_header-audat    = sy-datum.
+      gs_so_header-delid    = lv_delid.
+      gs_so_header-waers    = gs_so_item-waers.
+      gs_so_header-menge    = lv_qty_sum.
+      gs_so_header-netwr    = lv_total.
+      gs_so_header-state    = 'N'.
+
+*-- 할인율 부가세 적용
+      gs_so_header-kbetr   = gs_kbetr-kbetr.
+      gs_so_header-dismo   = lv_dismo.
+      gs_so_header-stax    = lv_stax.
+      gs_so_header-finalsp = lv_finalsp.
+      gs_so_header-isreg   = 'R'.
+
+      APPEND gs_so_header TO gt_so_header.
+
+    ENDIF.
+
+*-- DB 저장
+    CLEAR ls_save_so_header.
+    ls_save_so_header = CORRESPONDING #( gs_so_header ).
+    ls_save_so_header = VALUE #( BASE ls_save_so_header
+                                  erdat = sy-datum
+                                  ernam = sy-uname
+                                  erzet = sy-uzeit
+                                  ).
+    MODIFY zc102sdt0006 FROM ls_save_so_header.
+
+    IF sy-subrc = 0.
+      COMMIT WORK AND WAIT.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_date
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_date .
+
+  DATA : lv_day TYPE i.
+
+  gv_date = sy-datum.
+  lv_day = gv_date+6(2).
+
+*-- 배치 실행 일자
+  CASE lv_day.
+    WHEN '10' OR '20' OR '30'.
+      gv_valid_day = 'X'.
+    WHEN OTHERS.
+      gv_valid_day = space.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form select_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM select_data .
+
+  DATA : lv_month(2).
+
+*-- 오늘 날짜에서 월 정보 추출
+  lv_month = gv_date+4(2).
+
+*-- 필드명 구성
+  CLEAR : gv_field.
+  CONCATENATE 'MONTH' lv_month INTO gv_field.
+
+*-- 판매 계획 데이터 조회
+  CLEAR  gt_batch.
+  SELECT stprs waers year_sd menge_year meins monat contype
+         month01 month02 month03 month04 month05 month06
+         month07 month08 month09 month10 month11 month12
+    INTO CORRESPONDING FIELDS OF TABLE gt_batch
+    FROM zc102mmt0019
+    WHERE year_sd = gv_date(4)   " 현재 연도
+      AND monat = sy-datum+6(2). " 매월 배치 실행 일자
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_cusno
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_cusno .
+
+*-- 고객 정보 조회
+  SELECT cusno partner knkli ctlzl
+    FROM zc102sdt0001
+    INTO CORRESPONDING FIELDS OF TABLE gt_cusmaster.
+
+  SORT gt_cusmaster BY cusno ASCENDING.
+
+*-- 고객 정책 조회
+  SELECT knkli ctlzl kbetr
+    FROM zc102sdt0003
+    INTO CORRESPONDING FIELDS OF TABLE gt_kbetr.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form apply_discount_policy_batch
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> LV_TOTAL
+*&      --> GS_KBETR_KBETR
+*&      <-- GS_SO_HEADER_DISMO
+*&      <-- GS_SO_HEADER_STAX
+*&      <-- GS_SO_HEADER_FINALSP
+*&---------------------------------------------------------------------*
+FORM apply_discount_policy_batch USING iv_total TYPE zc102e_sd_netwr
+                                        iv_kbetr TYPE zc102e_sd_kbetr
+                                  CHANGING ev_dismo    TYPE zc102e_sd_dismo
+                                           ev_stax     TYPE zc102e_fi_awrbtr
+                                           ev_finalsp  TYPE zc102e_fi_awrbtr.
+
+  CLEAR: ev_dismo, ev_stax, ev_finalsp.
+
+*-- 할인 금액 = 총액 * 할인율 / 100
+  ev_dismo = iv_total * iv_kbetr / 100.
+
+*-- 부가세 = 총액 * 0.10
+  ev_stax = iv_total * '0.10'.
+
+*-- 최종 금액 = (총액 - 할인금액) + 부가세
+  ev_finalsp = ( iv_total - ev_dismo ) + ev_stax.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

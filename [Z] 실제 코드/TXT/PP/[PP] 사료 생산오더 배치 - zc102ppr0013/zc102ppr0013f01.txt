@@ -1,0 +1,271 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0013F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form get_fo_route_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_fo_route_data .
+  CLEAR gt_fo.
+
+  SELECT *
+    INTO CORRESPONDING FIELDS OF TABLE gt_fo
+    FROM zc102ppt0014
+    WHERE rouno IN ( ' ', 'R50', 'R60', 'R40' )
+      AND mksta <> 'F'.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_plus_routeno
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_plus_routeno .
+  DATA : lv_tabix TYPE sy-tabix.
+
+  CLEAR lv_tabix.
+
+
+*  LOOP AT gt_fo INTO gs_fo WHERE pdstt <= sy-datum. " 오늘 또는 과거 시작일인 항목만 처리
+*    lv_tabix = sy-tabix.
+*    CASE gs_fo-rouno.
+*      WHEN ''.
+*        gs_fo-rouno = 'R50'.
+*        gs_fo-mksta = 'I'.
+*        gs_fo-prog = 30.
+*        gs_fo-p_unit = '%'.                       " 사료 라우팅 분쇄
+*      WHEN 'R50'.
+*        gs_fo-rouno = 'R60'.
+*        gs_fo-mksta = 'I'.
+*        gs_fo-prog = 80.
+*        gs_fo-p_unit = '%'.
+*      WHEN 'R60'.
+*        gs_fo-rouno = 'R40'.                       " 사료 라우팅 건조
+*        gs_fo-mksta = 'I'.
+*        gs_fo-prog = 90.
+*        gs_fo-p_unit = '%'.
+*      WHEN 'R40'.
+*        IF gs_fo-prog = 90.
+*          gs_fo-mksta = 'F'.
+*          gs_fo-prog = 100.
+*          gs_fo-p_unit = '%'.
+*          gs_fo-pdfns = gs_fo-aedat.               " 생산 종료일 찍어주기
+*        ENDIF.                                     " 사료 라우팅 포장 (완료)
+*      WHEN OTHERS.
+*        CONTINUE.
+*    ENDCASE.
+  LOOP AT gt_fo INTO gs_fo WHERE pdstt <= sy-datum.
+    lv_tabix = sy-tabix.
+
+    IF gs_fo-rouno IS INITIAL.
+      gs_fo-rouno = 'R50'.
+      gs_fo-mksta = 'I'.
+      gs_fo-prog  = 30.
+      gs_fo-p_unit = '%'.
+
+    ELSEIF gs_fo-rouno = 'R50'.
+      gs_fo-rouno = 'R60'.
+      gs_fo-mksta = 'I'.
+      gs_fo-prog  = 80.
+      gs_fo-p_unit = '%'.
+
+    ELSEIF gs_fo-rouno = 'R60'.
+      gs_fo-rouno = 'R40'.
+      gs_fo-mksta = 'I'.
+      gs_fo-prog  = 90.
+      gs_fo-p_unit = '%'.
+
+    ELSEIF gs_fo-rouno = 'R40' AND gs_fo-prog = 90.
+      gs_fo-mksta = 'F'.
+      gs_fo-prog  = 100.
+      gs_fo-p_unit = '%'.
+      gs_fo-pdfns = gs_fo-aedat.
+
+    ELSE.
+      CONTINUE.
+    ENDIF.
+
+*
+    gs_fo-aedat = sy-datum.
+    gs_fo-aenam = sy-uname.
+    gs_fo-aezet = sy-uzeit.
+
+    MODIFY gt_fo FROM gs_fo INDEX lv_tabix
+                            TRANSPORTING rouno mksta prog p_unit
+                                         pdfns
+                                         erdat ernam erzet
+                                         aedat aenam aezet.
+
+*--사료 생산오더 테이블 수정 ( 생산 완료 일자 제대로 찍어주기 )
+*    UPDATE zc102ppt0014
+*         SET rouno = @gs_fo-rouno,
+*           mksta = @gs_fo-mksta,
+*           pdstt = @gs_fo-pdstt,
+*           pdfns = @gs_fo-pdfns,
+*           prog  = @gs_fo-prog,
+*           p_unit = @gs_fo-p_unit,
+*           aedat  = @sy-datum,
+*           aezet  = @sy-uzeit,
+*           aenam  = @sy-uname
+*           WHERE pdono = @gs_fo-pdono.
+
+
+*--1. 배치번호  ( 생산완료된 것들에 한해서 배치번호 넘겨주기 )
+    IF gs_fo-mksta = 'F' AND gs_fo-prog EQ 100.
+      PERFORM create_batno. " 배치번호 GET
+      PERFORM set_batch.
+
+      gs_complit-pdono = gs_fo-pdono.
+      gs_complit-menge = gs_fo-menge.
+      gs_complit-meins = gs_fo-meins.
+      gs_complit-batno = gs_batch-batno.  "배치번호 읽어와서 넣어주기
+      gs_complit-wctno = gs_fo-wkcno.
+      gs_complit-werks = gs_fo-werks.
+      gs_complit-bomno = gs_fo-bomno.
+      gs_complit-matnr = gs_fo-matnr.
+      gs_complit-erdat = sy-datum.
+      gs_complit-ernam = sy-uname.
+      gs_complit-erzet = sy-uzeit.
+
+      APPEND gs_complit TO gt_complit.
+
+      PERFORM set_finish_data.
+      PERFORM create_md.
+    ENDIF.
+
+  ENDLOOP.
+  UPDATE zc102ppt0014 FROM TABLE gt_fo.
+*--배치번호 배치 테이블에 넘겨주기
+  MODIFY zc102ppt0005 FROM TABLE gt_batch.
+
+*--2. 생산완료 테이블에 넘겨주기
+  MODIFY zc102ppt0007 FROM TABLE gt_complit.
+
+*--3. 가공완제품 테이블로 이동
+  MODIFY zc102mmt0003 FROM TABLE gt_finish.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_batno
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_batno .
+
+  DATA: gv_number    TYPE n LENGTH 10,
+        gv_prefix(3),
+        gv_full_code TYPE string,
+        gv_range_nr  TYPE inri-nrrangenr,
+        gv_quantity  TYPE inri-quantity.
+
+  DATA: ls_nriv TYPE nriv.
+
+  gv_prefix = 'B'.  " 원하는 prefix 사용
+  gv_range_nr = '02'. " 원하는 번호 - 도메인 정의서에 있음!!!
+  gv_quantity = 1.    " 원하는 증가량 사용
+
+**********************************************************************
+* 순번 호출
+**********************************************************************
+  CALL METHOD zclc102cm_auto_sequence=>get_next_value
+    EXPORTING
+      pv_range_nr = gv_range_nr
+      pv_prefix   = gv_prefix
+      pv_quantity = gv_quantity
+    IMPORTING
+      pv_result   = gv_full_code.
+
+  gv_batno = CONV zc102ppt0005-batno( gv_full_code ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_batch
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_batch .
+
+  gs_batch-batno = gv_batno.
+  gs_batch-matnr = gs_fo-matnr.
+  gs_batch-mtart = 'P'.
+  gs_batch-lfdat = sy-datum.
+  gs_batch-stlno = 'S1400'. "사료 창고 1400번
+  gs_batch-bwart = '107'.
+  " Time stamp
+  gs_batch-erdat = sy-datum.
+  gs_batch-ernam = sy-uname.
+  gs_batch-erzet = sy-uzeit.
+
+  APPEND gs_batch TO gt_batch.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_finish_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_finish_data .
+
+  gs_finish-stlno   = 'SL1400'.       " 창고번호
+  gs_finish-stltype = 'P'.           " 완제품 창고
+  gs_finish-werks   = gs_fo-werks.   " Plant 번호
+  gs_finish-matnr   = gs_fo-matnr.   " 자재번호
+  gs_finish-batno   = gv_batno.      " 배치번호
+  gs_finish-labst   = gs_fo-menge.   " 최종 재고량 = 가용재고량
+  gs_finish-meins   = gs_fo-meins.   " 수량 단위
+  gs_finish-lfdat   = sy-datum.      " 입고일 = 날짜
+  " 온도 습도 유통기한
+  " Time stamp
+  gs_finish-erdat = sy-datum.
+  gs_finish-ernam = sy-uname.
+  gs_finish-erzet = sy-uzeit.
+
+  APPEND gs_finish TO  gt_finish.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_md
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_md .
+
+*-- 자재문서 생성
+  CALL FUNCTION 'ZFM_CL102_MM_02'
+    EXPORTING
+      iv_bwart          = '101'                          " 유형 : 입고
+      iv_usnam          = '이예인'                         " 담당자명(OPTIONAL),
+      iv_werks          = 'P1000'                        " Plant 번호
+      iv_stlno          = 'SL1400'                       " 창고번호
+      iv_batno          = gv_batno
+      iv_matnr          = gs_fo-matnr
+      iv_menge          = gs_fo-menge
+      iv_meins          = gs_fo-meins
+    EXCEPTIONS
+      missing_key_value = 1
+      OTHERS            = 2.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

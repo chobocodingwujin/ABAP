@@ -1,0 +1,322 @@
+<mvc:View controllerName="bpcontrol.bpcontrol.controller.BP_Detail"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:core="sap.ui.core"
+    xmlns="sap.uxap"
+    xmlns:layout="sap.ui.layout"
+    xmlns:partner="blocks.partner"
+    xmlns:customer="blocks.customer"
+    xmlns:vendor="blocks.vendor"
+    xmlns:forms="sap.ui.layout.form"
+    xmlns:m="sap.m"
+    xmlns:f="sap.f"
+    xmlns:table="sap.ui.table"
+    xmlns:u="sap.ui.unified"
+    xmlns:c="sap.ui.core"
+    xmlns:sfb="sap.ui.comp.smartfilterbar"
+    xmlns:smartTable="sap.ui.comp.smarttable"
+    xmlns:sv="sap.ui.comp.smartvariants"
+    xmlns:viz="sap.viz.ui5.controls"
+    xmlns:viz.feeds="sap.viz.ui5.controls.common.feeds"
+    xmlns:viz.data="sap.viz.ui5.data"
+    xmlns:micro="sap.suite.ui.microchart">
+    <!-- xmlns:goals="sap.uxap.sample.SharedBlocks.goals" xmlns:personal="sap.uxap.sample.SharedBlocks.personal"> -->
+
+    <m:Page id="page2" title="비즈니스 파트너 상세">
+        <m:customHeader>
+            <m:Bar>
+                <m:contentLeft>
+                    <m:Button icon="sap-icon://nav-back" tooltip="nav-back" press="onBack" />
+                </m:contentLeft>
+                <m:contentMiddle>
+                    <m:Text text="비즈니스 파트너 상세" />
+                </m:contentMiddle>
+            </m:Bar>
+        </m:customHeader>
+        <ObjectPageLayout id="ObjectPageLayout" showTitleInHeaderContent="true" useIconTabBar="true" upperCaseAnchorBar="false">
+            <headerTitle>
+                <ObjectPageHeader id="headerForTest" objectTitle="{PartnerSet>/Name1}" visible="true" objectImageShape="Square" objectImageURI="{PartnerSet>/imageSrc}" objectSubtitle="{PartnerSet>/RoleText}" isObjectTitleAlwaysVisible="false" isObjectSubtitleAlwaysVisible="false" isActionAreaAlwaysVisible="true" showPlaceholder="true">
+                    <navigationBar>
+                        <m:Bar>
+                            <m:contentLeft>
+                                <!-- <m:Button icon="sap-icon://nav-back" tooltip="nav-back" press="onBack()"/> -->
+                            </m:contentLeft>
+                            <m:contentMiddle>
+                                <!-- <m:Text text="비즈니스 파트너 상세"/> -->
+                            </m:contentMiddle>
+                        </m:Bar>
+                    </navigationBar>
+                    <actions>
+                        <ObjectPageHeaderActionButton icon="sap-icon://edit" text="수정" tooltip="수정" press="onEdit"/>
+                        <!-- <ObjectPageHeaderActionButton icon="sap-icon://action" text="action" tooltip="action"/> -->
+                    </actions>
+                </ObjectPageHeader>
+            </headerTitle>
+            <headerContent>
+                <layout:VerticalLayout>
+                    <m:ObjectStatus title="주소" text="{PartnerSet>/Address}"/>
+                    <m:HBox>
+                        <m:ObjectStatus title="전화연결" text=""/>
+                        <m:Link text="{PartnerSet>/Phone}" href="{= 'tel:' + ${PartnerSet>/Phone} }" />
+                    </m:HBox>
+                    <!-- <m:ObjectStatus title="이메일" text="{PartnerSet>/Email}"/> -->
+                    <m:HBox >
+                        <m:ObjectStatus title="이메일" text=""/>
+                        <m:Link text="{PartnerSet>/Email}" href="{= 'mailto:' + ${PartnerSet>/Email} }" />
+                    </m:HBox>
+                </layout:VerticalLayout>
+                <layout:HorizontalLayout>
+                    <m:Image width="21px" height="21px" src="./test-resources/sap/uxap/images/linkedInIcon.png"/>
+                    <m:Image width="20px" height="20px" src="./test-resources/sap/uxap/images/facebookIcon.png"/>
+                    <m:Image width="21px" height="21px" src="./test-resources/sap/uxap/images/twitterIcon.png"/>
+                </layout:HorizontalLayout>
+                <m:ObjectStatus state="{PartnerSet>/to_Credit/status}" icon="{PartnerSet>/StatusIcon}" text="{PartnerSet>/StatusText}"/>
+                <layout:VerticalLayout>
+                    <layout:HorizontalLayout>
+                        <layout:VerticalLayout>
+                            <m:Label id= "address" text="Seoul, Korea"/>
+                            <m:Label id= "currentTimeLabel" text="3:00 PM, Friday"/>
+                        </layout:VerticalLayout>
+                    </layout:HorizontalLayout>
+                    <m:VBox>
+                        <core:HTML id="mapContainer" />
+                    </m:VBox>
+                </layout:VerticalLayout>
+            </headerContent>
+            <sections>
+                <ObjectPageSection titleUppercase="false" title="고객" visible="{= !!${PartnerSet>/to_Customer/results/0/Cusno} }">
+                    <subSections>
+                        <ObjectPageSubSection title="고객 정보" titleUppercase="false">
+                            <blocks>
+                                <customer:CustomerInfo id="customer"/>
+                            </blocks>
+                        </ObjectPageSubSection>
+
+                        <ObjectPageSubSection id="paymentSubSection" title="여신 정보" titleUppercase="false">
+                            <blocks>
+                                <customer:CreditInfo id="credit" />
+                            </blocks>
+                        </ObjectPageSubSection>
+
+                        <ObjectPageSubSection id="matnrSubSection" title="판매 상품 목록" titleUppercase="false">
+                            <blocks>
+                                <m:VBox >
+                                    <sfb:SmartFilterBar search="cmd:Enter" id="smartFilterBar_cusmatnr" entitySet="CusTradeSet" filterBarExpanded="false" showFilterConfiguration="false" showGoOnFB="false" enableBasicSearch="false" basicSearchFieldName="Partner" persistencyKey="BP_Display" liveMode="true">
+                                        <sfb:customData>
+                                            <c:CustomData key="defaultFilterBarExpanded" value='{"Partner": "true"}'/>
+                                            <c:CustomData key="defaultShowAllFilters" value='{"Partner": "true"}'/>
+                                        </sfb:customData>
+                                    </sfb:SmartFilterBar>
+
+                                    <smartTable:SmartTable id="cusmatnrTable" header="상품" entitySet="CusTradeSet" smartFilterId="smartFilterBar_cusmatnr" tableType="ResponsiveTable" enableExport="true" beforeExport="onBeforeExport" showFullScreenButton="true" useVariantManagement="false" enableAutoColumnWidth="false" useTablePersonalisation="true" showRowCount="true">
+                                        <smartTable:layoutData>
+                                            <m:FlexItemData growFactor="1" baseSize="0%"/>
+                                        </smartTable:layoutData>
+                                        <smartTable:customData>
+                                        </smartTable:customData>
+                                        <smartTable:customToolbar>
+                                            <m:OverflowToolbar design="Transparent">
+                                                <m:ToolbarSpacer/>
+                                            </m:OverflowToolbar>
+                                        </smartTable:customToolbar>
+                                    </smartTable:SmartTable>
+                                </m:VBox>
+                            </blocks>
+                        </ObjectPageSubSection>
+
+                        <ObjectPageSubSection id="tradeSubSection" title="거래 내역" titleUppercase="false">
+                            <blocks>
+                                <m:VBox >
+                                    <!-- 상단 도구 영역 -->
+                                    <m:HBox >
+                                        <m:VBox>
+                                            <m:Label text="연도" labelFor="yearInput" />
+                                            <m:Input id="yearInput" placeholder="예: 2024" showValueHelp="true" valueHelpRequest="onYearHelpPress" submit="onYearSubmit" width="10rem" />
+                                        </m:VBox>
+                                        <m:VBox>
+                                            <!-- 차트 출력 모드 선택 -->
+                                            <m:Label text="차트 유형 선택" labelFor="chartTypeSelect" />
+                                            <m:Select id="chartTypeSelect" change="onChartTypeChange">
+                                                <m:items>
+                                                    <core:Item key="column" text="막대 차트" />
+                                                    <core:Item key="line" text="선형 차트" />
+                                                </m:items>
+                                            </m:Select>
+                                        </m:VBox>
+                                    </m:HBox>
+                                    <viz:VizFrame id="idLineFrame" uiConfig="{applicationSet:'fiori'}" height="30rem" width="100%" vizType='column' vizProperties="{
+                                                                                                                                                                        title:{text:'월별 거래 누계'},
+                                                                                                                                                                        legend:{drawingEffect:'glossy'},
+                                                                                                                                                                        plotArea:{drawingEffect:'glossy'}
+                                                                                                                                                                    }">
+                                        <viz:dataset>
+                                            <viz.data:FlattenedDataset data="{ChartModel>/to_CusTotalMerged}">
+                                                <!-- <viz.data:FlattenedDataset data="{PartnerSet>/to_CusTotalMerged/results}"> -->
+                                                <viz.data:dimensions>
+                                                    <viz.data:DimensionDefinition name="월" value="{Monat}" />
+                                                </viz.data:dimensions>
+                                                <viz.data:measures>
+                                                    <viz.data:MeasureDefinition name="현년도 금액" value="{Wrbtr_C}" />
+                                                    <viz.data:MeasureDefinition name="전년도 금액" value="{Wrbtr_P}" />
+                                                </viz.data:measures>
+                                            </viz.data:FlattenedDataset>
+                                        </viz:dataset>
+
+                                        <viz:feeds>
+                                            <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="현년도 금액" />
+                                            <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="전년도 금액" />
+                                            <viz.feeds:FeedItem uid="categoryAxis" type="Dimension" values="월" />
+                                        </viz:feeds>
+
+                                        <viz:dependents>
+                                            <viz:Popover id="idPopOver" />
+                                        </viz:dependents>
+
+                                    </viz:VizFrame>
+                                </m:VBox>
+                            </blocks>
+                        </ObjectPageSubSection>
+                    </subSections>
+                </ObjectPageSection>
+
+                <ObjectPageSection titleUppercase="false" title="거래처" visible="{= !!${PartnerSet>/to_Vendor/results/0/Venno} }">
+                    <subSections>
+                        <ObjectPageSubSection title="거래처 정보" titleUppercase="false">
+                            <blocks>
+                                <vendor:VendorInfo id="vendor" />
+                                <!-- <personal:BlockPhoneNumber id="phone"/>
+                                <personal:BlockSocial id="social"/>
+                                <personal:BlockAdresses id="adresses"/>
+                                <personal:BlockMailing id="mailing" columnLayout="1"/> -->
+                            </blocks>
+                        </ObjectPageSubSection>
+
+                        <ObjectPageSubSection id="accountSubSection" title="계좌 정보" titleUppercase="false">
+                            <blocks>
+                                <m:VBox >
+                                    <sfb:SmartFilterBar search="cmd:Enter" id="smartFilterBar_acc" entitySet="BankSet" filterBarExpanded="false" showFilterConfiguration="false" showGoOnFB="false" enableBasicSearch="false" basicSearchFieldName="Bank" persistencyKey="BP_Display" liveMode="true">
+                                        <sfb:customData>
+                                            <c:CustomData key="defaultFilterBarExpanded" value='{"Bank": "true"}'/>
+                                            <c:CustomData key="defaultShowAllFilters" value='{"Bank": "true"}'/>
+                                        </sfb:customData>
+                                    </sfb:SmartFilterBar>
+
+                                    <smartTable:SmartTable id="accTable" header="계좌" entitySet="BankSet" smartFilterId="smartFilterBar_acc" tableType="ResponsiveTable" enableExport="true" beforeExport="onBeforeExport" showFullScreenButton="true" useVariantManagement="false" enableAutoColumnWidth="false" useTablePersonalisation="true" showRowCount="true">
+                                        <smartTable:layoutData>
+                                            <m:FlexItemData growFactor="1" baseSize="0%"/>
+                                        </smartTable:layoutData>
+                                        <smartTable:customData>
+                                        </smartTable:customData>
+                                        <smartTable:customToolbar>
+                                            <m:OverflowToolbar design="Transparent">
+                                                <m:ToolbarSpacer/>
+                                            </m:OverflowToolbar>
+                                        </smartTable:customToolbar>
+                                    </smartTable:SmartTable>
+                                </m:VBox>
+                            </blocks>
+                        </ObjectPageSubSection>
+
+                        <ObjectPageSubSection id="vendorSubSection" title="거래 자재 목록" titleUppercase="false">
+                            <blocks>
+                                <m:VBox >
+                                    <sfb:SmartFilterBar search="cmd:Enter" id="smartFilterBar_matnr" entitySet="VenMatSet" filterBarExpanded="false" showFilterConfiguration="false" showGoOnFB="false" enableBasicSearch="false" basicSearchFieldName="Partner" persistencyKey="BP_Display" liveMode="true">
+                                        <sfb:customData>
+                                            <c:CustomData key="defaultFilterBarExpanded" value='{"Partner": "true"}'/>
+                                            <c:CustomData key="defaultShowAllFilters" value='{"Partner": "true"}'/>
+                                        </sfb:customData>
+                                    </sfb:SmartFilterBar>
+
+                                    <smartTable:SmartTable id="matnrTable" header="자재" entitySet="VenMatSet" smartFilterId="smartFilterBar_matnr" tableType="ResponsiveTable" enableExport="true" beforeExport="onBeforeExport" showFullScreenButton="true" useVariantManagement="false" enableAutoColumnWidth="false" useTablePersonalisation="true" showRowCount="true">
+                                        <smartTable:layoutData>
+                                            <m:FlexItemData growFactor="1" baseSize="0%"/>
+                                        </smartTable:layoutData>
+                                        <smartTable:customData>
+                                        </smartTable:customData>
+                                        <smartTable:customToolbar>
+                                            <m:OverflowToolbar design="Transparent">
+                                                <m:ToolbarSpacer/>
+                                            </m:OverflowToolbar>
+                                        </smartTable:customToolbar>
+
+                                        <m:Table>
+                                            <!-- 셀 내용 정의 -->
+                                            <m:ColumnListItem type="Navigation" press="onRowPress">
+                                                <m:cells>
+                                                </m:cells>
+                                            </m:ColumnListItem>
+
+                                        </m:Table>
+                                    </smartTable:SmartTable>
+                                </m:VBox>
+                            </blocks>
+                        </ObjectPageSubSection>
+
+                        <ObjectPageSubSection id="tradeVendorSubSection" title="거래 정보" titleUppercase="false">
+                            <blocks>
+                                <m:VBox >
+                                    <!-- 상단 도구 영역 -->
+                                    <m:HBox >
+                                        <m:VBox>
+                                            <m:Label text="연도" labelFor="yearInput" />
+                                            <m:Input id="yearInput2" placeholder="예: 2024" showValueHelp="true" valueHelpRequest="onYearHelpPress" submit="onYearSubmit2" width="10rem" />
+                                        </m:VBox>
+                                        <!-- <m:VBox>
+                                            <m:Label text="자재코드" labelFor="matnrInput" />
+                                            <m:Input id="matnrInput" placeholder="예: MM0029" showValueHelp="true" valueHelpRequest="onMatnrHelpPress" submit="onMatnrSubmit" width="10rem" />
+                                        </m:VBox> -->
+                                        <m:VBox>
+                                            <!-- 차트 출력 모드 선택 -->
+                                            <m:Label text="차트 유형 선택" labelFor="chartTypeSelect" />
+                                            <m:Select id="chartTypeSelect2" change="onChartTypeChange2">
+                                                <m:items>
+                                                    <core:Item key="line" text="선형 차트" />
+                                                    <core:Item key="column" text="막대 차트" />
+                                                </m:items>
+                                            </m:Select>
+                                        </m:VBox>
+                                    </m:HBox>
+                                    <viz:VizFrame id="idLineFrame2" uiConfig="{applicationSet:'fiori'}" height="30rem" width="100%" vizType='line' vizProperties="{
+                                                                                                                                                                title: {
+                                                                                                                                                                    text: '월별 자재 거래 누계'
+                                                                                                                                                                },
+                                                                                                                                                                legend: {
+                                                                                                                                                                    drawingEffect: 'glossy'
+                                                                                                                                                                },
+                                                                                                                                                                plotArea: {
+                                                                                                                                                                    drawingEffect: 'glossy'
+                                                                                                                                                                }
+                                                                                                                                                            }">
+                                        <viz:dataset>
+                                            <viz.data:FlattenedDataset data="{ChartModelTrade>/to_TradeMerged}">
+
+                                                <viz.data:dimensions>
+                                                    <viz.data:DimensionDefinition name="월" value="{Monat}" />
+                                                </viz.data:dimensions>
+                                                <viz.data:measures>
+                                                    <viz.data:MeasureDefinition name="현년도 금액" value="{Wrbtr_C}" />
+                                                    <viz.data:MeasureDefinition name="전년도 금액" value="{Wrbtr_P}" />
+                                                </viz.data:measures>
+                                            </viz.data:FlattenedDataset>
+                                        </viz:dataset>
+
+                                        <viz:feeds>
+                                            <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="현년도 금액" />
+                                            <viz.feeds:FeedItem uid="valueAxis" type="Measure" values="전년도 금액" />
+                                            <viz.feeds:FeedItem uid="categoryAxis" type="Dimension" values="월" />
+                                        </viz:feeds>
+
+                                        <viz:dependents>
+                                            <viz:Popover id="idPopOver2" />
+                                        </viz:dependents>
+
+                                    </viz:VizFrame>
+                                </m:VBox>
+                            </blocks>
+                        </ObjectPageSubSection>
+                    </subSections>
+                </ObjectPageSection>
+            </sections>
+        </ObjectPageLayout>
+    </m:Page>
+
+</mvc:View>

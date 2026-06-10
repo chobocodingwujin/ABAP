@@ -1,0 +1,158 @@
+{
+    "_version": "1.60.0",
+    "sap.app": {
+        "id": "bpcontrol.bpcontrol",
+        "type": "application",
+        "i18n": "i18n/i18n.properties",
+        "applicationVersion": {
+            "version": "0.0.1"
+        },
+        "title": "{{appTitle}}",
+        "description": "{{appDescription}}",
+        "resources": "resources.json",
+        "sourceTemplate": {
+            "id": "@sap/generator-fiori:basic",
+            "version": "1.16.5",
+            "toolsId": "a8b46886-f44d-41a0-a102-3beb60fcddd1"
+        },
+        "dataSources": {
+            "ZC102_P_BP_BP_CREATE_CDS_VAN": {
+                "uri": "/sap/opu/odata/IWFND/CATALOGSERVICE;v=2/Annotations(TechnicalName='ZC102_P_BP_BP_CREATE_CDS_VAN',Version='0001')/$value/",
+                "type": "ODataAnnotation",
+                "settings": {
+                    "localUri": "localService/mainService/ZC102_P_BP_BP_CREATE_CDS_VAN.xml"
+                }
+            },
+            "mainService": {
+                "uri": "/sap/opu/odata/sap/ZC102_P_BP_BP_CREATE_CDS/",
+                "type": "OData",
+                "settings": {
+                    "annotations": [
+                        "ZC102_P_BP_BP_CREATE_CDS_VAN"
+                    ],
+                    "localUri": "localService/mainService/metadata.xml",
+                    "odataVersion": "2.0"
+                }
+            }
+        }
+    },
+    "sap.ui": {
+        "technology": "UI5",
+        "icons": {
+            "icon": "",
+            "favIcon": "",
+            "phone": "",
+            "phone@2": "",
+            "tablet": "",
+            "tablet@2": ""
+        },
+        "deviceTypes": {
+            "desktop": true,
+            "tablet": true,
+            "phone": true
+        }
+    },
+    "sap.ui5": {
+        "flexEnabled": false,
+        "dependencies": {
+            "minUI5Version": "1.120.0",
+            "libs": {
+                "sap.m": {},
+                "sap.ui.core": {}
+            }
+        },
+        "resourceRoots": {
+            "blocks": "./blocks",
+            "bpcontrol.bpcontrol": "./"
+        },
+        "contentDensities": {
+            "compact": true,
+            "cozy": true
+        },
+        "models": {
+            "i18n": {
+                "type": "sap.ui.model.resource.ResourceModel",
+                "settings": {
+                    "bundleName": "bpcontrol.bpcontrol.i18n.i18n"
+                }
+            },
+            "": {
+                "dataSource": "mainService",
+                "preload": true,
+                "settings": {}
+            }
+        },
+        "resources": {
+            "css": [
+                {
+                    "uri": "css/style.css"
+                }
+            ]
+        },
+        "routing": {
+            "config": {
+                "routerClass": "sap.m.routing.Router",
+                "controlAggregation": "pages",
+                "controlId": "app",
+                "transition": "slide",
+                "type": "View",
+                "viewType": "XML",
+                "path": "bpcontrol.bpcontrol.view",
+                "async": true,
+                "viewPath": "bpcontrol.bpcontrol.view"
+            },
+            "routes": [
+                {
+                    "name": "RouteBP_Display",
+                    "pattern": ":?query:",
+                    "target": [
+                        "TargetBP_Display"
+                    ]
+                },
+                {
+                    "name": "RouteBP_Detail",
+                    "pattern": "detail/{partnerId}",
+                    "target": [
+                        "TargetBP_Detail"
+                    ]
+                },
+                {
+                    "name": "RouteBP_Edit",
+                    "pattern": "edit/{partnerId}",
+                    "target": [
+                        "TargetBP_Edit"
+                    ]
+                },
+                {
+                    "name": "RouteBP_Create",
+                    "pattern": "create",
+                    "target": [
+                        "TargetBP_Create"
+                    ]
+                }
+            ],
+            "targets": {
+                "TargetBP_Display": {
+                    "id": "BP_Display",
+                    "name": "BP_Display"
+                },
+                "TargetBP_Detail": {
+                    "id": "BP_Detail",
+                    "name": "BP_Detail"
+                },
+                "TargetBP_Edit": {
+                    "id": "BP_Edit",
+                    "name": "BP_Edit"
+                },
+                "TargetBP_Create": {
+                    "id": "BP_Create",
+                    "name": "BP_Create"
+                }
+            }
+        },
+        "rootView": {
+            "viewName": "bpcontrol.bpcontrol.view.App",
+            "type": "XML"
+        }
+    }
+}

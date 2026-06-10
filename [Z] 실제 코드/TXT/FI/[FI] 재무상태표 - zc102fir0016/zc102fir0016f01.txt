@@ -1,0 +1,1123 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102FIR0016F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form set_jaemoo_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_jaemoo_data .
+
+  CLEAR gt_jaemoo.
+  SELECT bukrs gjahr saknr shkzg waers
+         hsl01 hsl02 hsl03 hsl04 hsl05 hsl06
+         hsl07 hsl08 hsl09 hsl10 hsl11 hsl12
+    FROM zvfaglflextc102
+    INTO CORRESPONDING FIELDS OF TABLE gt_jaemoo
+   WHERE gjahr EQ pa_gjahr.
+
+  IF gt_jaemoo IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen_100
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen_100 .
+
+  IF go_tree IS NOT BOUND.
+
+    PERFORM init_tree.
+    PERFORM define_hierarchy_header CHANGING gs_hierhdr.
+    PERFORM build_comment USING gt_list_commentary gv_logo.
+    PERFORM define_field_catalog.
+    PERFORM create_hierarchy.
+    PERFORM fill_column_tree.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form init_tree
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM init_tree .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = go_container->dock_at_left
+      extension = 3000.
+
+  CREATE OBJECT go_tree
+    EXPORTING
+      parent              = go_container
+      node_selection_mode = cl_gui_column_tree=>node_sel_mode_multiple
+      item_selection      = 'X'.
+*      no_html_header              =
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form define_hierarchy_header
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- GS_HIERHDR
+*&---------------------------------------------------------------------*
+FORM define_hierarchy_header  CHANGING pv_hierhdr TYPE treev_hhdr.
+
+  pv_hierhdr-heading = '재무상태표'.
+  pv_hierhdr-tooltip = '재무상태표'.
+  pv_hierhdr-width   = 35.
+  pv_hierhdr-width_pix = space.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form build_comment
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> GT_LIST_COMMENTARY
+*&      --> GV_LOGO
+*&---------------------------------------------------------------------*
+FORM build_comment  USING pt_list_commentary TYPE slis_t_listheader
+                          pv_logo            TYPE sdydo_value.
+
+  DATA : ls_line TYPE slis_listheader.
+
+  CLEAR ls_line.
+  ls_line-typ  = 'H'. " 큰 폰트
+  ls_line-info = pa_gjahr && '년 재무상태표'.
+  APPEND ls_line TO pt_list_commentary.
+
+  IF pa_monat > '1' .
+
+    CLEAR ls_line.
+    ls_line-typ = 'H'.
+    ls_line-info = '1월'&& '~' && pa_monat && '월'.
+    APPEND ls_line TO pt_list_commentary.
+
+  ELSEIF pa_monat = '1'.
+
+    CLEAR ls_line.
+    ls_line-typ = 'H'.
+    ls_line-info = pa_monat && '월'.
+    APPEND ls_line TO pt_list_commentary.
+
+  ELSEIF pa_monat > sy-datum+4(2).
+
+    pa_monat = sy-datum+4(2).
+
+    CLEAR ls_line.
+    ls_line-typ = 'H'.
+    ls_line-info = pa_monat && '월'.
+    APPEND ls_line TO pt_list_commentary.
+
+  ENDIF.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " 작은 폰트
+  ls_line-key = '현재 날짜'.
+  ls_line-info = sy-datum.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'.
+  ls_line-key = '현재 시간'.
+  ls_line-info = sy-uzeit.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'.
+  ls_line-info = 'SYNC6 1반 2조'.
+  APPEND ls_line TO pt_list_commentary.
+
+  gs_variant-report = sy-repid.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form define_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM define_field_catalog .
+
+  CLEAR : gt_fcat, gs_fcat.
+  PERFORM set_field_catalog USING : 'AMOUNT' '금액'  ' ' 'R',
+                                    'WAERS'  '통화키' ' ' 'C'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_field_catalog  USING pv_field pv_text pv_noout pv_just.
+
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-coltext   = pv_text.
+  gs_fcat-just      = pv_just.
+  gs_fcat-no_out    = pv_noout.
+  gs_fcat-outputlen = 36.
+
+  CASE pv_field.
+    WHEN 'AMOUNT'.
+      gs_fcat-cfieldname = 'WAERS'.
+
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_hierarchy
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_hierarchy .
+
+  CALL METHOD go_tree->set_table_for_first_display
+    EXPORTING
+      is_variant          = gs_variant
+      i_save              = 'A'
+      i_default           = 'X'
+      is_hierarchy_header = gs_hierhdr
+      it_list_commentary  = gt_list_commentary
+      i_background_id     = 'SBACK1'
+      i_logo              = 'FOODLOGO'
+    CHANGING
+      it_outtab           = gt_outtab " 여기는 깡통이여야 함
+      it_fieldcatalog     = gt_fcat.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form fill_column_tree
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM fill_column_tree .
+
+  DATA : lv_acdes_text  TYPE lvc_value,
+         lv_lvl1_text   TYPE lvc_value,
+         lv_lvl2_text   TYPE lvc_value,
+         lv_root_key    TYPE lvc_nkey,
+         lv_lvl1_key    TYPE lvc_nkey, " GLVEL 1 재고자산
+         lv_lvl2_key    TYPE lvc_nkey, " GLVEL 2 일반현금
+         lv_txt20_key   TYPE lvc_nkey, " GLVEL 3 유동자산
+         lv_leaf_key    TYPE lvc_nkey,
+         lt_layout_item TYPE lvc_t_layi,
+         ls_layout      TYPE lvc_s_layn.
+
+  DATA : lt_nodes TYPE lvc_t_nkey.
+
+  LOOP AT gt_header INTO gs_header.
+
+    ON CHANGE OF gs_header-acdes.
+      CLEAR ls_layout.
+      PERFORM create_item_layouts CHANGING lt_layout_item.
+*-- 하위에 Level 정보가 더 있다면 Folder 속성 적용 ------------------*
+      ls_layout-isfolder = 'X'.
+      ls_layout-n_image  = '@06@'.
+      ls_layout-exp_image = '@07@'.
+*--------------------------------------------------------------------*
+      lv_acdes_text = gs_header-acdes.
+      MOVE-CORRESPONDING gs_header TO gs_tree.
+      READ TABLE gt_total INTO gs_total WITH KEY acdes = lv_acdes_text.
+      gs_tree-amount = gs_total-t_wrbtr.
+
+      CALL METHOD go_tree->add_node
+        EXPORTING
+          i_relat_node_key = lv_root_key
+          i_relationship   = cl_gui_column_tree=>relat_last_child
+          i_node_text      = lv_acdes_text
+          is_node_layout   = ls_layout
+          is_outtab_line   = gs_tree
+        IMPORTING
+          e_new_node_key   = lv_lvl1_key.
+      APPEND lv_lvl1_key TO lt_nodes.
+    ENDON.
+
+    IF gs_header-acdes = '자본'.
+
+*      ON CHANGE OF gs_header-bs_lvl1.
+      CLEAR ls_layout.
+      PERFORM create_item_layouts CHANGING lt_layout_item.
+*-- 하위에 Level 정보가 더 있다면 Folder 속성 적용 ------------------*
+      ls_layout-isfolder = ' '.
+*      ls_layout-n_image  = '@06@'.
+*      ls_layout-exp_image = '@07@'.
+*--------------------------------------------------------------------*
+
+      lv_acdes_text = gs_header-txt20.
+
+      CALL METHOD go_tree->add_node
+        EXPORTING
+          i_relat_node_key = lv_lvl1_key
+          i_relationship   = cl_gui_column_tree=>relat_last_child
+          i_node_text      = lv_acdes_text
+          is_node_layout   = ls_layout
+          is_outtab_line   = gs_header
+        IMPORTING
+          e_new_node_key   = lv_txt20_key.
+
+*      ENDON.
+
+    ELSE.
+
+      ON CHANGE OF gs_header-bs_lvl1.
+        CLEAR ls_layout.
+        PERFORM create_item_layouts CHANGING lt_layout_item.
+*-- 하위에 Level 정보가 더 있다면 Folder 속성 적용 ------------------*
+        ls_layout-isfolder = 'X'.
+        ls_layout-n_image  = '@06@'.
+        ls_layout-exp_image = '@07@'.
+*--------------------------------------------------------------------*
+        lv_acdes_text = gs_header-bs_lvl1.
+        MOVE-CORRESPONDING gs_header TO gs_tree.
+        READ TABLE gt_total INTO gs_total WITH KEY acdes = lv_acdes_text.
+        gs_tree-amount = gs_total-t_wrbtr.
+
+        CALL METHOD go_tree->add_node
+          EXPORTING
+            i_relat_node_key = lv_lvl1_key
+            i_relationship   = cl_gui_column_tree=>relat_last_child
+            i_node_text      = lv_acdes_text
+            is_node_layout   = ls_layout
+            is_outtab_line   = gs_tree
+          IMPORTING
+            e_new_node_key   = lv_lvl2_key.
+        APPEND lv_lvl2_key TO lt_nodes.
+      ENDON.
+
+    ENDIF.
+
+    IF gs_header-acdes = '부채'.
+
+      ON CHANGE OF gs_header-bs_lvl2.
+        CLEAR ls_layout.
+        PERFORM create_item_layouts CHANGING lt_layout_item.
+*-- 하위에 Level 정보가 더 있다면 Folder 속성 적용 ------------------*
+        ls_layout-isfolder = ' '.
+*        ls_layout-n_image  = '@06@'.
+*        ls_layout-exp_image = '@07@'.
+*--------------------------------------------------------------------*
+        lv_acdes_text = gs_header-bs_lvl2.
+
+        CALL METHOD go_tree->add_node
+          EXPORTING
+            i_relat_node_key = lv_lvl2_key
+            i_relationship   = cl_gui_column_tree=>relat_last_child
+            i_node_text      = lv_acdes_text
+            is_node_layout   = ls_layout
+            is_outtab_line   = gs_header
+          IMPORTING
+            e_new_node_key   = lv_txt20_key.
+
+      ENDON.
+
+    ELSEIF gs_header-acdes = '자산'.
+
+      ON CHANGE OF gs_header-bs_lvl2.
+        CLEAR ls_layout.
+        PERFORM create_item_layouts CHANGING lt_layout_item.
+*-- 하위에 Level 정보가 더 있다면 Folder 속성 적용 ------------------*
+        ls_layout-isfolder = 'X'.
+        ls_layout-n_image  = '@06@'.
+        ls_layout-exp_image = '@07@'.
+*--------------------------------------------------------------------*
+        lv_acdes_text = gs_header-bs_lvl2.
+        MOVE-CORRESPONDING gs_header TO gs_tree.
+        READ TABLE gt_total INTO gs_total WITH KEY acdes = lv_acdes_text.
+        gs_tree-amount = gs_total-t_wrbtr.
+
+        CALL METHOD go_tree->add_node
+          EXPORTING
+            i_relat_node_key = lv_lvl2_key
+            i_relationship   = cl_gui_column_tree=>relat_last_child
+            i_node_text      = lv_acdes_text
+            is_node_layout   = ls_layout
+            is_outtab_line   = gs_tree
+          IMPORTING
+            e_new_node_key   = lv_txt20_key.
+        APPEND lv_txt20_key TO lt_nodes.
+      ENDON.
+*
+    ENDIF.
+
+    IF gs_header-acdes = '자산'.
+
+*      ON CHANGE OF gs_header-bs_lvl2.
+* TXT20 (원시 데이터명) 단위로 항상 LEAF 노드를 추가하려면,
+* ON CHANGE OF 조건이 아닌 매 반복마다 트리에 추가하는 방식이 필요합니다.
+      CLEAR ls_layout.
+      PERFORM create_item_layouts CHANGING lt_layout_item.
+*-- 하위에 Level 정보가 더 있다면 Folder 속성 적용 --------------------------*
+      ls_layout-isfolder = ' '.
+*      ls_layout-n_image  = '@06@'.
+*      ls_layout-exp_image = '@07@'.
+*--------------------------------------------------------------------*
+      lv_acdes_text = gs_header-txt20.
+
+      CALL METHOD go_tree->add_node
+        EXPORTING
+          i_relat_node_key = lv_txt20_key
+          i_relationship   = cl_gui_column_tree=>relat_last_child
+          i_node_text      = lv_acdes_text
+          is_node_layout   = ls_layout
+          is_outtab_line   = gs_header
+        IMPORTING
+          e_new_node_key   = lv_leaf_key.
+*      ENDON.
+
+    ENDIF.
+
+    CLEAR : gs_header.
+
+  ENDLOOP.
+
+* 추가된 노드를 자동으로 펼침
+  CALL METHOD go_tree->expand_nodes
+    EXPORTING
+      it_node_key = lt_nodes.
+
+  CALL METHOD : go_tree->update_calculations,
+                go_tree->frontend_update,
+                cl_gui_cfw=>flush.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_item_layouts
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LT_LAYOUT_ITEM
+*&---------------------------------------------------------------------*
+FORM create_item_layouts  CHANGING pt_item_layout TYPE lvc_t_layi.
+
+  DATA: ls_item_layout TYPE lvc_s_layi.
+
+  CLEAR pt_item_layout.
+  LOOP AT gt_fcat INTO gs_fcat.
+    CLEAR ls_item_layout.
+    IF gs_fcat-no_out EQ space.
+      ls_item_layout-fieldname = gs_fcat-fieldname.
+      APPEND ls_item_layout TO pt_item_layout.
+    ENDIF.
+  ENDLOOP.
+
+  CLEAR ls_item_layout.
+  ls_item_layout-fieldname = go_tree->c_hierarchy_column_name.
+  APPEND ls_item_layout TO pt_item_layout.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_glinfo_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_glinfo_data .
+
+  CLEAR gt_glinfo.
+  SELECT saknr acdes txt20 bs_lvl1 bs_lvl2
+    FROM zc102fit0002
+    INTO CORRESPONDING FIELDS OF TABLE gt_glinfo.
+
+  IF gt_glinfo IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_header_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_header_data .
+
+  DATA : lv_total_sum TYPE zvfaglflextc102-hsl01,
+         lv_month     TYPE bkpf-monat,
+         lv_value     TYPE string.
+
+  SORT gt_jaemoo BY saknr.
+
+  LOOP AT gt_jaemoo INTO gs_jaemoo .
+
+    READ TABLE gt_glinfo INTO gs_glinfo WITH KEY saknr = gs_jaemoo-saknr.
+
+    CLEAR lv_total_sum.
+
+    IF gs_glinfo-acdes <> '수익'
+   AND gs_glinfo-acdes <> '비용'
+   AND gs_glinfo-acdes <> ' '.
+
+      DO pa_monat TIMES.
+        lv_month = sy-index.
+
+        lv_value = 'HSL' && lv_month.
+        ASSIGN COMPONENT lv_value OF STRUCTURE gs_jaemoo TO <gv_fs>.
+
+        lv_total_sum += <gv_fs>.
+        UNASSIGN <gv_fs>.
+
+      ENDDO.
+
+      gs_header-acdes   = gs_glinfo-acdes.
+      gs_header-bs_lvl1 = gs_glinfo-bs_lvl1.
+      gs_header-bs_lvl2 = gs_glinfo-bs_lvl2.
+      gs_header-txt20   = gs_glinfo-txt20.
+      gs_header-waers   = gs_jaemoo-waers.
+      gs_header-amount  = lv_total_sum.
+
+      COLLECT gs_header INTO gt_header.
+      CLEAR gs_header.
+
+      CLEAR gs_total.
+      gs_total-acdes   = gs_glinfo-acdes.
+      gs_total-t_wrbtr = lv_total_sum.
+      COLLECT gs_total INTO gt_total.
+
+      CLEAR gs_total.
+      IF gs_glinfo-bs_lvl2 IS NOT INITIAL.
+        gs_total-acdes = gs_glinfo-bs_lvl1.
+        gs_total-t_wrbtr = lv_total_sum.
+        COLLECT gs_total INTO gt_total.
+      ENDIF.
+
+      CLEAR gs_total.
+      gs_total-acdes = gs_glinfo-bs_lvl2.
+      gs_total-t_wrbtr = lv_total_sum.
+      COLLECT gs_total INTO gt_total.
+
+    ENDIF.
+
+  ENDLOOP.
+
+  SORT gt_total BY acdes ASCENDING.
+  SORT gt_header BY acdes DESCENDING bs_lvl1 DESCENDING bs_lvl2 DESCENDING.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_check_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_check_data .
+
+  IF pa_gjahr = sy-datum(4).
+    IF pa_monat > sy-datum+4(2).
+      MESSAGE pa_gjahr && '년도의' && sy-datum+4(2) && '월까지 조회됩니다.' TYPE 'I'.
+      pa_monat = sy-datum+4(2).
+      EXIT.
+    ENDIF.
+  ELSEIF pa_gjahr < '2023'.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form pdf_job
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM pdf_job .
+
+  DATA lv_answer.
+
+  PERFORM popup_to_confrim USING lv_answer.
+
+  CHECK lv_answer = '1'.
+
+*-- 엑셀 형식 생성
+  IF objfile IS INITIAL.
+    TRY.
+        CREATE OBJECT objfile.
+      CATCH cx_root.
+    ENDTRY.
+  ENDIF.
+
+*-- 윈도우 저장 창 생성
+  IF pfolder IS NOT INITIAL.
+    initialfolder = pfolder.
+  ELSE.
+    objfile->get_temp_directory( CHANGING temp_dir = initialfolder
+                                 EXCEPTIONS cntl_error = 1
+                                            error_no_gui = 2
+                                            not_supported_by_gui = 3 ).
+  ENDIF.
+
+  objfile->directory_browse( EXPORTING initial_folder = initialfolder
+                             CHANGING selected_folder = pickedfolder
+                             EXCEPTIONS cntl_error = 1
+                                        error_no_gui = 2
+                                        not_supported_by_gui = 3 ).
+
+  IF sy-subrc = 0.
+    pfolder = pickedfolder.
+  ELSE.
+    MESSAGE i053 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  IF pfolder IS INITIAL.
+    EXIT.
+  ENDIF.
+
+  CALL METHOD objfile->free.
+  FREE objfile.
+
+  PERFORM download_excel.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form popup_to_confrim
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM popup_to_confrim  USING pv_answer.
+
+  CALL FUNCTION 'ZFM_CL102_CM_POP_UP'
+    EXPORTING
+      iv_titlebar = 'PDF 다운로드'
+      iv_question = '조회한 내용으로 PDF 다운을 하시겠습니까?'
+    IMPORTING
+      ev_answer   = pv_answer.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form download_excel
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM download_excel .
+
+  DATA : lv_rc TYPE i.
+
+*-- File name
+  CLEAR gv_temp_filename.
+  CONCATENATE pfolder '\' TEXT-t03 '_' sy-datum '.xlsx'
+         INTO gv_temp_filename.
+
+  gv_form = 'ZEXCEL_PRINT_CL102_FI03'.
+  PERFORM download_template USING gv_form gv_temp_filename.
+  PERFORM open_excel_template USING gv_form.
+  PERFORM fill_excel_line.
+
+*-- 기본 sheet 1 세팅
+  CALL METHOD OF excel 'SHEETS' = sheet EXPORTING #1 = 1.
+  CALL METHOD OF sheet 'SELECT' NO FLUSH.
+
+*-- 모두 출력 후 맨 위로 커서 이동
+  CALL METHOD OF excel 'Cells' = cell EXPORTING #1 = 1 #2 = 2.
+
+  CALL METHOD OF cell 'Select'.
+
+  SET PROPERTY OF excel 'VISIBLE' = 1. " 엑셀 데이터 출력
+
+*-- PDF 변환
+  PERFORM convert_to_pdf.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form download_template
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> GV_FORM
+*&      --> GV_TEMP_FILENAME
+*&---------------------------------------------------------------------*
+FORM download_template  USING    pv_form
+                                 pv_temp_filename.
+
+  DATA : wwwdata_item TYPE wwwdatatab,
+         rc           TYPE i.
+
+  gv_file = pv_temp_filename.
+
+  CALL FUNCTION 'WS_FILE_DELETE'
+    EXPORTING
+      file   = pv_temp_filename
+    IMPORTING
+      return = rc.
+
+  IF ( rc NE 0 ) AND ( rc NE 1 ).
+    MESSAGE s000 WITH '임시파일 초기화 실패.' '이전에 Excel에서 자료를 Open하였는지 확인.'
+                 DISPLAY LIKE 'E'.
+  ENDIF.
+
+  SELECT SINGLE *
+    INTO CORRESPONDING FIELDS OF wwwdata_item
+    FROM wwwdata
+   WHERE objid = pv_form.
+
+  CALL FUNCTION 'DOWNLOAD_WEB_OBJECT'
+    EXPORTING
+      key         = wwwdata_item
+      destination = gv_file.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form open_excel_template
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> GV_FORM
+*&---------------------------------------------------------------------*
+FORM open_excel_template  USING pv_form.
+
+  IF excel IS INITIAL.
+    CREATE OBJECT excel 'EXCEL.APPLICATION'.
+  ENDIF.
+
+  IF sy-subrc NE 0.
+    MESSAGE i001 WITH sy-msgli.
+  ENDIF.
+
+  CALL METHOD OF excel 'WORKBOOKS' = workbook.
+  SET PROPERTY OF excel 'VISIBLE' = 0.
+
+  CALL METHOD OF workbook 'OPEN' EXPORTING #1 = gv_file.
+
+*-- sheet 설정
+  GET PROPERTY OF : workbook    'Application' = application,
+                    application 'ActiveSheet' = activesheet.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form fill_excel_line
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM fill_excel_line .
+  " excel 만들고 로직 구현
+  DATA : lv_name        TYPE string,
+         lv_amount(20),
+         lv_amount2(20),
+         lv_date(20).
+
+**********************************************************************
+* Write Document header
+**********************************************************************
+*-- 전기일자
+  CLEAR lv_date.
+  lv_date = pa_gjahr && '년' && sy-datum+4(2) && '월' && sy-datum+6(2) && '일'.
+  PERFORM fill_cells USING 5 3 lv_date.
+
+*  CLEAR lv_name.
+*  lv_name = '( 1월' && '~' && pa_monat && '월까지)'.
+*  PERFORM fill_cells USING 4 2 lv_name.
+
+  CLEAR lv_name.
+  lv_name = '푸드온보람'.
+  PERFORM fill_cells USING 8 2 lv_name.
+
+  CLEAR lv_name.
+  lv_name = '과목'.
+  PERFORM fill_cells USING 9 2 lv_name.
+
+  CLEAR lv_name.
+  lv_name = '금액'.
+  PERFORM fill_cells USING 9 3 lv_name.
+**********************************************************************
+* Write Line item
+**********************************************************************
+*  READ TABLE gt_total INTO gs_total WITH KEY acdes = gs_header-acdes.
+
+  LOOP AT gt_total INTO gs_total.
+
+    lv_amount2 = gs_total-t_wrbtr * 100.
+
+    CASE gs_total-acdes.
+      WHEN '자산'.
+        PERFORM fill_cells USING 57 3 lv_amount2.
+      WHEN '유동자산'.
+        PERFORM fill_cells USING 11 3 lv_amount2.
+      WHEN '당좌자산'.
+        PERFORM fill_cells USING 12 3 lv_amount2.
+      WHEN '재고자산'.
+        PERFORM fill_cells USING 28 3 lv_amount2.
+      WHEN '비유동자산'.
+        PERFORM fill_cells USING 34 3 lv_amount2.
+      WHEN '투자자산'.
+        PERFORM fill_cells USING 35 3 lv_amount2.
+      WHEN '유형자산'.
+        PERFORM fill_cells USING 41 3 lv_amount2.
+      WHEN '무형자산'.
+        PERFORM fill_cells USING 52 3 lv_amount2.
+      WHEN '부채'.
+        PERFORM fill_cells USING 84 3 lv_amount2.
+      WHEN '유동부채'.
+        PERFORM fill_cells USING 59 3 lv_amount2.
+      WHEN '비유동부채'.
+        PERFORM fill_cells USING 73 3 lv_amount2.
+      WHEN '자본'.
+        PERFORM fill_cells USING 99 3 lv_amount2.
+    ENDCASE.
+
+  ENDLOOP.
+
+  LOOP AT gt_header INTO gs_header.
+
+    lv_amount = gs_header-amount * 100.
+    IF lv_amount IS NOT INITIAL.
+      CASE gs_header-txt20.
+        WHEN '일반 현금'.
+          PERFORM fill_cells USING 13 3 lv_amount.
+        WHEN '소액 현금'.
+          PERFORM fill_cells USING 14 3 lv_amount.
+        WHEN '당좌 예금'.
+          PERFORM fill_cells USING 15 3 lv_amount.
+        WHEN '외화 예금'.
+          PERFORM fill_cells USING 16 3 lv_amount.
+        WHEN '보통 예금'.
+          PERFORM fill_cells USING 17 3 lv_amount.
+        WHEN '현금 및 현금성자산'.
+          PERFORM fill_cells USING 18 3 lv_amount.
+        WHEN '단기금융상품'.
+          PERFORM fill_cells USING 19 3 lv_amount.
+        WHEN '단기 매출채권'.
+          PERFORM fill_cells USING 20 3 lv_amount.
+        WHEN '선급금'.
+          PERFORM fill_cells USING 21 3 lv_amount.
+        WHEN '선급비용'.
+          PERFORM fill_cells USING 22 3 lv_amount.
+        WHEN '매입 부가세'.
+          PERFORM fill_cells USING 23 3 lv_amount.
+        WHEN '받을어음'.
+          PERFORM fill_cells USING 24 3 lv_amount.
+        WHEN '미수금'.
+          PERFORM fill_cells USING 25 3 lv_amount.
+        WHEN '미수수익'.
+          PERFORM fill_cells USING 26 3 lv_amount.
+        WHEN '현금'.
+          PERFORM fill_cells USING 27 3 lv_amount.
+        WHEN '저장품'.
+          PERFORM fill_cells USING 29 3 lv_amount.
+        WHEN '원재료'.
+          PERFORM fill_cells USING 30 3 lv_amount.
+        WHEN '상품'.
+          PERFORM fill_cells USING 31 3 lv_amount.
+        WHEN '제품'.
+          PERFORM fill_cells USING 32 3 lv_amount.
+        WHEN '제공품'.
+          PERFORM fill_cells USING 33 3 lv_amount.
+        WHEN '장기 매출채권'.
+          PERFORM fill_cells USING 36 3 lv_amount.
+        WHEN '장기대여금'.
+          PERFORM fill_cells USING 37 3 lv_amount.
+        WHEN '장기미수금'.
+          PERFORM fill_cells USING 38 3 lv_amount.
+        WHEN '관계기업투자'.
+          PERFORM fill_cells USING 39 3 lv_amount.
+        WHEN '투자부동산'.
+          PERFORM fill_cells USING 40 3 lv_amount.
+        WHEN '부동산'.
+          PERFORM fill_cells USING 42 3 lv_amount.
+        WHEN '토지'.
+          PERFORM fill_cells USING 43 3 lv_amount.
+        WHEN '건물'.
+          PERFORM fill_cells USING 44 3 lv_amount.
+        WHEN '기계장치'.
+          PERFORM fill_cells USING 45 3 lv_amount.
+        WHEN '차량운반구'.
+          PERFORM fill_cells USING 46 3 lv_amount.
+        WHEN '비품'.
+          PERFORM fill_cells USING 47 3 lv_amount.
+        WHEN '공구와기구'.
+          PERFORM fill_cells USING 48 3 lv_amount.
+        WHEN '건설중인자산'.
+          PERFORM fill_cells USING 49 3 lv_amount.
+        WHEN '사용권자산'.
+          PERFORM fill_cells USING 50 3 lv_amount.
+        WHEN '감가상각누계액'.
+          PERFORM fill_cells USING 51 3 lv_amount.
+        WHEN '영업권'.
+          PERFORM fill_cells USING 53 3 lv_amount.
+        WHEN '산업재산권'.
+          PERFORM fill_cells USING 54 3 lv_amount.
+        WHEN '상표권'.
+          PERFORM fill_cells USING 55 3 lv_amount.
+        WHEN '소프트웨어'.
+          PERFORM fill_cells USING 56 3 lv_amount.
+        WHEN '지급어음'.
+          PERFORM fill_cells USING 60 3 lv_amount.
+        WHEN '미지급금'.
+          PERFORM fill_cells USING 61 3 lv_amount.
+        WHEN '미지급비용'.
+          PERFORM fill_cells USING 62 3 lv_amount.
+        WHEN '단기차입금'.
+          PERFORM fill_cells USING 63 3 lv_amount.
+        WHEN '예수금'.
+          PERFORM fill_cells USING 64 3 lv_amount.
+        WHEN '단기 매입채무'.
+          PERFORM fill_cells USING 65 3 lv_amount.
+        WHEN '선수금'.
+          PERFORM fill_cells USING 66 3 lv_amount.
+        WHEN '선수수익'.
+          PERFORM fill_cells USING 67 3 lv_amount.
+        WHEN '매출 부가세'.
+          PERFORM fill_cells USING 68 3 lv_amount.
+        WHEN '충당부채(유동)'.
+          PERFORM fill_cells USING 69 3 lv_amount.
+        WHEN '리스부채(유동)'.
+          PERFORM fill_cells USING 70 3 lv_amount.
+        WHEN '미지급법인세'.
+          PERFORM fill_cells USING 71 3 lv_amount.
+        WHEN '매입할인'.
+          PERFORM fill_cells USING 72 3 lv_amount.
+        WHEN '장기매입채무'.
+          PERFORM fill_cells USING 74 3 lv_amount.
+        WHEN '장기차입금'.
+          PERFORM fill_cells USING 75 3 lv_amount.
+        WHEN '사채'.
+          PERFORM fill_cells USING 76 3 lv_amount.
+        WHEN '사용권리스부채(장기)'.
+          PERFORM fill_cells USING 77 3 lv_amount.
+        WHEN '파생상품부채'.
+          PERFORM fill_cells USING 78 3 lv_amount.
+        WHEN '퇴직급여충당부채'.
+          PERFORM fill_cells USING 79 3 lv_amount.
+        WHEN '장기미지급금'.
+          PERFORM fill_cells USING 80 3 lv_amount.
+        WHEN '임대보증금'.
+          PERFORM fill_cells USING 81 3 lv_amount.
+        WHEN '이연법인세부채'.
+          PERFORM fill_cells USING 82 3 lv_amount.
+        WHEN '충당부채(비유동)'.
+          PERFORM fill_cells USING 83 3 lv_amount.
+        WHEN '이익잉여금'.
+          PERFORM fill_cells USING 86 3 lv_amount.
+        WHEN '자본금'.
+          PERFORM fill_cells USING 87 3 lv_amount.
+        WHEN '보통주자본금'.
+          PERFORM fill_cells USING 88 3 lv_amount.
+        WHEN '우선주자본금'.
+          PERFORM fill_cells USING 89 3 lv_amount.
+        WHEN '주식발행초과금'.
+          PERFORM fill_cells USING 90 3 lv_amount.
+        WHEN '감자차익'.
+          PERFORM fill_cells USING 91 3 lv_amount.
+        WHEN '임의적립금'.
+          PERFORM fill_cells USING 92 3 lv_amount.
+        WHEN '이익준비금'.
+          PERFORM fill_cells USING 93 3 lv_amount.
+        WHEN '미처분이익잉여금'.
+          PERFORM fill_cells USING 94 3 lv_amount.
+        WHEN '자기주식'.
+          PERFORM fill_cells USING 95 3 lv_amount.
+        WHEN '기타포관손익누계액'.
+          PERFORM fill_cells USING 96 3 lv_amount.
+        WHEN '주식선택권'.
+          PERFORM fill_cells USING 97 3 lv_amount.
+        WHEN '자본조정'.
+          PERFORM fill_cells USING 98 3 lv_amount.
+
+      ENDCASE.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form convert_to_pdf
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM convert_to_pdf .
+
+  DATA lv_rc TYPE i.
+
+  CLEAR gv_temp_filename_pdf.
+  CONCATENATE pfolder '\' TEXT-t03 '_' sy-datum '.PDF'
+              INTO gv_temp_filename_pdf.
+
+  GET PROPERTY OF excel 'Workbooks' = workbook
+    EXPORTING #1 = 1.
+
+  CALL METHOD OF workbook 'ExportAsFixedFormat'
+    EXPORTING
+      #1 = '0'
+      #2 = gv_temp_filename_pdf.
+
+  CALL METHOD OF workbook 'Close'
+    EXPORTING
+      #1 = 0.
+
+  CALL METHOD OF excel 'Quit'.
+
+  CALL METHOD cl_gui_frontend_services=>file_delete
+    EXPORTING
+      filename = CONV #( gv_temp_filename )
+    CHANGING
+      rc       = lv_rc.
+
+  GET PROPERTY OF worksheet 'Columns' = columns.
+  CALL METHOD OF columns 'AutoFit'.
+  GET PROPERTY OF worksheet 'PageSetup' = pagesetup.
+
+  " 인쇄 비율을 한 페이지에 맞추기
+  SET PROPERTY OF pagesetup 'Zoom' = 0.
+  SET PROPERTY OF pagesetup 'FitToPagesWide' = 1.
+  SET PROPERTY OF pagesetup 'FitToPagesTall' = 1.
+
+  CALL METHOD OF workbook 'ExportAsFixedFormat'
+    EXPORTING
+      #1 = 0
+      #2 = gv_temp_filename_pdf.
+
+ENDFORM.
+
+*&---------------------------------------------------------------------*
+*& Form debt_tree
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM debt_tree .
+
+  DATA : lv_acdes_text  TYPE lvc_value,
+         lv_lvl1_text   TYPE lvc_value,
+         lv_lvl2_text   TYPE lvc_value,
+         lv_root_key    TYPE lvc_nkey, " GLVEL 1 유동자산
+         lv_lvl1_key    TYPE lvc_nkey, " GLVEL 2 재고자산
+         lv_lvl2_key    TYPE lvc_nkey, " GLVEL 3 일반현금
+         lv_txt20_key   TYPE lvc_nkey,
+         lv_leaf_key    TYPE lvc_nkey,
+         lt_layout_item TYPE lvc_t_layi,
+         ls_layout      TYPE lvc_s_layn.
+
+  ON CHANGE OF gs_header-acdes.
+    CLEAR ls_layout.
+    PERFORM create_item_layouts CHANGING lt_layout_item.
+*-- 하위에 Level 정보가 더 있다면 Folder 속성 적용 ------------------*
+    ls_layout-isfolder = 'X'.
+    ls_layout-n_image  = '@06@'.
+    ls_layout-exp_image = '@07@'.
+*--------------------------------------------------------------------*
+    lv_acdes_text = gs_header-acdes.
+
+    CALL METHOD go_tree->add_node
+      EXPORTING
+        i_relat_node_key = lv_root_key
+        i_relationship   = cl_gui_column_tree=>relat_last_child
+        i_node_text      = lv_acdes_text
+        is_node_layout   = ls_layout
+        is_outtab_line   = gs_header
+      IMPORTING
+        e_new_node_key   = lv_lvl1_key.
+  ENDON.
+
+  ON CHANGE OF gs_header-bs_lvl1.
+    CLEAR ls_layout.
+    PERFORM create_item_layouts CHANGING lt_layout_item.
+*-- 하위에 Level 정보가 더 있다면 Folder 속성 적용 ------------------*
+    ls_layout-isfolder = 'X'.
+    ls_layout-n_image  = '@06@'.
+    ls_layout-exp_image = '@07@'.
+*--------------------------------------------------------------------*
+    lv_acdes_text = gs_header-bs_lvl1.
+
+    CALL METHOD go_tree->add_node
+      EXPORTING
+        i_relat_node_key = lv_lvl1_key
+        i_relationship   = cl_gui_column_tree=>relat_last_child
+        i_node_text      = lv_acdes_text
+        is_node_layout   = ls_layout
+        is_outtab_line   = gs_header
+      IMPORTING
+        e_new_node_key   = lv_lvl2_key.
+  ENDON.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form fill_cells
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_5
+*&      --> P_3
+*&      --> LV_DATE
+*&---------------------------------------------------------------------*
+FORM fill_cells  USING  i j val.
+
+  CALL METHOD OF excel 'CELLS' = cell
+    EXPORTING
+      #1 = i  " 행
+      #2 = j. " 열
+
+  SET PROPERTY OF cell 'VALUE' = val.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_init_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_init_value .
+
+  pa_gjahr = sy-datum(4).
+  pa_monat = sy-datum+4(2).
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

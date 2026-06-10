@@ -1,0 +1,427 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0009F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0009F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0009F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102PPR0009F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_route_rstda</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_route_rstda .
+
+  DATA: lv_yesterday TYPE sy-datum.
+
+  lv_yesterday = sy-datum - 1.
+
+  SELECT rouno, wctno, werks, rstda, matnr, prog, meins,
+     renda, reman, remac, status, pdono, p_unit, menge
+    INTO CORRESPONDING FIELDS OF TABLE @gt_route
+    FROM zc102ppt0010
+<font color ="#0000FF">*    WHERE rstda &lt;= @lv_yesterday "주석해제</font>
+    WHERE rstda = @sy-datum
+      AND rouno IN ( 'R10', 'R20', 'R30', 'R40' )
+      AND status &lt;&gt; 'O'.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_plus_routeno</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_plus_routeno .
+
+  DATA: lv_yesterday TYPE sy-datum.
+
+  lv_yesterday = sy-datum - 1.
+
+  LOOP AT gt_route INTO gs_route.
+
+    CLEAR gv_bcno.
+
+    CASE gs_route-matnr.
+
+      WHEN 'M0002'.  "LA 갈비 라우팅 순서
+        CASE gs_route-rouno.
+          WHEN 'R10'.
+            gs_route-rouno = 'R20'.
+            gs_route-rstda = sy-datum.
+<font color ="#0000FF">*            gs_route-renda = sy-datum + 1. "주석 해체</font>
+            gs_route-renda = sy-datum. "삭제
+            gs_route-remac = '5'.
+
+            gs_rmaster-rouno = 'R20'.
+
+            gs_pdo-mksta = 'I'.
+
+          WHEN 'R20'.
+            gs_route-rouno = 'R30'.
+            gs_route-rstda = sy-datum.
+<font color ="#0000FF">*            gs_route-renda = sy-datum + 7. "주석 해체</font>
+            gs_route-renda = sy-datum. "삭제
+            gs_route-remac = '4'.
+
+            gs_rmaster-rouno = 'R30'.
+
+            gs_pdo-mksta = 'I'.
+
+            PERFORM create_bcno CHANGING gv_bcno.
+            PERFORM append_ripen USING gv_bcno.
+
+          WHEN 'R30'.
+            gs_route-rouno = 'R40'.
+            gs_route-rstda = sy-datum.
+<font color ="#0000FF">*            gs_route-renda = sy-datum + 1. "주석 해체</font>
+            gs_route-renda = sy-datum.  "삭제
+
+            gs_rmaster-rouno = 'R40'.
+            gs_route-remac = '3'.
+
+            gs_pdo-mksta = 'I'.
+
+          WHEN 'R40'.
+<font color ="#0000FF">*            gs_pdo-mksta = 'I'.</font>
+<font color ="#0000FF">*            gs_route-renda = sy-datum + 1.</font>
+            IF gs_route-rstda &lt;= lv_yesterday. "주석 해체
+<font color ="#0000FF">*            IF gs_route-rstda = sy-datum. "삭제</font>
+              gs_pdo-mksta = 'F'.  " 생산 완료
+              gs_route-remac = ''.
+            ENDIF.
+          WHEN OTHERS.
+            CONTINUE.
+        ENDCASE.
+
+      WHEN OTHERS.   "나머지 완제품들
+        CASE gs_route-rouno.
+          WHEN 'R10'.
+            gs_route-rouno = 'R20'.
+            gs_route-rstda = sy-datum.
+<font color ="#0000FF">*            gs_route-renda = sy-datum + 1. "주석 해체</font>
+            gs_route-renda = sy-datum . "삭제
+            gs_route-remac = '5'.
+
+            gs_rmaster-rouno = 'R20'.
+
+            gs_pdo-mksta = 'I'.
+          WHEN 'R20'.
+            gs_route-rouno = 'R40'.
+            gs_route-rstda = sy-datum.
+<font color ="#0000FF">*            gs_route-renda = sy-datum + 1. "주석 해체</font>
+            gs_route-renda = sy-datum . " 삭제
+            gs_route-remac = '4'.
+
+            gs_rmaster-rouno = 'R40'.
+
+            gs_pdo-mksta = 'I'.
+          WHEN 'R40'.
+<font color ="#0000FF">*            gs_pdo-mksta = 'I'.</font>
+<font color ="#0000FF">*            gs_route-renda = sy-datum + 1.</font>
+            IF gs_route-rstda &lt;= lv_yesterday. "주석 해체
+<font color ="#0000FF">*            IF gs_route-rstda = sy-datum. "삭제</font>
+              gs_pdo-mksta = 'F'.  " 생산 완료
+              gs_route-remac = ''.
+            ENDIF.
+          WHEN OTHERS.
+            CONTINUE.
+        ENDCASE.
+
+    ENDCASE.
+
+    "공정마다 진행률 띄워주기
+    IF gs_route-matnr &lt;&gt; 'M0002'.
+
+<font color ="#0000FF">*      IF gs_route-matnr = 'M0002'.</font>
+<font color ="#0000FF">*      CASE gs_route-rouno.</font>
+<font color ="#0000FF">*        WHEN 'R10'.</font>
+<font color ="#0000FF">*          gs_pdo-prog = 25.</font>
+<font color ="#0000FF">*          gs_pdo-p_unit = '%'.</font>
+<font color ="#0000FF">*        WHEN 'R20'.</font>
+<font color ="#0000FF">*          gs_pdo-prog = 50.</font>
+<font color ="#0000FF">*          gs_pdo-p_unit = '%'.</font>
+<font color ="#0000FF">*        WHEN 'R30'.</font>
+<font color ="#0000FF">*          gs_pdo-prog = 75.</font>
+<font color ="#0000FF">*          gs_pdo-p_unit = '%'.</font>
+<font color ="#0000FF">*      ENDCASE.</font>
+
+<font color ="#0000FF">*      ELSE.</font>
+
+      CASE gs_route-rouno.
+        WHEN 'R10'.
+          gs_pdo-prog = 33.
+          gs_pdo-p_unit = '%'.
+        WHEN 'R20'.
+          gs_pdo-prog = 66.
+          gs_pdo-p_unit = '%'.
+        WHEN 'R40'.
+          gs_pdo-prog = 99.
+          gs_pdo-p_unit = '%'.
+      ENDCASE.
+
+<font color ="#0000FF">*      ENDIF.</font>
+    ELSE.
+
+      CASE gs_route-rouno.
+        WHEN 'R10'.
+          gs_pdo-prog = 25.
+          gs_pdo-p_unit = '%'.
+        WHEN 'R20'.
+          gs_pdo-prog = 50.
+          gs_pdo-p_unit = '%'.
+        WHEN 'R30'.
+          gs_pdo-prog = 75.
+          gs_pdo-p_unit = '%'.
+        WHEN 'R40'.
+          gs_pdo-prog = 99.
+          gs_pdo-p_unit = '%'.
+      ENDCASE.
+
+    ENDIF.
+
+<font color ="#0000FF">*    IF gs_route-rouno = 'R40' AND gs_route-rstda &lt;= lv_yesterday. "주석 해체</font>
+    IF gs_route-rouno = 'R40' AND gs_route-rstda = sy-datum. "삭제
+      gs_pdo-matnr = gs_route-matnr.
+      gs_pdo-wkcno = gs_route-wctno.
+      gs_pdo-werks = gs_route-werks.
+      gs_pdo-menge = gs_route-menge.
+      gs_pdo-meins = gs_route-meins.
+
+      gs_pdo-mksta = 'F'.
+      gs_pdo-prog  = 100.
+      gs_pdo-p_unit = '%'.
+      gs_route-status = 'O'.
+<font color ="#0000FF">*      gs_route-rouno = '생산완료'.</font>
+    ENDIF.
+
+    " 생산오더 번호 복사
+    gs_pdo-pdono = gs_route-pdono.
+
+    " 상태나 진행률이 변경된 경우만 APPEND
+    IF gs_pdo-mksta IS NOT INITIAL OR gs_pdo-prog IS NOT INITIAL.
+      APPEND gs_pdo TO gt_pdo.
+    ENDIF.
+
+
+<font color ="#0000FF">*--라우팅 마스터 테이블 수정--*</font>
+<font color ="#0000FF">*    UPDATE zc102ppt0009</font>
+<font color ="#0000FF">*       SET rouno = gs_rmaster-rouno</font>
+<font color ="#0000FF">*       WHERE pdono = gs_rmaster-pdono.</font>
+
+<font color ="#0000FF">*--라우팅 테이블 수정--*</font>
+    UPDATE zc102ppt0010
+       SET rouno = @gs_route-rouno,
+           rstda = @gs_route-rstda,
+           renda = @gs_route-renda,
+           status = @gs_route-status,
+           remac = @gs_route-remac,
+<font color ="#0000FF">*           prog  = @gs_pdo-prog,</font>
+           p_unit = @gs_pdo-p_unit,
+           aedat  = @sy-datum,
+           aezet  = @sy-uzeit,
+           aenam  = @sy-uname
+     WHERE pdono = @gs_route-pdono.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*-- gt_pdo 기준으로 생산진행 상태 업데이트</font>
+  LOOP AT gt_pdo INTO gs_pdo.
+
+    UPDATE zc102ppt0012
+       SET mksta  = @gs_pdo-mksta,
+           rouno = @gs_route-rouno,
+           prog   = @gs_pdo-prog,
+           p_unit = @gs_pdo-p_unit,
+           aedat  = @sy-datum,
+           aezet  = @sy-uzeit,
+           aenam  = @sy-uname
+     WHERE pdono = @gs_pdo-pdono.
+
+<font color ="#0000FF">*--fi 생산완료 오더번호 넘기기--*</font>
+    IF gs_pdo-prog = 100.
+
+      call function <a href ="zfm_cl102_fi_09/zfm_cl102_fi_09.html">'ZFM_CL102_FI_09'</a>
+        EXPORTING
+          iv_pdono = gs_pdo-pdono.
+
+    ENDIF.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*--생산완료 테이블에 완료된 건들 넘겨주기--*</font>
+  PERFORM send_complit_process.
+
+  COMMIT WORK AND WAIT.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_bcno</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_bcno CHANGING pv_bcno.
+
+  DATA: lv_range_nr TYPE inri-nrrangenr,
+        lv_prefix   TYPE char3,
+        lv_quantity TYPE inri-quantity.
+
+
+  lv_prefix = 'B'. "숙성 배치번호 prefix
+  lv_range_nr = '01'. "번호 범위
+  lv_quantity = 3.
+
+<font color ="#0000FF">**순번 호출</font>
+
+  CALL METHOD zclc102cm_auto_sequence=&gt;get_next_value
+    EXPORTING
+      pv_range_nr = lv_range_nr
+      pv_prefix   = lv_prefix
+      pv_quantity = lv_quantity
+    IMPORTING
+      pv_result   = pv_bcno.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form append_ripen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM append_ripen USING pv_bcno.
+
+
+    gs_ripen-werks = gs_route-werks.
+    gs_ripen-matnr = gs_route-matnr.
+    gs_ripen-pdono = gs_route-pdono.
+    gs_ripen-datbi = sy-datum + 15.
+    gs_ripen-batno = pv_bcno.
+    gs_ripen-menge = gs_route-menge.
+    gs_ripen-meins = gs_route-meins.
+    gs_ripen-stltype = 'I'.
+<font color ="#0000FF">*  gs_ripen-stlno = 'RIPEN001'.</font>
+    gs_ripen-erdat = sy-datum.
+    gs_ripen-ernam = sy-uname.
+    gs_ripen-erzet = sy-uzeit.
+
+    " 창고 코드 설정
+    CASE gs_route-werks.
+      WHEN 'P1000'.
+        gs_ripen-stlno = 'SL100'.
+      WHEN 'P2000'.
+        gs_ripen-stlno = 'SL200'.
+      WHEN 'P3000'.
+        gs_ripen-stlno = 'SL300'.
+      WHEN 'P4000'.
+        gs_ripen-stlno = 'SL400'.
+    ENDCASE.
+
+    APPEND gs_ripen TO gt_ripen.
+
+
+  "숙성창고 테이블 INSERT
+<font color ="#0000FF">*  INSERT zc102mmt0014 FROM gs_ripen.</font>
+<font color ="#0000FF">*  INSERT zc102mmt0014_1 FROM gs_ripen.</font>
+  MODIFY zc102mmt0014_1 FROM gs_ripen.
+
+  IF sy-subrc = 0.
+    MESSAGE s001 WITH '성공적으로 숙성창고에 보관되었습니다!'.
+  ELSE.
+    MESSAGE s001 WITH '숙성창고 보관에 실패했습니다!' DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form send_complit_process</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM send_complit_process .
+
+  DATA: lv_tabix TYPE sy-tabix.
+
+  PERFORM get_pdo.
+
+  LOOP AT gt_pdo INTO gs_pdo WHERE mksta = 'F' .
+
+    lv_tabix = sy-tabix.
+
+    gs_complit-pdono = gs_pdo-pdono.
+    gs_complit-menge = gs_pdo-menge.
+    gs_complit-meins = gs_pdo-meins.
+    gs_complit-wctno = gs_pdo-wkcno.
+    gs_complit-werks = gs_pdo-werks.
+    gs_complit-matnr = gs_pdo-matnr.
+    gs_complit-stlno = gs_pdo-stlno.
+    gs_complit-erdat = sy-datum.
+    gs_complit-ernam = sy-uname.
+    gs_complit-erzet = sy-uzeit.
+
+    APPEND gs_complit TO gt_complit.
+
+  ENDLOOP.
+
+  MODIFY zc102ppt0007 FROM TABLE gt_complit.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_pdo</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_pdo .
+
+  SELECT pdono wkcno werks plono rouno matnr
+           pdstt pdfns mksta menge meins prog
+           p_unit stlno
+      INTO CORRESPONDING FIELDS OF TABLE gt_pdo
+      FROM zc102ppt0012.
+<font color ="#0000FF">*      WHERE pdono = gs_pdo-pdono.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form check_pdo</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM check_pdo .
+
+  SELECT pdono wkcno werks plono rouno matnr
+           pdstt pdfns mksta menge meins prog
+           p_unit
+      INTO CORRESPONDING FIELDS OF TABLE gt_check
+      FROM zc102ppt0012.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

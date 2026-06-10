@@ -1,0 +1,151 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102SDR0004TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102SDR0004TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102SDR0004TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102SDR0004TOP                          - Report ZC102SDR0004</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102sdr0004 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES: zc102sdt0004, zc102sdt0005, zc102mmt0001.
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*call instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA: go_container       TYPE REF TO cl_gui_custom_container,
+      go_split_container TYPE REF TO cl_gui_splitter_container,
+
+      go_left_container  TYPE REF TO cl_gui_container,
+      go_right_container TYPE REF TO cl_gui_container,
+
+      go_left_grid       TYPE REF TO cl_gui_alv_grid,
+      go_right_grid      TYPE REF TO cl_gui_alv_grid,
+
+<font color ="#0000FF">*--item 팝업 띄우기</font>
+      go_pop_container   TYPE REF TO cl_gui_custom_container,
+      go_pop_grid        TYPE REF TO cl_gui_alv_grid.
+
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*itab and work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*--input 값itab</font>
+DATA: BEGIN OF gs_input,
+        vbeln_del TYPE zc102sdt0004-vbeln_del,
+        partner   TYPE zc102sdt0004-partner,
+      END OF gs_input,
+      gt_input LIKE TABLE OF gs_input.
+
+<font color ="#0000FF">*--납품문서 헤더</font>
+<font color ="#0000FF">*DATA: gt_del TYPE TABLE OF zc102sdt0004,</font>
+<font color ="#0000FF">*      gs_del TYPE zc102sdt0004.</font>
+
+DATA: BEGIN OF gs_del.
+        include structure <a href ="zc102sdt0004/dictionary-zc102sdt0004.html">zc102sdt0004</a>.
+DATA: d_state(10),
+        ddtext(6),
+      END OF gs_del,
+      gt_del LIKE TABLE OF gs_del.
+
+<font color ="#0000FF">*-- 납품문서 테이블 배송상태 카운트 확인</font>
+DATA: BEGIN OF gs_iv,
+        status TYPE icon-id.
+        include structure <a href ="zc102sdt0004/dictionary-zc102sdt0004.html">zc102sdt0004</a>.
+DATA :  END OF gs_iv,
+gt_iv LIKE TABLE OF gs_iv.
+
+<font color ="#0000FF">*--납품문서 서치헬프--*</font>
+DATA: BEGIN OF gs_vbeln,
+        vbeln_del TYPE zc102sdt0004-vbeln_del,
+      END OF gs_vbeln,
+      gt_vbeln LIKE TABLE OF gs_vbeln.
+
+<font color ="#0000FF">*--partner 서치헬프--*</font>
+DATA: BEGIN OF gs_partner,
+        partner   TYPE ZC102BPT0001-partner,
+        name1  TYPE ZC102BPT0001-name1,
+      END OF gs_partner,
+      gt_partner LIKE TABLE OF gs_partner.
+
+<font color ="#0000FF">**배송상태 도메인 값**</font>
+DATA: gt_list TYPE TABLE OF dd07v,
+      gs_list TYPE dd07v.
+
+
+DATA : gs_do_h TYPE zc102sdt0004. " 판매 오더 - 납품 오더 조회시
+
+<font color ="#0000FF">*--납품문서 아이템</font>
+DATA: gt_del_item TYPE TABLE OF zc102sdt0005,
+      gs_del_item TYPE zc102sdt0005.
+
+<font color ="#0000FF">*--자재관리</font>
+DATA: gt_mange TYPE TABLE OF zc102mmt0001,
+      gs_mange TYPE zc102mmt0001.
+
+
+<font color ="#0000FF">*--for ALV</font>
+DATA: gs_lfcat        TYPE lvc_s_fcat,
+      gs_rfcat        TYPE lvc_s_fcat,
+      gs_pfcat        TYPE lvc_s_fcat,
+
+      gt_lfcat        TYPE lvc_t_fcat,
+      gt_rfcat        TYPE lvc_t_fcat,
+      gt_pfcat        TYPE lvc_t_fcat,
+
+      gs_layout_left  TYPE lvc_s_layo,
+      gs_layout_right TYPE lvc_s_layo,
+      gs_pop_layout   TYPE lvc_s_layo,
+
+      gs_variant      TYPE disvariant,
+      gs_variant_pop  TYPE disvariant.
+
+<font color ="#0000FF">*--toolbar</font>
+DATA: gt_ui_functions TYPE ui_functions,
+      gs_button       TYPE stb_button,
+      gs_button_pop   TYPE stb_button.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*variant</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA: gv_okcode TYPE sy-ucomm.
+
+<font color ="#0000FF">*RANGES: gr_vbeln_del FOR zc102sdt0004-vbeln_del,</font>
+<font color ="#0000FF">*        gr_partner   FOR zc102sdt0004-partner.</font>
+
+RANGES: gr_vbeln_del FOR gs_input-vbeln_del,
+        gr_partner   FOR gs_input-partner.
+
+DATA: gv_vbeln_del TYPE zc102sdt0004-vbeln_del,
+      gv_partner   TYPE zc102sdt0004-partner.
+
+DATA: gv_radio1(1),
+      gv_radio2(1),
+      gv_radio3(1).
+
+DATA: gv_cnt1 TYPE i,
+      gv_cnt2 TYPE i,
+      gv_cnt3 TYPE i,
+      gv_cnt4 TYPE i,
+      gv_cnt5 TYPE i.
+
+
+<font color ="#0000FF">*-- FROM 판매오더 조회(BY 소연)</font>
+DATA : gv_from TYPE abap_bool VALUE abap_false.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

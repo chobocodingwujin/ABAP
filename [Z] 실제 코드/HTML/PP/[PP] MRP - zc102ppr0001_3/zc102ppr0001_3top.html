@@ -1,0 +1,254 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0001_3TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0001_3TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0001_2TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102PPR0001_2TOP                        - Report ZC102PPR0001_2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102ppr0001_2 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TAB Strip controls</font>
+<font color ="#0000FF">**********************************************************************</font>
+CONTROLS gc_tab TYPE TABSTRIP.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Class instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_container TYPE REF TO cl_gui_custom_container,
+       go_alv_grid  TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_container2 TYPE REF TO cl_gui_custom_container,
+       go_alv_grid2  TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_container3 TYPE REF TO cl_gui_custom_container,
+       go_alv_grid3  TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Internal table and Work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+
+<font color ="#0000FF">*-- 왼쪽 자재 소요량 보여주는 itab</font>
+DATA : BEGIN OF gs_mrp.
+         include structure <a href ="zc102ppt0013/dictionary-zc102ppt0013.html">zc102ppt0013</a>.
+DATA :   icon      TYPE icon-id,
+         labst     TYPE zc102e_mm_labst,
+         eisbe     TYPE zc102e_mm_eisbe,
+         avail_qty TYPE zc102e_mm_eisbe,
+         wemng     TYPE zc102ppt0001-wemng, "생산계획량
+         pequan    TYPE zc102sdt0007-pequan, "판매요구 수량
+         color     TYPE lvc_t_scol,
+         prno      TYPE zc102mmt0017-prno,
+       END OF gs_mrp,
+       gt_mrp LIKE TABLE OF gs_mrp.
+
+"mrp버튼 클릭시 요청할 자재 정보 itab
+DATA: BEGIN OF gs_minus,
+        vbeln_so TYPE zc102sdt0007-vbeln_so,
+        pplno    TYPE zc102ppt0001-pplno,
+        matnr    TYPE zc102sdt0007-matnr,
+        stlno    TYPE zc102mmt0001-stlno,
+        werks    TYPE zc102mmt0001-werks,
+        labst    TYPE zc102mmt0001-labst,
+        menge    TYPE zc102ppt0004-menge, "완제품 생산에 필요한 수량
+        needed   TYPE zc102ppt0004-menge, "주문받은 수량만큼 생산에 필요한 수량
+        ppquan   TYPE zc102ppt0004-menge, "생산 가능수량
+        lequan   TYPE zc102ppt0004-menge, "부족수량
+        i_lequan TYPE zc102ppt0004-menge, "부족 수량이 있을 시 각각 bom자재 몇개 씩 부족한지
+      END OF gs_minus,
+      gt_minus LIKE TABLE OF gs_minus.
+
+"자재관리 테이블
+DATA : gt_mange TYPE TABLE OF zc102mmt0001,
+       gs_mange TYPE zc102mmt0001.
+
+
+" 판매오더 헤더
+DATA: gt_so_header TYPE TABLE OF zc102sdt0006,
+      gs_so_header TYPE zc102sdt0006.
+
+
+" 판매오더 아이템
+DATA : BEGIN OF gs_order.
+         include structure <a href ="zc102sdt0007/dictionary-zc102sdt0007.html">zc102sdt0007</a>.
+DATA :   werks TYPE zc102e_pp_werks,
+         stlno TYPE zc102e_mm_stlno,
+       END OF gs_order,
+       gt_order LIKE TABLE OF gs_order.
+
+
+"생산 계획
+DATA : gt_plan TYPE TABLE OF zc102ppt0001,
+       gs_plan TYPE zc102ppt0001.
+
+
+"구매요청 아이템
+DATA: gt_ipr TYPE TABLE OF zc102mmt0017,
+      gs_ipr TYPE zc102mmt0017.
+
+"구매요청 헤더
+DATA: gt_hpr TYPE TABLE OF zc102mmt0016,
+      gs_hpr TYPE zc102mmt0016.
+
+"자재마스터
+DATA: gt_matnr_master TYPE TABLE OF zc102mmt0004,
+      gs_matnr_master TYPE          zc102mmt0004.
+
+"부족한 자재 담아두기 (부족 수량 있을 시)
+DATA: BEGIN OF gs_shortage,
+        matnr   TYPE zc102mmt0001-matnr,
+        meins   TYPE zc102mmt0001-meins,
+        lequan  TYPE zc102ppt0004-menge, "부족수량
+        partner TYPE zc102sdt0007-partner,
+        depno   TYPE zc102mmt0016-depno,
+        price   TYPE zc102mmt0017-stprs, "구매요청 아이템에 넘길 자재당 가격
+        tol_co  TYPE zc102mmt0017-stprs, "구매요청 헤더에 넘길 총 가격
+        waers   TYPE zc102mmt0016-waers,
+        pequan  TYPE zc102ppt0004-menge,
+      END OF gs_shortage,
+      gt_shortage LIKE TABLE OF gs_shortage.
+
+
+<font color ="#0000FF">*--계획오더 테이블 가져오기--*</font>
+DATA: gt_plo TYPE TABLE OF zc102ppt0006,
+      gs_plo TYPE zc102ppt0006.
+
+
+<font color ="#0000FF">*-- 우측</font>
+
+DATA : BEGIN OF gs_docu.    "우측 ALV
+         include structure <a href ="zc102ppt0013/dictionary-zc102ppt0013.html">zc102ppt0013</a>.
+
+DATA :   bomno   TYPE zc102e_pp_bomno,
+         prno    TYPE zc102mmt0017-prno,
+         labst   TYPE zc102e_mm_labst,
+         stlno   TYPE zc102e_mm_stlno,
+         eisbe   TYPE zc102e_mm_eisbe,
+         werks   TYPE zc102e_pp_werks,
+         partner TYPE zc102e_bp_partner,
+         waers   TYPE zc102e_fi_waers,
+         rgtime  TYPE zc102mmt0017-rgtime,
+         pequan  TYPE  zc102mmt0017-pequan,
+         icon    TYPE icon-id,
+       END OF gs_docu,
+       gt_docu LIKE TABLE OF gs_docu.
+
+"bom 아이템
+DATA: gt_bom TYPE TABLE OF zc102ppt0004,
+      gs_bom TYPE zc102ppt0004.
+
+DATA : gt_header LIKE TABLE OF gs_docu,
+       gs_header LIKE gs_docu,
+
+       gt_item   LIKE TABLE OF gs_docu,
+       gs_item   LIKE gs_docu.
+
+DATA : gt_podocu LIKE TABLE OF gs_docu,
+       gt_prdocu LIKE TABLE OF gs_docu,
+
+       gs_podocu LIKE gs_docu,
+       gs_prdocu LIKE gs_docu.
+
+<font color ="#0000FF">*-- For Search Help</font>
+DATA : BEGIN OF gs_matnr, "자재명
+         matnr TYPE zc102mmt0004-matnr,
+         maktx TYPE zc102mmt0004-maktx,
+       END OF gs_matnr,
+       gt_matnr LIKE TABLE OF gs_matnr.
+
+DATA : BEGIN OF gs_plant, "Plant
+         werks      TYPE zc102e_pp_werks,
+         werks_name TYPE dd07t-ddtext,
+       END OF gs_plant,
+       gt_plant LIKE TABLE OF gs_plant.
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gt_fcat    TYPE lvc_t_fcat,
+       gs_fcat    TYPE lvc_s_fcat,
+       gs_layout  TYPE lvc_s_layo,
+       gs_variant TYPE disvariant.
+
+DATA : gt_fcat2 TYPE lvc_t_fcat,
+       gs_fcat2 TYPE lvc_s_fcat,
+
+       gt_fcat3 TYPE lvc_t_fcat,
+       gs_fcat3 TYPE lvc_s_fcat.
+
+DATA : gt_ui_functions TYPE ui_functions,
+       gs_button       TYPE stb_button.
+
+<font color ="#0000FF">*-- BP 자재 매핑</font>
+DATA: gs_bpmaster TYPE zc102mmt0019,
+      gt_bpmaster TYPE TABLE OF zc102mmt0019.
+
+<font color ="#0000FF">*-- STLNO 매핑</font>
+DATA : gs_stlno TYPE zc102ppt0002,
+       gt_stlno TYPE TABLE OF zc102ppt0002.
+
+<font color ="#0000FF">*--BP 주문 정보--*</font>
+DATA: gs_bpinfo TYPE zc102sdt0010,
+      gt_bpinfo TYPE TABLE OF zc102sdt0010.
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Common variable</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode TYPE sy-ucomm.
+
+DATA : gv_labst_cal TYPE zc102e_mm_labst, "가용재고 for ALV 계산
+       gv_eisbe_cal TYPE zc102e_mm_labst, "안전재고
+
+       gv_labst     TYPE zc102e_mm_labst, "가용재고
+       gv_eisbe     TYPE zc102e_mm_labst. "안전재고
+
+<font color ="#0000FF">*-- For Screen</font>
+DATA : gv_matnr TYPE zc102ppt0001-matnr_pp,
+       gv_plant TYPE zc102e_pp_werks,
+       gv_rate  TYPE p LENGTH 3.
+
+DATA : gv_cnt_pldord TYPE i VALUE 0, "For MRP
+       gv_cnt_salrqs TYPE i VALUE 0,
+       gv_cnt_ppor   TYPE i VALUE 0,
+
+       gv_newpo      TYPE i,
+       gv_newpr      TYPE i.
+
+DATA : gv_subscreen TYPE sy-dynnr. " Subscreen number
+
+<font color ="#0000FF">*-- 채번 (계획 오더)</font>
+DATA: gv_number    TYPE n LENGTH 10,     " 도메인의 길이에 맞게
+      gv_prefix(3),  " PPO, PD0 등
+      gv_full_code TYPE string,
+      gv_range_nr  TYPE inri-nrrangenr,
+      gv_quantity  TYPE inri-quantity.
+
+DATA: ls_nriv TYPE nriv.
+
+<font color ="#0000FF">*-- 채번 (구매 오더)</font>
+DATA: gv_number2    TYPE n LENGTH 10,     " 도메인의 길이에 맞게
+      gv_prefix2(3),  " PPO, PD0 등
+      gv_full_code2 TYPE string,
+      gv_range_nr2  TYPE inri-nrrangenr,
+      gv_quantity2  TYPE inri-quantity.
+
+DATA: ls_nriv2 TYPE nriv.
+
+<font color ="#0000FF">*-- 채번 (MRP)</font>
+DATA: gv_mrpnum(10).
+
+DATA: gv_plono       TYPE string, "계획오더 채번
+      gv_prno        TYPE string, "구매요청 채번
+      gv_excute_flag TYPE abap_bool VALUE abap_false.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

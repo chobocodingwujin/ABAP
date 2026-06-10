@@ -1,0 +1,1557 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102MMR0002F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form set_listbox
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_listbox .
+
+  DATA : lv_result TYPE string.                 .
+
+  CALL FUNCTION 'DD_DOMVALUES_GET'
+    EXPORTING
+      domname   = 'ZC102D_PP_WERKS'
+      text      = 'X'
+      langu     = sy-langu
+    TABLES
+      dd07v_tab = gt_werks.
+
+  CLEAR: gt_value[], gs_vrm_posi[].
+
+  LOOP AT gt_werks INTO gs_werks.
+
+    CLEAR gs_vrm_value.
+
+    lv_result = |{ gs_werks-domvalue_l } - { gs_werks-ddtext }|.
+    gs_vrm_value-key  = gs_werks-domvalue_l.
+    gs_vrm_value-text = lv_result.
+    APPEND gs_vrm_value TO gs_vrm_posi.
+
+  ENDLOOP.
+
+  gs_vrm_name = 'PA_WERKS'.
+  CALL FUNCTION 'VRM_SET_VALUES'
+    EXPORTING
+      id     = gs_vrm_name
+      values = gs_vrm_posi[].
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_option
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_option .
+
+  LOOP AT SCREEN.
+    IF screen-name = 'PA_STLNO'.
+      screen-input = 0. " Read-only 처리
+      MODIFY SCREEN.
+    ENDIF.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_stlno
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_stlno .
+
+  IF pa_werks IS NOT INITIAL.
+
+    IF pa_rtype = 'X'.
+      gv_stltype = 'R'. " 원자재
+    ELSE.
+      pa_ptype = 'X'.
+      gv_stltype = 'P'. " 완제품
+    ENDIF.
+
+    " 창고번호를 조회해 자동 세팅
+    SELECT SINGLE stlno INTO pa_stlno
+      FROM zc102mmt0008 " 창고 마스터
+      WHERE werks = pa_werks
+        AND stltype = gv_stltype.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen .
+
+  IF go_container IS NOT BOUND.
+
+*-- 미검수 리스트
+    CLEAR : gs_fcat, gt_fcat.
+    PERFORM set_catalog USING : 'X' 'STATUS'  'ICON'         'C' ' ', " 유통기한 상태
+*                                'X' 'STLNO'   'ZC102MMT0005' 'C' ' ', " 창고번호
+*                                'X' 'STLTYPE' 'ZC102MMT0005' 'C' ' ', " 창고유형
+*                                'X' 'WERKS'   'ZC102MMT0005' 'C' ' ', " Plant 번호
+                                'X' 'MATNR'   'ZC102MMT0005' 'C' ' ', " 자재번호
+                                'X' 'MAKTX'   'ZC102MMT0004' ' ' ' ',
+                                'X' 'BATNO'   'ZC102MMT0005' 'C' 'X', " 배치번호
+                                ' ' 'LABST'   'ZC102MMT0005' ' ' 'X', " 가용재고
+                                ' ' 'MEINS'   'ZC102MMT0005' 'C' ' ', " 수량 단위
+                                ' ' 'LFDAT'   'ZC102MMT0005' 'C' ' ', " 입고일
+                                ' ' 'VFDAT'   'ZC102MMT0001' 'C' ' '. " 유통기한
+
+    gs_variant-report = sy-repid.
+    gs_variant-handle = 'ALV1'.
+
+    PERFORM set_layout.
+    PERFORM exclude_toolbar.
+    PERFORM create_object.
+
+    SET HANDLER : lcl_event_handler=>handle_edit_toolbar FOR go_alv_grid,
+                  lcl_event_handler=>user_command FOR go_alv_grid.
+
+    CALL METHOD go_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_variant           = gs_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = gs_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_storage
+        it_fieldcatalog      = gt_fcat.
+*        it_sort              = gt_sort.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_init_screen_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_init_screen_value .
+
+*-- 창고번호 자동 세팅
+  gv_stlno = pa_stlno.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_catalog USING pv_key
+                        pv_field
+                        pv_table
+                        pv_just
+                        pv_emph.
+
+  gs_fcat-key       = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'LABST'.
+      gs_fcat-qfieldname = 'MEINS'.
+*      gs_fcat-do_sum = abap_true.
+    WHEN 'MEINS'.
+      gs_fcat-coltext    = '단위'.
+    WHEN 'LFDAT'.
+      gs_fcat-coltext    = '입고일'.
+    WHEN 'STATUS'.
+      gs_fcat-coltext = '상태'.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout .
+
+  DATA : lv_stlname(25).
+
+*-- 창고 지역 GET
+  PERFORM get_werks_text.
+
+  lv_stlname = |{ '자재 재고 (' } { gv_werks } { '창고 )' }|.
+
+  gs_layout-zebra      = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = 'D'.
+  gs_layout-grid_title = lv_stlname.
+  gs_layout-no_totline = abap_true.
+
+*-- Set Sort
+  CLEAR : gs_sort, gt_sort.
+  gs_sort-spos       = 1.          " 정렬의 우선순위
+  gs_sort-fieldname  = 'MATNR'.    " 얘를 기준으로 정
+  gs_sort-up         = abap_true.  " 오름차순 (생략시 디폴트 UP)
+  gs_sort-subtot     = abap_true.  " 항목별 합
+
+  APPEND gs_sort TO gt_sort.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form exclude_toolbar
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM exclude_toolbar .
+
+  DATA : ls_ui_functions TYPE ui_func.
+
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_undo.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_copy_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_cut.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_delete_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_insert_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_append_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_loc_paste_new_row.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_refresh.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_auf.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_average.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_print.
+  APPEND ls_ui_functions TO gt_ui_functions.
+  ls_ui_functions = cl_gui_alv_grid=>mc_fc_graph.
+  APPEND ls_ui_functions TO gt_ui_functions.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_table
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_table .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+  CALL METHOD go_alv_grid->refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_matno
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM search_matno .
+
+*-- 자재번호 range 초기화
+  _init gr_matnr.
+
+*-- 입력된 값 range에 set
+  IF gv_matnr IS NOT INITIAL.
+    gr_matnr-sign = 'I'.
+    gr_matnr-option = 'EQ'.
+    gr_matnr-low = gv_matnr.
+    APPEND gr_matnr.
+  ENDIF.
+
+  IF gt_storage IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ENDIF.
+
+  PERFORM get_stl_data.
+  PERFORM set_status.
+  IF gv_filter_on = abap_false.
+    PERFORM list_clicked.
+  ENDIF.
+  PERFORM refresh_table.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_status
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_status .
+
+  DATA: lv_days_left TYPE i,
+        lv_tabix     TYPE sy-tabix.
+
+  LOOP AT gt_storage INTO gs_storage.
+
+    lv_tabix = sy-tabix.
+
+*-- lv_threshold 값에 따라 상태 표시
+    CLEAR lv_days_left.
+    lv_days_left = gs_storage-vfdat - sy-datum.
+
+    IF lv_days_left <= 0.
+      gs_storage-status = icon_led_red.
+    ELSEIF lv_days_left <= gv_threshold.
+      gs_storage-status = icon_led_yellow.
+    ELSE.
+      gs_storage-status = icon_led_green.
+    ENDIF.
+
+    MODIFY gt_storage FROM gs_storage INDEX lv_tabix TRANSPORTING status.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_edit_toolbar1
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_OBJECT
+*&      --> E_INTERACTIVE
+*&---------------------------------------------------------------------*
+FORM handle_edit_toolbar USING po_object TYPE REF TO cl_alv_event_toolbar_set
+                               pv_interactive.
+
+  IF gv_filter_on = abap_true.
+*-- 폐기리스트 버튼
+    CLEAR gs_button.
+    gs_button-function = 'LIST'.
+    gs_button-icon     = icon_led_red.
+    gs_button-quickinfo = '폐기리스트'.
+    gs_button-text = TEXT-b01.
+    APPEND gs_button TO po_object->mt_toolbar.
+  ELSE.
+*-- 폐기리스트 해제 버튼
+    CLEAR gs_button.
+    gs_button-function = 'ALLV'.
+    gs_button-text     = TEXT-b02.
+    gs_button-icon     = icon_cancel.
+    APPEND gs_button TO po_object->mt_toolbar.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_user_command
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_UCOMM
+*&---------------------------------------------------------------------*
+FORM handle_user_command USING pv_ucomm.
+
+  CASE pv_ucomm.
+    WHEN 'LIST'.            " 폐기리스트 버튼
+      PERFORM list_clicked.
+    WHEN 'ALLV'.            " 폐기리스트 해제 버튼
+      PERFORM allv_clicked.
+    WHEN 'SETA'.            " 전체 유통기한 처리
+      PERFORM set_all_clicked.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_werks_text
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_werks_text .
+
+  SELECT SINGLE stlname
+    INTO gv_werks
+    FROM zc102mmt0008
+    WHERE stlno EQ pa_stlno
+      AND stltype EQ gv_stltype.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form dispose_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM dispose_item .
+
+  DATA : lt_backup LIKE TABLE OF gs_storage.
+
+  CLEAR : gt_select, gs_select, gs_storage.
+
+*-- 사용자가 선택한 행 정보를 받아온다
+  CALL METHOD go_alv_grid->get_selected_rows
+    IMPORTING
+      et_row_no = gt_select.
+
+*-- 행을 선택하지 않고 품질검사 버튼 선택시 알림창
+  IF gt_select IS INITIAL.
+    MESSAGE s000 WITH TEXT-e01 DISPLAY LIKE 'E'.
+    EXIT. " 서브루틴 빠져나감
+  ENDIF.
+
+*-- 가져올 행에 대해 품질검사용 인터널 테이블에 담는다
+  LOOP AT gt_select INTO gs_select.
+
+    READ TABLE gt_storage INTO gs_storage INDEX gs_select-row_id.
+
+    APPEND gs_storage TO lt_backup.           " 인터널 테이블에 검수할 항목 적재
+
+  ENDLOOP.
+
+  MOVE-CORRESPONDING lt_backup TO gt_dispose.
+
+*-- pop-up 스크린 style 설정
+  PERFORM set_pop_screen.
+
+  CALL SCREEN 110 STARTING AT 5 5.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_pop_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_pop_screen .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         ls_style TYPE lvc_s_styl.
+
+  LOOP AT gt_dispose INTO gs_dispose.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR : ls_style, gs_dispose-cell_tab.
+
+*-- 스타일
+    ls_style-style     = cl_gui_alv_grid=>mc_style_disabled.
+    INSERT ls_style INTO TABLE gs_dispose-cell_tab.
+
+    CLEAR ls_style.
+    ls_style-fieldname = 'DISME'.
+    ls_style-style     = cl_gui_alv_grid=>mc_style_enabled. " 편집모드
+    INSERT ls_style INTO TABLE gs_dispose-cell_tab.
+
+    CLEAR ls_style.
+    ls_style-fieldname = 'REASO'.
+    ls_style-style     = cl_gui_alv_grid=>mc_style_enabled. " 편집 모드
+    INSERT ls_style INTO TABLE gs_dispose-cell_tab.
+
+    MODIFY gt_dispose FROM gs_dispose INDEX lv_tabix TRANSPORTING cell_tab.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_threshold
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_threshold .
+
+  CASE gv_stltype.
+*-- 원자재 창고 : red 당일 / yellow 3일 이하 / green 4일 이상
+    WHEN 'R'.
+      gv_threshold = 3.
+    WHEN 'P'.
+*-- 신선 완제품 창고 : red 당일 / yellow 3일 이하 / green 4일 이상
+      IF pa_werks EQ 'P1000'. " 강원 PLANT
+        gv_threshold = 3.
+      ELSE.
+*-- 가공 완제품 창고 : red 당일 / yellow 3주 이하(21일) / green 3주 초과(22일)
+        gv_threshold = 21.
+      ENDIF.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Module INIT_POP_SCREEN OUTPUT
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+MODULE init_pop_screen OUTPUT.
+
+  PERFORM init_screen_value.
+  PERFORM display_screen_110.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*& Form save_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM save_data .
+***********************************************************************
+* SAVE 로직 처리
+* 1. 폐기 테이블로 INSERT
+* 2. 원자재 창고 테이블에서 MODIFY / DELETE
+* 3. 자재 이동 문서 - 폐기문서 생성
+* 4. 자재 관리 테이블 가용/전체 재고 감소
+***********************************************************************
+  DATA : lv_answer, " 저장시 사용자 동의
+        lv_tabix TYPE sy-tabix.
+
+  PERFORM get_mat_info.
+*-- 변경 데이터 인터널 테이블에 반영
+  CALL METHOD go_pop_grid->check_changed_data.
+
+*-- 반품 수량, 사유에 대한 유효값인지 체크
+  PERFORM check_valid_data.
+
+  PERFORM check_confirm CHANGING lv_answer.
+  CHECK lv_answer EQ '1'.
+
+  LOOP AT gt_dispose INTO gs_dispose.
+
+    lv_tabix = sy-tabix.
+
+*-- 1. 폐기 인터널 테이블로 append
+    IF gs_dispose-disme NE 0.
+      PERFORM set_dispose.
+    ENDIF.
+
+*-- 2. 원자재 창고 테이블 Update
+    PERFORM update_storage.
+
+*-- 3. 자재 이동 문서 테이블 INSERT
+
+*-- 4. 자재 관리 테이블 UPDATE
+    READ TABLE gt_mat_info INTO gs_mat_info WITH KEY matnr = gs_dispose-matnr.
+
+    IF sy-subrc EQ 0.
+      gs_mat_info-labst = ( gs_mat_info-labst - gs_dispose-disme ).
+      gs_mat_info-rabst = ( gs_mat_info-rabst - gs_dispose-disme ).
+      gs_mat_info-aedat = sy-datum.
+      gs_mat_info-aenam = sy-uname.
+      gs_mat_info-aezet = sy-uzeit.
+
+      MODIFY gt_mat_info FROM gs_mat_info INDEX lv_tabix
+                         TRANSPORTING labst rabst aedat aenam aezet.
+    ENDIF.
+
+  ENDLOOP.
+
+*-- 1-1. 폐기 테이블 DB반영
+  INSERT zc102mmt0018 FROM TABLE gt_return.
+*-- 4-1. 자재관리 테이블 DB반영
+  MODIFY zc102mmt0001 FROM TABLE gt_mat_info.
+
+  IF sy-subrc EQ 0.
+    MESSAGE s035.
+    COMMIT WORK.
+  ELSE.
+    ROLLBACK WORK.
+    MESSAGE e000 WITH TEXT-e03.
+  ENDIF.
+
+*-- REFRESH
+  PERFORM get_stl_data.           " 창고 자재리스트 다시 GET
+  PERFORM set_status.           " 상태 다시 표시
+  IF gv_filter_on = abap_false.
+    PERFORM list_clicked.
+  ENDIF.
+  PERFORM refresh_table.          " ALV 업데이트
+  CLEAR : gt_dispose, gs_dispose. " 폐기 인터널 테이블 초기화
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form init_screen_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM init_screen_value .
+
+*-- 폐기 관리자, 날짜 자동 세팅
+  gv_id   = sy-uname.
+  WRITE sy-datum TO gv_date.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen_110
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen_110 .
+
+  DATA : ls_variant TYPE disvariant,
+         ls_layout  TYPE lvc_s_layo.
+
+  IF go_pop_cont IS NOT BOUND.
+
+    CLEAR : gt_pop_fcat, gs_pop_fcat.
+
+*-- 폐기 POP-UP 리스트
+    PERFORM set_pop_fcat USING : 'X' 'MATNR'     'ZC102MMT0005' 'C' ' ',
+                                 'X' 'MAKTX'     'ZC102MMT0004' 'C' ' ',
+                                 'X' 'BATNO'     'ZC102MMT0005' 'C' ' ',
+                                 ' ' 'LABST'     'ZC102MMT0005' ' ' ' ',
+                                 ' ' 'DISME'     'ZC102MMT0018' ' ' 'X',
+                                 ' ' 'MEINS'     'ZC102MMT0005' 'C' ' ',
+                                 ' ' 'LFDAT'     'ZC102MMT0005' 'C' 'X',
+                                 ' ' 'VFDAT'     'ZC102MMT0005' 'C' 'X',
+                                 ' ' 'REASO'     'ZC102MMT0018' 'C' ' '.
+
+    PERFORM create_popup_object.
+    PERFORM exclude_toolbar.
+
+*-- POP-UP ls_variant 설정
+    ls_variant-report = sy-repid.
+    ls_variant-handle = 'POP1'.
+
+*-- POP-UP ls_layout 설정
+    ls_layout-zebra      = abap_true.
+    ls_layout-cwidth_opt = 'A'.
+    ls_layout-sel_mode   = 'D'.
+    ls_layout-stylefname = 'CELL_TAB'.
+
+    SET HANDLER : lcl_event_handler=>modify_value       FOR go_pop_grid,
+                  lcl_event_handler=>handle_toolbar_pop FOR go_pop_grid,
+                  lcl_event_handler=>user_command       FOR go_pop_grid.
+
+    CALL METHOD go_pop_grid->set_table_for_first_display
+      EXPORTING
+        is_variant           = ls_variant
+        i_save               = 'A'
+        i_default            = 'X'
+        is_layout            = ls_layout
+        it_toolbar_excluding = gt_ui_functions
+      CHANGING
+        it_outtab            = gt_dispose
+        it_fieldcatalog      = gt_pop_fcat.
+
+  ENDIF.
+
+  PERFORM register_event.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_pop_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_pop_fcat USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_pop_fcat-key        = pv_key.
+  gs_pop_fcat-fieldname  = pv_field.
+  gs_pop_fcat-ref_table  = pv_table.
+  gs_pop_fcat-just       = pv_just.
+  gs_pop_fcat-emphasize  = pv_emph.
+
+  CASE pv_field.
+    WHEN 'LABST'.
+      gs_pop_fcat-qfieldname = 'MEINS'.
+    WHEN 'DISME'.
+      gs_pop_fcat-qfieldname = 'MEINS'.
+      gs_pop_fcat-coltext    = '폐기 수량'.
+    WHEN 'MEINS'.
+      gs_pop_fcat-coltext    = '단위'.
+    WHEN 'REASO'.
+      gs_pop_fcat-coltext    = '폐기 사유'.
+      gs_pop_fcat-edit          = 'X'.
+      gs_pop_fcat-domname    = 'ZC102D_MM_REASO'.
+  ENDCASE.
+
+  APPEND gs_pop_fcat TO gt_pop_fcat.
+  CLEAR gs_pop_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_popup_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_popup_object .
+
+  CREATE OBJECT go_pop_cont
+    EXPORTING
+      container_name = 'POP_CONT'.
+
+  CREATE OBJECT go_pop_grid
+    EXPORTING
+      i_parent = go_pop_cont.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_event
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_event .
+
+  CALL METHOD go_pop_grid->set_ready_for_input
+    EXPORTING
+      i_ready_for_input = 1. " 1 : EDIT ON, 0 : EDIT OFF
+
+  CALL METHOD go_pop_grid->register_edit_event
+    EXPORTING
+      i_event_id = cl_gui_alv_grid=>mc_evt_modified.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_modify_values
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_MODIFIED
+*&      --> ET_GOOD_CELLS
+*&---------------------------------------------------------------------*
+FORM handle_modify_values USING pv_modified
+                                 pt_good_cells.
+
+  DATA : ls_good_cells TYPE lvc_s_modi.
+
+  CHECK pv_modified IS NOT INITIAL.
+  LOOP AT pt_good_cells INTO ls_good_cells.
+
+    CLEAR gs_dispose.
+    READ TABLE gt_dispose INTO gs_dispose INDEX ls_good_cells-row_id.
+
+    CASE ls_good_cells-fieldname.
+      WHEN 'DISME'.
+        IF gs_dispose-disme > gs_dispose-labst. " 폐기수량 =< 현재수량
+          MESSAGE i034 DISPLAY LIKE 'W'.
+          gs_dispose-disme = 0.
+          MODIFY gt_dispose FROM gs_dispose INDEX ls_good_cells-row_id.
+          PERFORM refresh_pop_table.
+          RETURN.
+        ENDIF.
+      WHEN 'REASO'.
+        IF gs_dispose-reaso = 'Z02'
+           AND gs_dispose-disme < gs_dispose-labst.
+          MESSAGE i049 DISPLAY LIKE 'W'.
+          gs_dispose-disme = 0.
+          gs_dispose-reaso = ' '.
+          MODIFY gt_dispose FROM gs_dispose INDEX ls_good_cells-row_id.
+          PERFORM refresh_pop_table.
+        ENDIF.
+    ENDCASE.
+
+  ENDLOOP.
+
+  PERFORM refresh_pop_table.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_pop_table
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_pop_table .
+
+  DATA : ls_stable TYPE lvc_s_stbl.
+
+  ls_stable-row = abap_true.
+  ls_stable-col = abap_true.
+
+  CALL METHOD go_pop_grid->refresh_table_display
+    EXPORTING
+      is_stable = ls_stable.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_valid_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_valid_data .
+
+  DATA : lv_reaso(30).
+
+  lv_reaso = '폐기 수량에 대한 폐기 사유를 입력해주세요'.
+
+  LOOP AT gt_dispose INTO gs_dispose.
+
+*-- 반품 수량에 대해 반품 사유를 입력했는지 확인
+    IF gs_dispose-disme > 0 AND gs_dispose-reaso IS INITIAL.
+      MESSAGE e000 WITH lv_reaso DISPLAY LIKE 'I'.
+*-- 반품 수량이 0인데 반품 사유가 입력되었을 때
+    ELSEIF gs_dispose-disme = 0 AND gs_dispose-reaso IS NOT INITIAL.
+      MESSAGE e000 WITH TEXT-e04 DISPLAY LIKE 'I'.
+    ENDIF.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_confirm
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM check_confirm CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data save dialog'
+      text_question         = '저장하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '2'
+      display_cancel_button = 'X'
+    IMPORTING
+      answer                = pv_answer.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_dispose
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_dispose .
+
+  gs_return-matnr   = gs_dispose-matnr. " 자재번호
+  gs_return-batno   = gs_dispose-batno. " 배치번호
+  gs_return-disda   = sy-datum.         " 반품등록일
+  gs_return-distype = '03'.             " 유형 - 반품
+  gs_return-disme   = gs_dispose-disme. " 반품 수량
+  gs_return-meins   = gs_dispose-meins. " 수량 단위
+  gs_return-reaso   = gs_dispose-reaso. " 반품 사유
+  gs_return-refno   = gs_dispose-stlno. " 참조번호 - 창고번호
+  " Time stamp
+  gs_return-erdat = sy-datum.
+  gs_return-ernam = sy-uname.
+  gs_return-erzet = sy-uzeit.
+
+  APPEND gs_return TO gt_return.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form update_storage
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM update_storage.
+
+  gv_menge = gs_dispose-labst - gs_dispose-disme.
+
+  CASE gv_stltype.
+*-- 원자재인 경우 zc102mmt0005
+    WHEN 'R'.
+      PERFORM update_0005.
+    WHEN 'P'.
+*-- 완제품인 경우, 강원 plant는 신선완제품 창고, 나머지 plant는 가공 완제품 창고 update
+      IF pa_werks EQ 'P1000'. " 강원 PLANT
+        PERFORM update_0006.
+      ELSE.
+        PERFORM update_0003.
+      ENDIF.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_mat_info
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_mat_info .
+
+  SELECT * FROM zc102mmt0001
+    FOR ALL ENTRIES IN @gt_dispose
+    WHERE matnr = @gt_dispose-matnr
+      AND stlno = @pa_stlno
+   INTO TABLE @gt_mat_info.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_stl_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_stl_data .
+
+  CASE gv_stltype.
+
+*-- 원자재인 경우 모두 select from zc102mmt0005 with 플랜트, 창고번호
+    WHEN 'R'.
+      SELECT stlno stltype werks matnr batno
+             labst meins lfdat vfdat
+        INTO CORRESPONDING FIELDS OF TABLE gt_storage
+        FROM zc102mmt0005
+        WHERE werks = pa_werks
+          AND stlno = pa_stlno
+          AND matnr IN gr_matnr
+        ORDER BY matnr batno.
+    WHEN 'P'.
+*-- 완제품인 경우, 강원 plant는 신선완제품 창고, 나머지 plant는 가공 완제품 창고
+      IF pa_werks EQ 'P1000'. " 강원 PLANT
+        SELECT stlno stltype werks matnr batno
+              labst meins lfdat vfdat
+         INTO CORRESPONDING FIELDS OF TABLE gt_storage
+         FROM zc102mmt0006
+         WHERE werks = pa_werks
+           AND stlno = pa_stlno
+           AND matnr IN gr_matnr
+      ORDER BY matnr batno.
+      ELSE.
+        SELECT stlno stltype werks matnr batno
+              labst meins lfdat vfdat
+         INTO CORRESPONDING FIELDS OF TABLE gt_storage
+         FROM zc102mmt0003
+         WHERE werks = pa_werks
+           AND stlno = pa_stlno
+           AND matnr IN gr_matnr
+    ORDER BY matnr batno.
+      ENDIF.
+
+  ENDCASE.
+
+*-- SET MAKTX(자재이름)
+  PERFORM set_maktx.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_screen .
+
+*-- 창고마다 status 기준 다르게 표시
+  gv_left_good = gv_threshold + 1.
+  gv_left_soso = gv_threshold.
+  gv_left_bad = 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form release_item
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM inventory_item .
+
+  CLEAR : gt_select, gs_select.
+
+*-- 사용자가 선택한 행 정보를 받아온다
+  CALL METHOD go_alv_grid->get_selected_rows
+    IMPORTING
+      et_row_no = gt_select.
+
+  " 행을 선택하지 않고 버튼 선택시 알림창
+  IF gt_select IS INITIAL.
+    MESSAGE s000 WITH TEXT-e01 DISPLAY LIKE 'E'.
+    EXIT.
+    " 재고실사 - 개별 항목 처리, 한 줄 이상 선택되면 알림창
+  ELSEIF lines( gt_select ) > 1.
+    MESSAGE s050 WITH TEXT-e01 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+*-- 가져온 행을 wa에 담는다.
+  READ TABLE gt_select INTO gs_select INDEX 1.
+  READ TABLE gt_storage INTO gs_storage INDEX gs_select-row_id.
+  MOVE-CORRESPONDING gs_storage TO gs_inventory.
+
+  CALL SCREEN 120 STARTING AT 5 15.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form init_screen_120
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM init_screen_120 .
+
+  gv_werks = gv_werks.
+  gv_matnr = gs_inventory-matnr.
+  gv_stlno = gs_inventory-stlno.
+  gv_batno = gs_inventory-batno.
+  gv_labst = gs_inventory-labst.
+
+  IF gv_real IS INITIAL.
+    gv_change = 0.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form apply_inventory
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM apply_inventory.
+**********************************************************************
+* 1. 원자재 테이블 UPDATE
+* 2. 자재 관리 테이블 UPDATE
+* 3. 자재 문서 생성 - 조정 출고 or 조정 입고
+**********************************************************************
+  DATA : lv_answer. " 저장시 사용자 동의
+
+*-- 실사 수량이 재고 수량과 동일할 경우 알림
+  PERFORM check_valid_labst.
+
+*-- 사용자가 YES 시 저장 로직 실행
+  PERFORM check_confirm CHANGING lv_answer.
+  CHECK lv_answer EQ '1'.
+
+*-- 원자재 테이블 update - 만약 전량이면 delete
+  PERFORM update_storage_by_inventory.
+
+*-- 자재 관리 테이블 update
+  gv_change = gv_real - gv_labst. " 엔터 안 친경우 계산
+  UPDATE zc102mmt0001
+    SET labst = labst + gv_change
+        rabst = rabst + gv_change
+        aedat = sy-datum
+        aenam = sy-uname
+        aezet = sy-uzeit
+    WHERE stlno   = pa_stlno
+      AND stltype = gv_stltype
+      AND werks   = gs_inventory-werks
+      AND matnr   = gs_inventory-matnr.
+
+  IF sy-subrc EQ 0.
+    MESSAGE s000 WITH TEXT-s01.
+    COMMIT WORK.
+
+    PERFORM get_stl_data.
+    PERFORM set_status.   " 상태 다시 표시
+    IF gv_filter_on = abap_false.
+      PERFORM list_clicked.
+    ENDIF.
+    PERFORM refresh_table.
+    CLEAR : gv_real, gv_change.
+
+  ELSE.
+    ROLLBACK WORK.
+  ENDIF.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_valid_labst
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM check_valid_labst .
+
+  IF gs_inventory-labst = gv_real.
+    MESSAGE e000 WITH TEXT-e02 DISPLAY LIKE 'I'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form update_storage_by_inventory
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM update_storage_by_inventory .
+
+  CASE gv_stltype.
+*-- 원자재인 경우 zc102mmt0005
+    WHEN 'R'.
+      PERFORM update_0005_byinven.
+    WHEN 'P'.
+*-- 완제품인 경우, 강원 plant는 신선완제품 창고, 나머지 plant는 가공 완제품 창고 update
+      IF pa_werks EQ 'P1000'. " 강원 PLANT
+        PERFORM update_0006_byinven.
+      ELSE.
+        PERFORM update_0003_byinven.
+      ENDIF.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form calculate_output
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM calculate .
+
+  gv_change = gv_real - gv_labst.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form list_clicked
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM list_clicked .
+
+**-- 전체 리스트를 백업
+  gt_st_backup = gt_storage.
+
+*-- ALV에 띄워지는 인터널 테이블 세팅(빨간색 STATUS만 넣기)
+  CLEAR gt_storage.
+  LOOP AT gt_st_backup INTO gs_st_backup.
+    IF gs_st_backup-status = icon_led_red.
+      APPEND gs_st_backup TO gt_storage.
+    ENDIF.
+  ENDLOOP.
+
+*-- 모드 변경
+  gv_filter_on = abap_false.
+
+*-- ALV 업데이트
+  PERFORM refresh_table.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_maktx
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_maktx .
+
+  DATA : lv_tabix TYPE sy-tabix.
+
+  LOOP AT gt_storage INTO gs_storage.
+
+    lv_tabix = sy-tabix.
+
+    CALL FUNCTION 'ZFM_CL102_MM_01'
+      EXPORTING
+        lv_matnr = gs_storage-matnr
+      IMPORTING
+        ev_maktx = gs_storage-maktx.
+
+    MODIFY gt_storage FROM gs_storage INDEX lv_tabix
+                                      TRANSPORTING maktx.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form allv_clicked
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM allv_clicked .
+
+*-- 다시 SELECT
+  PERFORM get_stl_data.
+  PERFORM set_status.
+
+*-- 모드 변경
+  gv_filter_on = abap_true.
+
+*-- 동기화
+  PERFORM refresh_table.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_edit_pop
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_OBJECT
+*&      --> E_INTERACTIVE
+*&---------------------------------------------------------------------*
+FORM handle_edit_pop USING po_object TYPE REF TO cl_alv_event_toolbar_set
+                     pv_interactive.
+
+  CLEAR gs_button_pop.
+  gs_button_pop-function = 'SETA'.
+  gs_button_pop-icon     = icon_check .
+  gs_button_pop-quickinfo = '전체 유통기한 폐기'.
+  gs_button_pop-text = '전체 유통기한 폐기'.
+  APPEND gs_button_pop TO po_object->mt_toolbar.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_all_clicked
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_all_clicked .
+
+  DATA : lv_answer, " 처리시 사용자 동의
+         lv_tabix  TYPE sy-tabix,
+         ls_style  TYPE lvc_s_styl.
+
+*-- 사용자가 YES 시 저장 로직 실행
+  PERFORM check_confirm_set_all CHANGING lv_answer.
+  CHECK lv_answer EQ '1'.
+
+  LOOP AT gt_dispose INTO gs_dispose.
+
+    lv_tabix = sy-tabix.
+
+    CLEAR : ls_style, gs_dispose-cell_tab.
+
+*-- 모든 필드 잠금 설정
+    ls_style-style     = cl_gui_alv_grid=>mc_style_disabled.
+    INSERT ls_style INTO TABLE gs_dispose-cell_tab.
+
+*-- 전체 수량 = 폐기 수량
+    gs_dispose-disme = gs_dispose-labst.
+
+*-- 폐기 사유 -> Z02(유통기한)
+    gs_dispose-reaso = 'Z02'.
+
+    MODIFY gt_dispose FROM gs_dispose INDEX lv_tabix
+                                      TRANSPORTING disme reaso cell_tab.
+
+  ENDLOOP.
+
+  PERFORM refresh_pop_table.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form check_confirm_set_all
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      <-- LV_ANSWER
+*&---------------------------------------------------------------------*
+FORM check_confirm_set_all  CHANGING pv_answer.
+
+  CALL FUNCTION 'POPUP_TO_CONFIRM'
+    EXPORTING
+      titlebar              = 'Data save dialog'
+      text_question         = '전체 항목에 대해 유통기한 폐기 처리하시겠습니까?'
+      text_button_1         = '네'
+      icon_button_1         = 'ICON_OKAY'
+      text_button_2         = '아니오'
+      icon_button_2         = 'ICON_CANCEL'
+      default_button        = '2'
+      display_cancel_button = 'X'
+    IMPORTING
+      answer                = pv_answer.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form update_0005
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM update_0005 .
+
+  IF gs_dispose-labst = gs_dispose-disme. " 가용재고 = 폐기수량
+*-- 전량 폐기인 경우 DELETE
+    DELETE FROM zc102mmt0005
+  WHERE stlno = pa_stlno
+    AND stltype = gv_stltype
+    AND matnr = gs_dispose-matnr
+    AND batno = gs_dispose-batno.
+  ELSE.
+*-- 일부 폐기인 경우 UPDATE
+    UPDATE zc102mmt0005
+    SET labst = gv_menge
+        aedat = sy-datum
+        aenam = sy-uname
+        aezet = sy-uzeit
+    WHERE stlno = pa_stlno
+        AND stltype = gv_stltype
+        AND matnr = gs_dispose-matnr
+        AND batno = gs_dispose-batno.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form update_0006
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM update_0006 .
+
+  IF gs_dispose-labst = gs_dispose-disme. " 가용재고 = 폐기수량
+*-- 전량 폐기인 경우 DELETE
+    DELETE FROM zc102mmt0006
+  WHERE stlno = pa_stlno
+    AND stltype = gv_stltype
+    AND matnr = gs_dispose-matnr
+    AND batno = gs_dispose-batno.
+  ELSE.
+*-- 일부 폐기인 경우 UPDATE
+    UPDATE zc102mmt0006
+    SET labst = gv_menge
+        aedat = sy-datum
+        aenam = sy-uname
+        aezet = sy-uzeit
+    WHERE stlno = pa_stlno
+        AND stltype = gv_stltype
+        AND matnr = gs_dispose-matnr
+        AND batno = gs_dispose-batno.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form update_0003
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM update_0003 .
+
+  IF gs_dispose-labst = gs_dispose-disme. " 가용재고 = 폐기수량
+*-- 전량 폐기인 경우 DELETE
+    DELETE FROM zc102mmt0003
+  WHERE stlno = pa_stlno
+    AND stltype = gv_stltype
+    AND matnr = gs_dispose-matnr
+    AND batno = gs_dispose-batno.
+  ELSE.
+*-- 일부 폐기인 경우 UPDATE
+    UPDATE zc102mmt0003
+    SET labst = gv_menge
+        aedat = sy-datum
+        aenam = sy-uname
+        aezet = sy-uzeit
+    WHERE stlno = pa_stlno
+        AND stltype = gv_stltype
+        AND matnr = gs_dispose-matnr
+        AND batno = gs_dispose-batno.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form update_0005_byinven
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM update_0005_byinven .
+
+  IF gv_real = 0.        " 실제 수량 = 0
+*-- 전량 실사인 경우 DELETE
+    DELETE FROM zc102mmt0005
+  WHERE stlno   = pa_stlno
+    AND stltype = gv_stltype
+    AND matnr   = gs_inventory-matnr
+    AND batno   = gs_inventory-batno.
+  ELSE.
+*-- 일부 수량 실사의 경우 UPDATE
+    UPDATE zc102mmt0005
+    SET labst = gv_real
+        aedat = sy-datum
+        aenam = sy-uname
+        aezet = sy-uzeit
+      WHERE stlno   = pa_stlno
+        AND stltype = gv_stltype
+        AND matnr   = gs_inventory-matnr
+        AND batno   = gs_inventory-batno.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form update_0006_byinven
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM update_0006_byinven .
+
+
+  IF gv_real = 0.        " 실제 수량 = 0
+*-- 전량 실사인 경우 DELETE
+    DELETE FROM zc102mmt0006
+  WHERE stlno   = pa_stlno
+    AND stltype = gv_stltype
+    AND matnr   = gs_inventory-matnr
+    AND batno   = gs_inventory-batno.
+  ELSE.
+*-- 일부 수량 실사의 경우 UPDATE
+    UPDATE zc102mmt0006
+    SET labst = gv_real
+        aedat = sy-datum
+        aenam = sy-uname
+        aezet = sy-uzeit
+      WHERE stlno   = pa_stlno
+        AND stltype = gv_stltype
+        AND matnr   = gs_inventory-matnr
+        AND batno   = gs_inventory-batno.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form update_0003_byinven
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM update_0003_byinven .
+
+  IF gv_real = 0.        " 실제 수량 = 0
+*-- 전량 실사인 경우 DELETE
+    DELETE FROM zc102mmt0003
+  WHERE stlno   = pa_stlno
+    AND stltype = gv_stltype
+    AND matnr   = gs_inventory-matnr
+    AND batno   = gs_inventory-batno.
+  ELSE.
+*-- 일부 수량 실사의 경우 UPDATE
+    UPDATE zc102mmt0003
+    SET labst = gv_real
+        aedat = sy-datum
+        aenam = sy-uname
+        aezet = sy-uzeit
+      WHERE stlno   = pa_stlno
+        AND stltype = gv_stltype
+        AND matnr   = gs_inventory-matnr
+        AND batno   = gs_inventory-batno.
+  ENDIF.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

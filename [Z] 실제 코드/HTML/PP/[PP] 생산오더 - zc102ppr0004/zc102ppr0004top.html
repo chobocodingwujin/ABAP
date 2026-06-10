@@ -1,0 +1,136 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0004TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0004TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0004TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102PPR0004TOP                          - Report ZC102PPR0004</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102ppr0004 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zc102ppt0006, zc102ppt0012.
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*Tap Strip controls</font>
+<font color ="#0000FF">**********************************************************************</font>
+CONTROLS gc_tab TYPE TABSTRIP.      " TAB Strip object
+
+DATA : gv_subscreen TYPE sy-dynnr.  " Subscreen number
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* CLASS INSTANCE</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : go_tab_cont1 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid1 TYPE REF TO cl_gui_alv_grid,
+       go_tab_cont2 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid2 TYPE REF TO cl_gui_alv_grid,
+       go_tab_cont3 TYPE REF TO cl_gui_custom_container,
+       go_tab_grid3 TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*internal table and workarea</font>
+<font color ="#0000FF">**********************************************************************</font>
+
+DATA : BEGIN OF gs_body,                " 본체
+         ostatus  TYPE icon-id.
+         include structure <a href ="zc102ppt0012/dictionary-zc102ppt0012.html">zc102ppt0012</a>.
+DATA :   cell_tab TYPE lvc_t_styl,
+         modi_yn,
+       END OF gs_body,
+       gt_body LIKE TABLE OF gs_body.
+
+
+DATA : BEGIN OF gs_tab1,                " TAB1
+         ostatus  TYPE icon-id.
+         include structure <a href ="zc102ppt0012/dictionary-zc102ppt0012.html">zc102ppt0012</a>.
+DATA :   cell_tab TYPE lvc_t_styl,
+         modi_yn,
+       END OF gs_tab1,
+       gt_tab1 LIKE TABLE OF gs_tab1.
+
+
+
+DATA : BEGIN OF gs_tab2,                " TAB2
+         ostatus  TYPE icon-id.
+         include structure <a href ="zc102ppt0012/dictionary-zc102ppt0012.html">zc102ppt0012</a>.
+DATA :   cell_tab TYPE lvc_t_styl,
+         modi_yn,
+       END OF gs_tab2,
+       gt_tab2 LIKE TABLE OF gs_tab2.
+
+
+DATA : BEGIN OF gs_tab3,                " TAB3
+         ostatus  TYPE icon-id.
+         include structure <a href ="zc102ppt0012/dictionary-zc102ppt0012.html">zc102ppt0012</a>.
+DATA :   cell_tab TYPE lvc_t_styl,
+         modi_yn,
+       END OF gs_tab3,
+       gt_tab3 LIKE TABLE OF gs_tab3.
+
+
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gs_layout    TYPE lvc_s_layo,
+       gs_style     TYPE lvc_s_styl,
+
+       gt_tab_fcat1 TYPE lvc_t_fcat,   " 탭 1 FCAT
+       gt_tab_fcat2 TYPE lvc_t_fcat,   " 탭 2 FCAT
+       gt_tab_fcat3 TYPE lvc_t_fcat,   " 탭 3 FCAT
+       gs_tab_fcat1 TYPE lvc_s_fcat,
+       gs_tab_fcat2 TYPE lvc_s_fcat,
+       gs_tab_fcat3 TYPE lvc_s_fcat,
+       gs_variant   TYPE disvariant.
+
+
+DATA:gv_title1(20), " 텝 타이틀 변수 선언
+     gv_title2(20),
+     gv_title3(20).
+
+
+<font color ="#0000FF">*--Search Help 생산오더번호</font>
+DATA : BEGIN OF gs_pdono,
+         pdono TYPE zc102ppt0012-pdono,
+       END OF gs_pdono,
+       gt_pdono LIKE TABLE OF gs_pdono.
+
+
+DATA : gt_ui_functions TYPE ui_functions,
+       gs_button       TYPE stb_button.
+
+<font color ="#0000FF">**********************************************************************4</font>
+<font color ="#0000FF">*SCREEN ELEMENT</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_pdstt_fr TYPE zc102ppt0012-pdstt,
+       gv_pdstt_to TYPE zc102ppt0012-pdstt,
+<font color ="#0000FF">*       gv_cnt1     TYPE i,</font>
+<font color ="#0000FF">*       gv_cnt2     TYPE i,</font>
+<font color ="#0000FF">*       gv_cnt3     TYPE i.</font>
+       gv_cnt1(3),
+       gv_cnt2(3),
+       gv_cnt3(3),
+       gv_cnt4(3).   " 메세지 띄울때 총합 한번에 보려고 만듦
+
+
+RANGES gr_pdstt FOR zc102ppt0012-pdstt.
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* COMMON VARIABLE</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_mode   VALUE 'D',
+       gv_answer, " Mode value
+       gv_pdono  TYPE zc102ppt0012-pdono.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

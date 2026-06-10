@@ -1,0 +1,49 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102PPR0013TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102PPR0013TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102PPR0013TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102PPR0013TOP                          - Report ZC102PPR0013</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102ppr0013  MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+TABLES: zc102ppt0010 ,zc102ppt0014, zc102ppt0007.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*Internal table and workarea</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*--사료 생산오더</font>
+DATA : gt_fo TYPE TABLE OF zc102ppt0014,
+       gs_fo TYPE zc102ppt0014.
+
+<font color ="#0000FF">*--사료 생산완료</font>
+DATA: gt_complit TYPE TABLE OF zc102ppt0007,
+      gs_complit TYPE zc102ppt0007.
+
+<font color ="#0000FF">*--가공 완제품 테이블</font>
+DATA : gt_finish TYPE TABLE OF zc102mmt0003,
+       gs_finish TYPE zc102mmt0003.
+
+<font color ="#0000FF">*--배치 번호 insert</font>
+DATA: gv_batno TYPE zc102ppt0005-batno,
+      gs_batch TYPE zc102ppt0005,
+      gt_batch TYPE TABLE OF zc102ppt0005.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*Varient</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA:  gv_today TYPE sy-datum.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

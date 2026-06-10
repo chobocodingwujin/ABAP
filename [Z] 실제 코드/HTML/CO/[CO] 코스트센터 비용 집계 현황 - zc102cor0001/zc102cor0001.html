@@ -1,0 +1,103 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102COR0001</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102COR0001</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [CO] 코스트센터 비용 집계 현황 조회</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102COR0001</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zc102cor0001top.html">zc102cor0001top</a>.  " Global Data
+include <a href ="zc102cor0001s01.html">zc102cor0001s01</a>.  " Selection Screen
+include <a href ="zc102cor0001c01.html">zc102cor0001c01</a>.  " Event
+include <a href ="zc102cor0001o01.html">zc102cor0001o01</a>.  " PBO-Modules
+include <a href ="zc102cor0001i01.html">zc102cor0001i01</a>.  " PAI-Modules
+include <a href ="zc102cor0001f01.html">zc102cor0001f01</a>.  " FORM-Routines
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* INITIALIZATION</font>
+<font color ="#0000FF">**********************************************************************</font>
+INITIALIZATION.
+  PERFORM set_init_value.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* AT SELECTION-SCREEN OUTPUT</font>
+<font color ="#0000FF">**********************************************************************</font>
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM screen_ctrl.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* AT SELECTION-SCREEN</font>
+<font color ="#0000FF">**********************************************************************</font>
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR so_kostl-low.
+  PERFORM f4_kostl.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+  PERFORM get_hierachy_data.
+  PERFORM get_cost_data.
+  PERFORM get_cel_data.
+  PERFORM get_txt20.
+
+  CASE 'X'.
+    WHEN pa_alv.
+      CALL SCREEN 100.
+    WHEN pa_tree.
+      PERFORM make_tree_body.
+      CALL SCREEN 200.
+  ENDCASE.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* TITLE100 --&gt; [ALV] 코스트센터 비용 집계 현황</font>
+<font color ="#0000FF">* TITLE200 --&gt; [Tree] 코스트센터 비용 집계 현황</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* 001 Tree</font>
+<font color ="#0000FF">* 002 ALV</font>
+<font color ="#0000FF">* S01 코스트 센터 비용 집계 현황</font>
+<font color ="#0000FF">* S02 세부 내역</font>
+<font color ="#0000FF">* T01 코스트 센터 조건</font>
+<font color ="#0000FF">* T02 출력 조건</font>
+<font color ="#0000FF">* W01 푸드 온 보람</font>
+<font color ="#0000FF">* W02 1000</font>
+<font color ="#0000FF">* W03 1000</font>
+<font color ="#0000FF">* W04 년</font>
+<font color ="#0000FF">* W05 회사명</font>
+<font color ="#0000FF">* W06 관리 회계 영역</font>
+<font color ="#0000FF">* W07 회사 코드</font>
+<font color ="#0000FF">* W08 회계 연도</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_ALV         ALV 조회</font>
+<font color ="#0000FF">* PA_CHECK         No top-of-page</font>
+<font color ="#0000FF">* PA_KOKRS D       .</font>
+<font color ="#0000FF">* PA_TREE         Tree 조회</font>
+<font color ="#0000FF">* SO_KOSTL D       .</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZC102MSG</font>
+<font color ="#0000FF">*004   데이터가 존재하지 않습니다</font>
+<font color ="#0000FF">*010   & 건이 조회되었습니다.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

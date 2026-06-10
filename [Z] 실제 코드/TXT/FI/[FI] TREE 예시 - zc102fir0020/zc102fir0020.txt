@@ -1,0 +1,47 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102FIR0020
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102fir0020top                         .    " Global Data
+
+INCLUDE zc102fir0020s01                         .  " Selection screen
+INCLUDE zc102fir0020c01                         .  " ALV Events
+INCLUDE zc102fir0020o01                         .  " PBO-Modules
+INCLUDE zc102fir0020i01                         .  " PAI-Modules
+INCLUDE zc102fir0020f01                         .  " FORM-Routines
+
+**********************************************************************
+* START-OF-SELECTION.
+**********************************************************************
+START-OF-SELECTION.
+
+  PERFORM fill_tree_info.
+  PERFORM fill_alv_info.
+
+  IF lines( gt_trade ) GT 0.
+    CALL SCREEN 100.
+  ELSE.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ENDIF.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> BP 거래내역
+
+
+*Selection texts
+*----------------------------------------------------------
+* SO_BPART         비즈니스 파트너
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*001   & &
+*004   데이터가 존재하지 않습니다
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

@@ -1,0 +1,63 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0002C01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Class LCL_EVENT_HANDLER
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+CLASS lcl_event_handler DEFINITION FINAL.
+
+  PUBLIC SECTION.
+    CLASS-METHODS: double_click FOR EVENT double_click
+                                OF cl_gui_alv_grid
+                                IMPORTING e_row e_column,
+
+*                  double_click_pr FOR EVENT double_click
+*                                  OF cl_gui_alv_grid
+*                                  IMPORTING e_row e_column,
+
+                  edit_toolbar FOR EVENT toolbar
+                               OF cl_gui_alv_grid
+                               IMPORTING e_object e_interactive,
+
+                 edit_toolbar_bottom  FOR EVENT toolbar
+                                      OF cl_gui_alv_grid
+                                      IMPORTING e_object e_interactive,
+
+                 user_command   FOR EVENT user_command
+                                OF cl_gui_alv_grid
+                                IMPORTING e_ucomm.
+
+ENDCLASS.
+*&---------------------------------------------------------------------*
+*& Class (Implementation) LCL_EVENT_HANDLER
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+CLASS lcl_event_handler IMPLEMENTATION.
+
+  METHOD double_click .
+    IF gt_item IS NOT INITIAL.
+      PERFORM handle_double_click USING e_row e_column.
+    ELSE.
+      EXIT.
+    ENDIF.
+  ENDMETHOD.
+*  METHOD double_click_pr .
+*    PERFORM handle_double_click_pr USING e_row e_column.
+*  ENDMETHOD.
+  METHOD edit_toolbar .
+    PERFORM handle_edit_toolbar USING e_object e_interactive.
+  ENDMETHOD.
+  METHOD edit_toolbar_bottom .
+    PERFORM handle_edit_toolbar_bottom USING e_object e_interactive.
+  ENDMETHOD.
+  METHOD user_command.
+    PERFORM handle_user_command USING e_ucomm.
+  ENDMETHOD.
+
+ENDCLASS.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

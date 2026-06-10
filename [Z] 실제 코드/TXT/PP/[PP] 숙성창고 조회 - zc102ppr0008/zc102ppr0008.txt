@@ -1,0 +1,66 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102PPR0008
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102ppr0008top                         .    " Global Data
+INCLUDE zc102ppr0008s01                         .  " selection scree
+INCLUDE zc102ppr0008o01                         .  " PBO-Modules
+INCLUDE zc102ppr0008i01                         .  " PAI-Modules
+INCLUDE zc102ppr0008c01                         .  " PAI-Modules
+INCLUDE zc102ppr0008f01                         .  " FORM-Routines
+
+**********************************************************************
+*INITIALIZATION
+**********************************************************************
+  INITIALIZATION.
+
+  PERFORM set_value.
+
+**********************************************************************
+*at SELECTION-SCREEN
+**********************************************************************
+
+
+  "LOW 서치헬프
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR so_werks-low.
+  PERFORM f4_btype.
+
+  "HIGH 서치헬프
+
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR so_werks-high.
+  PERFORM f4_btype .
+
+**********************************************************************
+*START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+
+  PERFORM get_ripening. "숙성창고 가져오기
+
+  CALL SCREEN 100.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> 숙성창고 조회
+
+*Text elements
+*----------------------------------------------------------
+* T01 조회 조건 입력
+
+
+*Selection texts
+*----------------------------------------------------------
+* SO_WERKS D       .
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*004   데이터가 존재하지 않습니다
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

@@ -1,0 +1,124 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0002I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE gv_okcode.
+    WHEN 'SOBT'.
+      PERFORM get_soitem_info.
+  ENDCASE.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+
+*-- 하단 우측 Grid 해제
+  IF go_bottom2_grid IS BOUND.
+    CALL METHOD go_bottom2_grid->free.
+    FREE go_bottom2_grid.
+  ENDIF.
+
+*-- 하단 좌측 Grid 해제
+  IF go_bottom_grid IS BOUND.
+    CALL METHOD go_bottom_grid->free.
+    FREE go_bottom_grid.
+  ENDIF.
+
+*-- 상단 Grid 해제
+  IF go_top_grid IS BOUND.
+    CALL METHOD go_top_grid->free.
+    FREE go_top_grid.
+  ENDIF.
+
+*-- 하단 우측 Container 해제
+  IF go_bottom2_container IS BOUND.
+    CALL METHOD go_bottom2_container->free.
+    FREE go_bottom2_container.
+  ENDIF.
+
+*-- 하단 좌측 Container 해제
+  IF go_bottom_container IS BOUND.
+    CALL METHOD go_bottom_container->free.
+    FREE go_bottom_container.
+  ENDIF.
+
+*-- 상단 Container 해제
+  IF go_top_container IS BOUND.
+    CALL METHOD go_top_container->free.
+    FREE go_top_container.
+  ENDIF.
+
+*-- Split 컨테이너 해제
+  IF go_split_container IS BOUND.
+    CALL METHOD go_split_container->free.
+    FREE go_split_container.
+  ENDIF.
+
+*-- 메인 컨테이너 해제
+  IF go_container IS BOUND.
+    CALL METHOD go_container->free.
+    FREE go_container.
+  ENDIF.
+
+  LEAVE TO SCREEN 0.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  EXIT_POP  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit_pop INPUT.
+
+*  CALL METHOD: go_pbottom_grid->free, go_ptop_grid->free,
+*
+*               go_pbottom_container->free, go_ptop_container->free,
+*
+*               go_split_container_pop->free,
+*               go_pop_container->free.
+*
+*  FREE: go_pbottom_grid, go_ptop_grid, go_pbottom_container,
+*         go_ptop_container,
+*        go_split_container_pop, go_pop_container.
+*
+*  LEAVE TO SCREEN 0.
+
+  CALL METHOD: go_ptop_grid->free, go_pop_container->free.
+
+  FREE:  go_ptop_grid, go_pop_container.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0110  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0110 INPUT.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CUST_F4_VBELN_SO  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE cust_f4_vbeln_so INPUT.
+
+  PERFORM set_search_help.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

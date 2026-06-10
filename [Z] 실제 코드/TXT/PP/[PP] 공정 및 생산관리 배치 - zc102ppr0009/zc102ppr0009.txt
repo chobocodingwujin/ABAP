@@ -1,0 +1,29 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102PPR0009
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102ppr0009top                         .    " Global Data
+INCLUDE zc102ppr0009o01                         .  " PBO-Modules
+INCLUDE zc102ppr0009i01                         .  " PAI-Modules
+INCLUDE zc102ppr0009f01                         .  " FORM-Routines
+
+**********************************************************************
+*START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+
+  PERFORM get_route_rstda.
+*  PERFORM create_bcno CHANGING gv_bcno.
+  PERFORM set_plus_routeno.
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*001   & &
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

@@ -1,0 +1,142 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0009F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0009F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0009F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_value .
+  gv_url = TEXT-u01.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_connection</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_connection .
+
+  IF gv_url IS NOT INITIAL.
+
+<font color ="#0000FF">*-- Http Connection</font>
+    CALL METHOD cl_http_client=&gt;create_by_url
+      EXPORTING
+        url                = gv_url
+      IMPORTING
+        client             = lo_http_client
+      EXCEPTIONS
+        argument_not_found = 1
+        plugin_not_active  = 2
+        internal_error     = 3
+        pse_not_found      = 4
+        pse_not_distrib    = 5
+        pse_errors         = 6
+        OTHERS             = 7.
+
+  ENDIF.
+
+<font color ="#0000FF">*-- 오류 발생시...</font>
+  IF sy-subrc &lt;&gt; 0.
+    gv_status_code = 500.
+    MESSAGE ID sy-msgid TYPE sy-msgty NUMBER sy-msgno
+            WITH sy-msgv1 sy-msgv2 sy-msgv3 sy-msgv4 INTO gv_status_text.
+    WRITE:/ gv_status_code, gv_status_text.
+    EXIT.
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_exchange_data_json</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_exchange_data_json .
+
+<font color ="#0000FF">*-- 커넥션 테스트</font>
+  lo_http_client-&gt;send( ).
+  lo_http_client-&gt;receive( ).
+
+<font color ="#0000FF">*-- API Json 데이터 받아오기</font>
+  CLEAR gv_response.
+  gv_response = lo_http_client-&gt;response-&gt;get_cdata( ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_json_to_table</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_json_to_table .
+
+<font color ="#0000FF">*-- Json to ITAB</font>
+  CALL METHOD /ui2/cl_json=&gt;deserialize
+    EXPORTING
+      json = gv_response
+    CHANGING
+      data = gt_exchange_rate.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_save_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_save_data .
+
+<font color ="#0000FF">*-- itab 가공</font>
+  CLEAR gt_save_data.
+  DELETE gt_exchange_rate WHERE cur_unit = 'KRW'.
+
+<font color ="#0000FF">*-- ITAB 데이터 가공 및 Save ITAB으로 이동</font>
+  LOOP AT gt_exchange_rate INTO DATA(ls_rate).
+
+    REPLACE ALL OCCURRENCES OF ',' IN ls_rate-deal_bas_r WITH ''.
+
+    CASE ls_rate-cur_unit.
+      WHEN 'JPY(100)' OR 'IDR(100)'.
+        ls_rate-deal_bas_r = ls_rate-deal_bas_r / 100.
+        ls_rate-cur_unit = ls_rate-cur_unit+0(3).
+    ENDCASE.
+
+    CLEAR gs_save_data.
+    gs_save_data-t_waers = TEXT-t01.
+    gs_save_data-o_waers = ls_rate-cur_unit.
+    gs_save_data-datum = sy-datum.
+    gs_save_data-wrbtr = ls_rate-deal_bas_r.
+    APPEND gs_save_data TO gt_save_data.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*  DELETE FROM zc102fit0015.</font>
+  MODIFY zc102fit0015 FROM TABLE gt_save_data.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

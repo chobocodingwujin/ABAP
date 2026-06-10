@@ -1,0 +1,1998 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0023F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0023F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0023F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102FIR0023F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_value .
+
+  pa_bukrs = '1000'.
+  pa_gjahr = sy-datum(4).
+
+  so_monat-sign = 'I'.
+  so_monat-low = 1.
+  so_monat-option = 'EQ'.
+  APPEND so_monat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_screen .
+
+  LOOP AT SCREEN.
+    IF screen-name = 'PA_BUKRS'.
+      screen-input = ''.
+    ENDIF.
+
+    MODIFY SCREEN.
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_body_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_body_data .
+
+  DATA : lv_previous TYPE zvfaglflextc102-gjahr.
+  lv_previous = pa_gjahr - 1.
+
+  CLEAR gt_body.
+  SELECT bukrs, gjahr, a~saknr, waers, ktoks, acdes, txt20, shkzg,
+         bs_lvl1, bs_lvl2,
+         hsl01, hsl02, hsl03, hsl04, hsl05, hsl06,
+         hsl07, hsl08, hsl09, hsl10, hsl11, hsl12
+    INTO CORRESPONDING FIELDS OF TABLE @gt_body
+    FROM zc102fit0002 AS a LEFT OUTER JOIN zvfaglflextc102 AS b
+      ON a~saknr = b~saknr
+    WHERE bukrs  = @pa_bukrs
+      AND gjahr IN ( @pa_gjahr, @lv_previous )
+      AND ( a~saknr LIKE '4%' OR a~saknr LIKE '5%' )
+    ORDER BY a~saknr, gjahr DESCENDING.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_saknr_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_saknr_data .
+
+  CLEAR gt_saknr.
+  SELECT saknr txt20
+    INTO CORRESPONDING FIELDS OF TABLE gt_saknr
+    FROM zc102fit0002
+    WHERE spras = sy-langu
+      AND ( saknr LIKE '4%' OR saknr LIKE '5%' ).
+
+  SORT gt_saknr BY saknr ASCENDING.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_sum_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_sum_data .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         lv_count TYPE i,
+         lv_month TYPE bkpf-monat VALUE 1,
+         lv_val   TYPE string,
+         lv_sum   TYPE zvfaglflextc102-hsl01. " 총합
+
+  lv_count = lines( gt_body ).
+
+  LOOP AT gt_body INTO gs_body.
+
+    lv_tabix = sy-tabix.
+
+<font color ="#0000FF">*-- 계산값 및 Field Symbol 변수 초기화</font>
+    CLEAR : lv_val, lv_sum, gs_alv.
+    lv_month = so_monat-low.
+
+    IF ( gs_body-acdes = '비용' AND gs_body-shkzg = 'H' ) OR
+       ( gs_body-acdes = '수익' AND gs_body-shkzg = 'S' ).
+      CONTINUE.
+    ENDIF.
+
+<font color ="#0000FF">*-- 조건 기간에 따른 HSL 금액 합</font>
+    DO.
+      lv_val = 'HSL' && lv_month.
+
+      ASSIGN COMPONENT lv_val OF STRUCTURE gs_body TO &lt;gs_tot&gt;.
+
+      IF ( &lt;gs_tot&gt; IS NOT ASSIGNED ) OR
+         ( lv_month &gt; so_monat-high ).
+        EXIT.
+      ENDIF.
+
+<font color ="#0000FF">*-- 구분이 '비용'이라면 음수로 변경</font>
+      IF gs_body-acdes = '비용'.
+        gs_body-(lv_val) *= -1.
+        MODIFY gt_body FROM gs_body INDEX lv_tabix
+                                    TRANSPORTING (lv_val).
+      ENDIF.
+
+      lv_sum += &lt;gs_tot&gt;.
+      UNASSIGN &lt;gs_tot&gt;.
+
+      lv_month += 1.
+
+    ENDDO.
+
+    gs_alv-saknr = gs_body-saknr.
+    gs_alv-txt20 = gs_body-txt20.
+    gs_alv-acdes = gs_body-acdes.
+    gs_alv-waers = gs_body-waers.
+    gs_alv-bs_lvl1 = gs_body-bs_lvl1.
+    gs_alv-bs_lvl2 = gs_body-bs_lvl2.
+<font color ="#0000FF">*    gs_alv-gjahr = pa_gjahr.</font>
+
+    IF gs_body-gjahr = pa_gjahr.
+      gs_alv-total = lv_sum.
+    ELSE.
+      gs_alv-comp = lv_sum.
+    ENDIF.
+
+    COLLECT gs_alv INTO gt_alv.
+
+<font color ="#0000FF">**-- 연도가 같음 -&gt; 현년도</font>
+<font color ="#0000FF">*    IF gs_body-gjahr = pa_gjahr.</font>
+<font color ="#0000FF">*      gs_alv-total = lv_sum.</font>
+<font color ="#0000FF">*      " 마지막 인덱스거나 다음 아이템의 계정과목이 다르다면 비교년도가 없는 경우</font>
+<font color ="#0000FF">*      IF ( lv_tabix = lv_count ) OR</font>
+<font color ="#0000FF">*         ( gs_body-saknr NE gt_body[ lv_tabix + 1 ]-saknr ).</font>
+<font color ="#0000FF">*        PERFORM set_gs_alv.</font>
+<font color ="#0000FF">**-- SAKNR에 따른 TXT20 값 세팅</font>
+<font color ="#0000FF">*        PERFORM set_txt20 CHANGING gs_alv.</font>
+<font color ="#0000FF">*        APPEND gs_alv TO gt_alv.</font>
+<font color ="#0000FF">*        CLEAR gs_alv.</font>
+<font color ="#0000FF">*      ENDIF.</font>
+<font color ="#0000FF">**-- 연도가 다름 -&gt; 비교년도</font>
+<font color ="#0000FF">*    ELSE.</font>
+<font color ="#0000FF">*      gs_alv-comp = lv_sum.</font>
+<font color ="#0000FF">*      PERFORM set_gs_alv.</font>
+<font color ="#0000FF">**-- SAKNR에 따른 TXT20 값 세팅</font>
+<font color ="#0000FF">*      PERFORM set_txt20 CHANGING gs_alv.</font>
+<font color ="#0000FF">*      APPEND gs_alv TO gt_alv.</font>
+<font color ="#0000FF">*      CLEAR gs_alv.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+  ENDLOOP.
+
+<font color ="#0000FF">*-- 수익, 비용 정렬</font>
+  SORT gt_alv BY acdes DESCENDING.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen_0100</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen_0100 .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_fcat, gs_fcat.
+    PERFORM set_fcat USING : 'X' 'SAKNR' 'ZVFAGLFLEXTC102' 'C' ' ',
+                             ' ' 'TXT20' 'ZC102FIT0002'    ' ' ' ',
+                             ' ' 'ACDES' 'ZC102FIT0002'    'C' ' ',
+                             ' ' 'TOTAL' ' '               ' ' 'X',
+                             ' ' 'COMP'  ' '               ' ' 'X',
+                             ' ' 'DIFF'  ' '               ' ' 'X',
+                             ' ' 'PCT_DIFF' ' '            ' ' 'X',
+                             ' ' 'WAERS' 'ZC102FIT0016'    'C' ' '.
+
+    PERFORM set_layout.
+    PERFORM create_object.
+
+    SET HANDLER lcl_event_handler=&gt;top_of_page FOR go_alv_grid.
+    CALL METHOD go_alv_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_alv
+        it_sort         = gt_sort
+        it_fieldcatalog = gt_fcat.
+
+    PERFORM set_top_page.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_fcat USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat-key       = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'TOTAL'.
+      gs_fcat-coltext = '총 금액'.
+      gs_fcat-do_sum = abap_true.
+      gs_fcat-cfieldname = 'WAERS'.
+    WHEN 'COMP'.
+      gs_fcat-coltext = '비교 금액'.
+      gs_fcat-do_sum = abap_true.
+      gs_fcat-cfieldname = 'WAERS'.
+    WHEN 'DIFF'.
+      gs_fcat-coltext = '차액'.
+      gs_fcat-cfieldname = 'WAERS'.
+      gs_fcat-do_sum = abap_true.
+    WHEN 'PCT_DIFF'.
+      gs_fcat-coltext = '백분률(%)'.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+  gs_layout-zebra      = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = 'D'.
+  gs_layout-grid_title = TEXT-t03.
+
+  gs_variant-report = sy-repid.
+  gs_variant-handle = 'ALV1'.
+
+  CLEAR : gt_sort, gs_sort.
+  gs_sort-spos = 1.
+  gs_sort-fieldname = 'ACDES'.
+  gs_sort-subtot = abap_true.
+  APPEND gs_sort TO gt_sort.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+<font color ="#0000FF">*-- TOP OF PAGE 컨테이너</font>
+  CREATE OBJECT go_page_cont
+    EXPORTING
+      repid     = sy-cprog
+      dynnr     = sy-dynnr
+      side      = go_page_cont-&gt;dock_at_top
+      extension = 70.
+
+<font color ="#0000FF">*-- 메인 컨테이너</font>
+  CREATE OBJECT go_container
+    EXPORTING
+      side      = go_container-&gt;dock_at_top
+      extension = 5000.
+
+<font color ="#0000FF">*-- 스플릿 컨테이너</font>
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_container
+      rows    = 1
+      columns = 2.
+
+<font color ="#0000FF">*-- 왼쪽에 ALV 컨테이너 붙이기</font>
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_alv_cont.
+
+<font color ="#0000FF">*-- 오른쪽에 Chart 컨테이너 붙이기</font>
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_chart_cont.
+
+<font color ="#0000FF">*-- 사이즈 조절</font>
+<font color ="#0000FF">*  CALL METHOD go_split_cont-&gt;set_row_height</font>
+<font color ="#0000FF">*    EXPORTING</font>
+<font color ="#0000FF">*      id     = 2</font>
+<font color ="#0000FF">*      height = 80.</font>
+
+<font color ="#0000FF">*-- Split2 container</font>
+  CALL METHOD go_split_cont-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_chart_cont.
+
+  CREATE OBJECT go_split_cont2
+    EXPORTING
+      parent  = go_chart_cont
+      rows    = 2
+      columns = 1.
+
+<font color ="#0000FF">**-- 사이즈 조절</font>
+<font color ="#0000FF">*  CALL METHOD go_split_cont2-&gt;set_column_width</font>
+<font color ="#0000FF">*    EXPORTING</font>
+<font color ="#0000FF">*      id    = 2</font>
+<font color ="#0000FF">*      width = 60.</font>
+
+  CALL METHOD go_split_cont2-&gt;get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_top_cont.
+
+  CALL METHOD go_split_cont2-&gt;get_container
+    EXPORTING
+      row       = 2
+      column    = 1
+    RECEIVING
+      container = go_bottom_cont.
+
+<font color ="#0000FF">*-- ALV GRID 붙이기</font>
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_alv_cont.
+
+<font color ="#0000FF">*-- Chart 붙이기</font>
+  CREATE OBJECT go_chart
+    EXPORTING
+      parent = go_bottom_cont.
+
+  CREATE OBJECT go_chart2
+    EXPORTING
+      parent = go_top_cont.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form build_comment</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GT_LIST_COMMENTARY</font>
+<font color ="#0000FF">*&      --&gt; GV_LOGO</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM build_comment USING pt_list_commentary TYPE slis_t_listheader
+                         pv_logo            TYPE sdydo_value.
+  DATA: ls_line TYPE slis_listheader.
+
+  CLEAR ls_line.
+  ls_line-typ = 'H'. " High font
+  ls_line-info = '손익계산서'.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " High font
+  ls_line-key = '전기 기간'.
+  ls_line-info = so_monat-low && `월 ~ ` && so_monat-high && '월'.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'. " Small font
+  ls_line-key = '현재 날짜 : '.
+  ls_line-info = sy-datum.
+  APPEND ls_line TO pt_list_commentary.
+
+  CLEAR ls_line.
+  ls_line-typ = 'S'.
+  ls_line-key = '현재 시간 : '.
+  ls_line-info = sy-uzeit.
+  APPEND ls_line TO pt_list_commentary.
+
+<font color ="#0000FF">*  CLEAR ls_line.</font>
+<font color ="#0000FF">*  ls_line-typ = 'A'. " Italic font</font>
+<font color ="#0000FF">*  ls_line-info = 'SYNC-6 Seoul'.</font>
+<font color ="#0000FF">*  APPEND ls_line TO pt_list_commentary.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  pv_logo = 'ENJOYSAP_LOGO'.</font>
+  gs_variant-report = sy-repid.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_top_page</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_top_page .
+
+<font color ="#0000FF">*-- TOP-OF-PAGE</font>
+  CREATE OBJECT go_dyndoc_id " cl_dd_document
+    EXPORTING
+      style = 'ALV_GRID'.
+
+<font color ="#0000FF">*-- 초기화</font>
+  CALL METHOD go_dyndoc_id-&gt;initialize_document
+    EXPORTING
+      background_color = cl_dd_area=&gt;col_textarea.
+
+<font color ="#0000FF">*-- TOP OF PAGE 이벤트 실행 -&gt; TOP OF PAGE 출력</font>
+  CALL METHOD go_alv_grid-&gt;list_processing_events
+    EXPORTING
+      i_event_name = 'TOP_OF_PAGE'
+      i_dyndoc_id  = go_dyndoc_id.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_top_of_page</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_DYNDOC_ID</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_top_of_page USING po_dyndoc_id TYPE REF TO cl_dd_document.
+
+  DATA : lv_id    TYPE sdydo_text_element,
+         lv_id2   TYPE sdydo_text_element,
+         lv_conid TYPE sdydo_text_element.
+
+<font color ="#0000FF">*-- 헤더 타이틀 설정</font>
+  CALL METHOD po_dyndoc_id-&gt;add_text
+    EXPORTING
+      text         = '손익계산서'
+      sap_style    = cl_dd_area=&gt;key
+      sap_color    = cl_dd_area=&gt;large
+      sap_fontsize = cl_dd_area=&gt;list_heading.
+
+<font color ="#0000FF">*-- 줄바꿈</font>
+  CALL METHOD po_dyndoc_id-&gt;new_line( ).
+  CALL METHOD po_dyndoc_id-&gt;new_line( ).
+
+<font color ="#0000FF">*-- Document 설정</font>
+<font color ="#0000FF">*-- 회사 코드</font>
+  CALL METHOD po_dyndoc_id-&gt;add_text
+    EXPORTING
+      text         = '회사코드 : '
+      sap_style    = cl_dd_area=&gt;key
+      sap_color    = cl_dd_area=&gt;large
+      sap_fontsize = cl_dd_area=&gt;list_normal.
+
+  lv_id = pa_bukrs.
+  CALL METHOD po_dyndoc_id-&gt;add_text
+    EXPORTING
+      text         = lv_id
+      sap_style    = cl_dd_area=&gt;key
+      sap_color    = cl_dd_area=&gt;large
+      sap_fontsize = cl_dd_area=&gt;list_normal.
+
+<font color ="#0000FF">*-- 줄바꿈</font>
+  CALL METHOD po_dyndoc_id-&gt;new_line( ).
+
+<font color ="#0000FF">*-- 회계 연도</font>
+  CALL METHOD po_dyndoc_id-&gt;add_text
+    EXPORTING
+      text         = '회계연도 : '
+      sap_style    = cl_dd_area=&gt;key
+      sap_color    = cl_dd_area=&gt;large
+      sap_fontsize = cl_dd_area=&gt;list_normal.
+
+  lv_id = pa_gjahr.
+  CALL METHOD po_dyndoc_id-&gt;add_text
+    EXPORTING
+      text         = lv_id
+      sap_style    = cl_dd_area=&gt;key
+      sap_color    = cl_dd_area=&gt;large
+      sap_fontsize = cl_dd_area=&gt;list_normal.
+
+<font color ="#0000FF">*-- 줄바꿈</font>
+  CALL METHOD po_dyndoc_id-&gt;new_line( ).
+
+<font color ="#0000FF">*-- 검색 월</font>
+  CALL METHOD po_dyndoc_id-&gt;add_text
+    EXPORTING
+      text         = '전기 기간 : '
+      sap_style    = cl_dd_area=&gt;key
+      sap_color    = cl_dd_area=&gt;large
+      sap_fontsize = cl_dd_area=&gt;list_normal.
+
+  lv_id = so_monat-low.
+  lv_id2 = so_monat-high.
+  CALL METHOD po_dyndoc_id-&gt;add_text
+    EXPORTING
+      text         = lv_id && `월 ~ ` && lv_id2 && `월`
+      sap_style    = cl_dd_area=&gt;key
+      sap_color    = cl_dd_area=&gt;large
+      sap_fontsize = cl_dd_area=&gt;list_normal.
+
+<font color ="#0000FF">*-- TOP OF PAGE 붙이기</font>
+  IF go_html_cntrl IS NOT BOUND.
+    CREATE OBJECT go_html_cntrl
+      EXPORTING
+        parent = go_page_cont.
+  ENDIF.
+
+  CALL METHOD go_dyndoc_id-&gt;merge_document.
+  go_dyndoc_id-&gt;html_control = go_html_cntrl.
+
+  CALL METHOD po_dyndoc_id-&gt;display_document
+    EXPORTING
+      reuse_control = 'X'
+      parent        = go_page_cont.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_chart</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_chart .
+  CLEAR : go_ixml,
+          go_ixml_sf,
+          go_ixml_docu,
+          go_ixml_ostream,
+          go_ixml_encoding,
+          go_chartdata,
+          go_categories,
+          go_category,
+          go_series,
+          go_point,
+          go_value.
+
+  CLEAR : gv_xstring.
+
+  go_ixml = cl_ixml=&gt;create(  ).
+  go_ixml_sf = go_ixml-&gt;create_stream_factory( ).
+
+  go_ixml_docu = go_ixml-&gt;create_document( ).
+
+  go_ixml_encoding = go_ixml-&gt;create_encoding(
+                       byte_order    = if_ixml_encoding=&gt;co_little_endian
+                       character_set = 'utf-8' ).
+
+  go_ixml_docu-&gt;set_encoding( encoding = go_ixml_encoding ).
+
+<font color ="#0000FF">*-- Now build a DOM, representing an XML document with chart data</font>
+  go_chartdata = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'ChartData'
+                                        parent = go_ixml_docu ).
+
+<font color ="#0000FF">*-- Categories (parent)</font>
+  go_categories = go_ixml_docu-&gt;create_simple_element(
+                                        name   = 'Categories'
+                                        parent = go_chartdata ).
+
+<font color ="#0000FF">*-- 차트 디자인 설정</font>
+  PERFORM set_category_value.
+  PERFORM set_chart_value.
+  PERFORM set_design.
+
+  go_chart-&gt;set_data( xdata = gv_xstring ).
+  go_chart-&gt;render( ).
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_category_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_category_value .
+
+  DATA : lv_month TYPE bkpf-monat.
+
+  lv_month = so_monat-low.
+
+  WHILE lv_month &lt;= so_monat-high.
+
+    go_category = go_ixml_docu-&gt;create_simple_element(
+                                      name   = 'Category'
+                                      parent = go_categories ).
+    go_category-&gt;if_ixml_node~set_value( lv_month && '월' ).
+
+    lv_month += 1.
+  ENDWHILE.
+
+
+
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '2월' ).</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '3월' ).</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '4월' ).</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '5월' ).</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '6월' ).</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                        name   = 'Category'</font>
+<font color ="#0000FF">*                                        parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '7월' ).</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '8월' ).</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '9월' ).</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '10월' ).</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '11월' ).</font>
+<font color ="#0000FF">*  go_category = go_ixml_docu-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories ).</font>
+<font color ="#0000FF">*  go_category-&gt;if_ixml_node~set_value( '12월' ).</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_chart_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_chart_value .
+
+  DATA : lv_value TYPE string,
+         lv_month TYPE bkpf-monat.
+
+  FIELD-SYMBOLS : &lt;ls_month&gt; TYPE any.
+
+
+  LOOP AT gt_month INTO gs_month.
+    lv_month = so_monat-low.
+    lv_value = gs_month-gjahr && '년-' && gs_month-acdes.
+
+<font color ="#0000FF">*-- 라벨 달기</font>
+    go_series = go_ixml_docu-&gt;create_simple_element(
+                                                      name = 'Series'
+                                                      parent = go_chartdata ).
+    go_series-&gt;set_attribute( name  = 'label'
+                              value = lv_value ). "'Series1' ).
+
+<font color ="#0000FF">*-- 값 계산</font>
+    DO.
+      lv_value = 'MON' && lv_month.
+
+      ASSIGN COMPONENT lv_value OF STRUCTURE gs_month TO &lt;ls_month&gt;.
+      IF ( &lt;ls_month&gt; IS NOT ASSIGNED ) OR
+         ( lv_month &gt; so_monat-high ).
+        EXIT.
+      ENDIF.
+      lv_value = &lt;ls_month&gt;.
+
+      go_point = go_ixml_docu-&gt;create_simple_element(
+                                                      name = 'Point'
+                                                      parent = go_series ).
+      go_point-&gt;set_attribute( name  = 'label'
+                               value = lv_value ).
+<font color ="#0000FF">*</font>
+      go_value = go_ixml_docu-&gt;create_simple_element(
+                                                      name = 'Value'
+                                                      parent = go_point ).
+
+      go_value-&gt;if_ixml_node~set_value( lv_value ).
+
+      UNASSIGN &lt;ls_month&gt;.
+
+      lv_month += 1.
+
+    ENDDO.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*-- create ostream (into string variable) and render document into stream</font>
+  go_ixml_ostream = go_ixml_sf-&gt;create_ostream_xstring( gv_xstring ).
+  go_ixml_docu-&gt;render( go_ixml_ostream ). "here f_xstring is filled
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_design</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_design .
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* Chart type : Only Columns and Lines</font>
+<font color ="#0000FF">**********************************************************************</font>
+  DATA: l_win_chart   TYPE REF TO cl_gui_chart_engine_win,
+        g_design_mode.
+
+  CATCH SYSTEM-EXCEPTIONS move_cast_error = 1.
+    l_win_chart ?= go_chart-&gt;get_control( ).
+  ENDCATCH.
+
+  IF sy-subrc IS INITIAL.
+
+    l_win_chart-&gt;set_design_mode( flag = g_design_mode event = 'X' ).
+<font color ="#0000FF">*    l_win_chart-&gt;restrict_chart_types( charttypes = 'Columns' ).</font>
+    l_win_chart-&gt;restrict_chart_types( charttypes = 'Lines' ).
+    l_win_chart-&gt;restrict_property_events( events = 'ChartType' ).
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_chart2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_chart2 .
+
+  CLEAR : go_ixml2,
+          go_ixml_sf2,
+          go_ixml_docu2,
+          go_ixml_ostream2,
+          go_ixml_encoding2,
+          go_chartdata2,
+          go_categories2,
+          go_category2,
+          go_series2,
+          go_point2,
+          go_value2.
+
+  CLEAR : gv_xstring2.
+
+  go_ixml2 = cl_ixml=&gt;create(  ).
+  go_ixml_sf2 = go_ixml2-&gt;create_stream_factory( ).
+
+  go_ixml_docu2 = go_ixml2-&gt;create_document( ).
+
+  go_ixml_encoding2 = go_ixml2-&gt;create_encoding(
+                       byte_order    = if_ixml_encoding=&gt;co_little_endian
+                       character_set = 'utf-8' ).
+
+  go_ixml_docu2-&gt;set_encoding( encoding = go_ixml_encoding2 ).
+
+<font color ="#0000FF">*-- Now build a DOM, representing an XML document with chart data</font>
+  go_chartdata2 = go_ixml_docu2-&gt;create_simple_element(
+                                        name   = 'ChartData'
+                                        parent = go_ixml_docu2 ).
+<font color ="#0000FF">*  go_chartdata-&gt;set_attribute( name = 'chart_type' value = 'Line' ).</font>
+
+
+<font color ="#0000FF">*-- Categories (parent)</font>
+  go_categories2 = go_ixml_docu2-&gt;create_simple_element(
+                                        name   = 'Categories'
+                                        parent = go_chartdata2 ).
+
+<font color ="#0000FF">*-- 차트 디자인 설정</font>
+<font color ="#0000FF">*  PERFORM set_design.</font>
+  PERFORM set_category_value2.
+  PERFORM set_chart_value2.
+
+  go_chart2-&gt;set_data( xdata = gv_xstring2 ).
+  go_chart2-&gt;render( ).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_category_value2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_category_value2 .
+
+  DATA : lv_category TYPE string.
+
+<font color ="#0000FF">*-- 계정과목 별 카테고리</font>
+  LOOP AT gt_alv INTO gs_alv.
+
+    lv_category = gs_alv-txt20.
+    go_category2 = go_ixml_docu2-&gt;create_simple_element(
+                                        name   = 'Category'
+                                        parent = go_categories2 ).
+    go_category2-&gt;if_ixml_node~set_value( lv_category ).
+
+  ENDLOOP.
+
+<font color ="#0000FF">*-- 년도 별 카테고리</font>
+<font color ="#0000FF">*  lv_category = pa_gjahr.</font>
+<font color ="#0000FF">*  go_category2 = go_ixml_docu2-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories2 ).</font>
+<font color ="#0000FF">*  go_category2-&gt;if_ixml_node~set_value( lv_category ).</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*  lv_category = pa_gjahr - 1.</font>
+<font color ="#0000FF">*  go_category2 = go_ixml_docu2-&gt;create_simple_element(</font>
+<font color ="#0000FF">*                                      name   = 'Category'</font>
+<font color ="#0000FF">*                                      parent = go_categories2 ).</font>
+<font color ="#0000FF">*  go_category2-&gt;if_ixml_node~set_value( lv_category ).</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_chart_value2</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_chart_value2 .
+
+  DATA : lv_value  TYPE string,
+         lv_value2 TYPE zc102fit0016-gjahr.
+
+  FIELD-SYMBOLS : &lt;ls_value&gt; TYPE any.
+
+<font color ="#0000FF">*-- Series는 이전, 현재 년도</font>
+<font color ="#0000FF">*-- Value는 계정 별 현재, 이전 년도 값</font>
+  DO 2 TIMES.
+    IF sy-index = 1.
+      lv_value = 'TOTAL'.
+      lv_value2 = pa_gjahr.
+    ELSE.
+      lv_value = 'COMP'.
+      lv_value2 = pa_gjahr - 1.
+    ENDIF.
+
+    ASSIGN COMPONENT lv_value OF STRUCTURE gs_alv TO &lt;ls_value&gt;.
+
+    IF &lt;ls_value&gt; IS ASSIGNED.
+<font color ="#0000FF">*-- 라벨 달기</font>
+      lv_value = lv_value2.
+      go_series2 = go_ixml_docu2-&gt;create_simple_element(
+                                                        name = 'Series'
+                                                        parent = go_chartdata2 ).
+      go_series2-&gt;set_attribute( name  = 'label'
+                                value = lv_value ). "'Series1' ).
+      LOOP AT gt_alv INTO gs_alv.
+
+<font color ="#0000FF">*-- 값 계산</font>
+        lv_value = &lt;ls_value&gt;.
+
+        go_point2 = go_ixml_docu2-&gt;create_simple_element(
+                                                        name = 'Point'
+                                                        parent = go_series2 ).
+        go_point2-&gt;set_attribute( name  = 'label'
+                                 value = lv_value ).
+<font color ="#0000FF">*</font>
+        go_value2 = go_ixml_docu2-&gt;create_simple_element(
+                                                        name = 'Value'
+                                                        parent = go_point2 ).
+
+        go_value2-&gt;if_ixml_node~set_value( lv_value ).
+
+      ENDLOOP.
+      UNASSIGN &lt;ls_value&gt;.
+    ENDIF.
+
+  ENDDO.
+
+<font color ="#0000FF">*-- create ostream (into string variable) and render document into stream</font>
+  go_ixml_ostream2 = go_ixml_sf2-&gt;create_ostream_xstring( gv_xstring2 ).
+  go_ixml_docu2-&gt;render( go_ixml_ostream2 ). "here f_xstring is filled
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_month_total</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_month_total .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         lv_month TYPE bkpf-monat,
+         lv_val   TYPE string,
+         lv_sum   TYPE zvfaglflextc102-hsl01.
+
+  FIELD-SYMBOLS : &lt;ls_tot&gt; TYPE any.
+
+  LOOP AT gt_body INTO gs_body.
+
+    lv_month = so_monat-low.
+
+<font color ="#0000FF">*-- 당년이면 해당년의 LOW 월부터 HIGH 월까지 각 계정 합 저장</font>
+<font color ="#0000FF">*-- 조건 기간에 따른 HSL 금액 합</font>
+    DO.
+      lv_val = 'HSL' && lv_month.
+
+      ASSIGN COMPONENT lv_val OF STRUCTURE gs_body TO &lt;gs_tot&gt;.
+
+      IF ( &lt;gs_tot&gt; IS NOT ASSIGNED ) OR
+         ( ( so_monat-high IS NOT INITIAL ) AND
+           ( lv_month &gt; so_monat-high )
+          ).
+        EXIT.
+      ENDIF.
+
+<font color ="#0000FF">*-- gt_month에서 gs_body 년도 lv_month 달을 읽는다</font>
+      lv_val = 'MON' && lv_month.
+      CLEAR gs_month.
+      READ TABLE gt_month INTO gs_month WITH KEY gjahr = gs_body-gjahr
+                                                 acdes = gs_body-acdes.
+<font color ="#0000FF">*                                                 BINARY SEARCH.</font>
+      IF sy-subrc = 0.
+
+        lv_tabix = sy-tabix.
+
+        ASSIGN COMPONENT lv_val OF STRUCTURE gs_month TO &lt;ls_tot&gt;.
+        IF &lt;ls_tot&gt; IS ASSIGNED.
+          &lt;ls_tot&gt; += &lt;gs_tot&gt;.
+          MODIFY gt_month FROM gs_month INDEX lv_tabix TRANSPORTING (lv_val).
+
+          UNASSIGN &lt;ls_tot&gt;.
+        ENDIF.
+      ENDIF.
+
+      UNASSIGN &lt;gs_tot&gt;.
+
+      lv_month += 1.
+
+    ENDDO.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_month_base</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_month_base .
+
+  CLEAR gs_month.
+  gs_month-gjahr = pa_gjahr.
+  gs_month-acdes = '비용'.
+  APPEND gs_month TO gt_month.
+
+  CLEAR gs_month.
+  gs_month-gjahr = pa_gjahr.
+  gs_month-acdes = '수익'.
+  APPEND gs_month TO gt_month.
+
+  CLEAR gs_month.
+  gs_month-gjahr = pa_gjahr - 1.
+  gs_month-acdes = '비용'.
+  APPEND gs_month TO gt_month.
+
+  CLEAR gs_month.
+  gs_month-gjahr = pa_gjahr - 1.
+  gs_month-acdes = '수익'.
+  APPEND gs_month TO gt_month.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen_0200</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen_0200 .
+
+  IF go_tree IS NOT BOUND.
+
+    PERFORM init_tree.
+    PERFORM define_hierachy_header CHANGING gs_hierhdr.
+    PERFORM build_comment USING gt_list_commentary gv_logo.
+
+    CLEAR : gs_tree_fact, gt_tree_fcat.
+    PERFORM define_tree_catalog USING : 'TOTAL'    '총금액'     ' ' 'R',
+                                        'COMP'     '비교금액'    ' ' 'R',
+                                        'DIFF'     '차액'       ' ' 'R',
+                                        'PCT_DIFF' '백분률(%)'   ' ' 'C',
+                                        'WAERS'    '통화키'      ' ' 'C'.
+    PERFORM create_hierarchy.
+    PERFORM fill_column_tree.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form init_tree</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM init_tree .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      repid     = sy-repid
+      dynnr     = sy-dynnr
+      side      = go_container-&gt;dock_at_left
+      extension = 5000.
+
+  CREATE OBJECT go_tree
+    EXPORTING
+      parent              = go_container
+      node_selection_mode = cl_gui_column_tree=&gt;node_sel_mode_multiple
+      item_selection      = 'X'.
+<font color ="#0000FF">*      no_html_header      = pa_check.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form define_hierachy_header</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      &lt;-- GS_HIERHDR</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM define_hierachy_header CHANGING ps_hierhdr TYPE treev_hhdr.
+
+  ps_hierhdr-heading = '손익계산서'.
+  ps_hierhdr-tooltip = '손익계산서'.
+  ps_hierhdr-width = 35.
+  ps_hierhdr-width_pix = space.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form define_tree_catalog</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM define_tree_catalog USING pv_field pv_text pv_noout pv_just.
+
+  gs_tree_fact-fieldname  = pv_field.
+  gs_tree_fact-coltext    = pv_text.
+  gs_tree_fact-no_out     = pv_noout.
+  gs_tree_fact-just       = pv_just.
+  gs_tree_fact-outputlen  = 40.
+
+  CASE pv_field.
+    WHEN 'TOTAL' OR 'COMP' OR 'DIFF'.
+      gs_tree_fact-cfieldname = 'WAERS'.
+  ENDCASE.
+
+  APPEND gs_tree_fact TO gt_tree_fcat.
+  CLEAR gs_tree_fact.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_hierarchy</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_hierarchy .
+
+  DATA : lv_logo TYPE sdydo_value.
+  lv_logo = 'ZIMAGE_LOG_CL102'.
+
+  CALL METHOD go_tree-&gt;set_table_for_first_display
+    EXPORTING
+      is_variant          = gs_variant
+      i_save              = 'A'
+      i_default           = 'X'
+      is_hierarchy_header = gs_hierhdr
+      it_list_commentary  = gt_list_commentary
+      i_logo              = 'FOODLOGO'
+      i_background_id     = 'SBACK1'
+    CHANGING
+      it_outtab           = gt_tree
+      it_fieldcatalog     = gt_tree_fcat.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_column_tree</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_column_tree .
+
+  DATA : lv_node_text    TYPE lvc_value,
+         lv_bu_group_key TYPE lvc_nkey,
+         lv_root_key     TYPE lvc_nkey,
+         lv_saknr_key    TYPE lvc_nkey,
+         lv_lvl1_key     TYPE lvc_nkey,
+         lv_lvl2_key     TYPE lvc_nkey,
+         lv_lvl3_key     TYPE lvc_nkey,
+         lv_last_key     TYPE lvc_nkey,
+         lt_layout_item  TYPE lvc_t_layi,
+         ls_layout       TYPE lvc_s_layn.
+
+  DATA : lt_nodes TYPE lvc_t_nkey.
+
+<font color ="#0000FF">*-- Layout 세팅</font>
+  ls_layout-isfolder = 'X'.
+  ls_layout-n_image  = '@06@'.
+  ls_layout-exp_image = '@07@'.
+
+<font color ="#0000FF">*-- 당기 순이익 최상위 폴더</font>
+  CLEAR gs_result.
+  READ TABLE gt_result INTO gs_result WITH KEY acdes = '당기 이익금'
+                                      BINARY SEARCH.
+  PERFORM create_item_layouts USING abap_false
+                            CHANGING lt_layout_item.
+  CLEAR gs_tree.
+<font color ="#0000FF">*  gs_tree-saknr = gs_alv-saknr.</font>
+  gs_tree-txt20 = gs_result-acdes.
+  gs_tree-acdes = gs_result-acdes.
+  gs_tree-total = gs_result-total.
+  gs_tree-comp = gs_result-comp.
+  gs_tree-diff = gs_result-diff.
+  gs_tree-pct_diff = gs_result-pct_diff.
+  gs_tree-waers = gs_alv-waers.
+
+  lv_node_text = gs_result-acdes.
+  CALL METHOD go_tree-&gt;add_node
+    EXPORTING
+      i_relat_node_key = lv_root_key           " 상위 노드 키
+      i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+      i_node_text      = lv_node_text
+      is_node_layout   = ls_layout
+      it_item_layout   = lt_layout_item
+      is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+    IMPORTING
+      e_new_node_key   = lv_saknr_key.
+
+
+  APPEND lv_saknr_key TO lt_nodes.
+
+  SORT gt_alv BY acdes DESCENDING bs_lvl1 DESCENDING bs_lvl2 DESCENDING.
+  LOOP AT gt_alv INTO gs_alv.
+    ls_layout-isfolder = 'X'.
+    ls_layout-n_image  = '@06@'.
+    ls_layout-exp_image = '@07@'.
+    " 첫번째 폴더
+    ON CHANGE OF gs_alv-acdes.
+      READ TABLE gt_result INTO gs_result
+                           WITH KEY acdes = gs_alv-acdes
+                           BINARY SEARCH.
+      IF sy-subrc = 0.
+        CLEAR gs_tree.
+<font color ="#0000FF">*        gs_tree-saknr = gs_alv-saknr.</font>
+        gs_tree-txt20 = gs_alv-acdes.
+        gs_tree-acdes = gs_result-acdes.
+        gs_tree-total = gs_result-total.
+        gs_tree-comp = gs_result-comp.
+        gs_tree-diff = gs_result-diff.
+        gs_tree-pct_diff = gs_result-pct_diff.
+        gs_tree-waers = gs_alv-waers.
+      ENDIF.
+
+      PERFORM create_item_layouts USING abap_false
+                                  CHANGING lt_layout_item.
+
+      lv_node_text = gs_result-acdes.
+      CALL METHOD go_tree-&gt;add_node
+        EXPORTING
+          i_relat_node_key = lv_saknr_key           " 상위 노드 키
+          i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+          i_node_text      = lv_node_text
+          is_node_layout   = ls_layout
+          it_item_layout   = lt_layout_item
+          is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+        IMPORTING
+          e_new_node_key   = lv_lvl1_key.
+      APPEND lv_lvl1_key TO lt_nodes.
+    ENDON.
+
+    " 두번째 폴더
+    ON CHANGE OF gs_alv-bs_lvl1.
+      READ TABLE gt_result INTO gs_result
+                           WITH KEY acdes = gs_alv-bs_lvl1
+                           BINARY SEARCH.
+      IF sy-subrc = 0.
+        CLEAR gs_tree.
+<font color ="#0000FF">*        gs_tree-saknr = gs_alv-saknr.</font>
+        gs_tree-txt20 = gs_alv-bs_lvl1.
+        gs_tree-acdes = gs_result-acdes.
+        gs_tree-total = gs_result-total.
+        gs_tree-comp = gs_result-comp.
+        gs_tree-diff = gs_result-diff.
+        gs_tree-pct_diff = gs_result-pct_diff.
+        gs_tree-waers = gs_alv-waers.
+      ENDIF.
+
+      PERFORM create_item_layouts USING abap_false
+                                  CHANGING lt_layout_item.
+
+      lv_node_text = gs_alv-bs_lvl1.
+      CALL METHOD go_tree-&gt;add_node
+        EXPORTING
+          i_relat_node_key = lv_lvl1_key           " 상위 노드 키
+          i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+          i_node_text      = lv_node_text
+          is_node_layout   = ls_layout
+          it_item_layout   = lt_layout_item
+          is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+        IMPORTING
+          e_new_node_key   = lv_lvl2_key.
+      APPEND lv_lvl2_key TO lt_nodes.
+    ENDON.
+
+    IF gs_alv-bs_lvl2 IS INITIAL.
+
+      CLEAR gs_tree.
+      gs_tree-saknr = gs_alv-saknr.
+      gs_tree-txt20 = gs_alv-txt20.
+      gs_tree-acdes = gs_alv-acdes.
+      gs_tree-total = gs_alv-total.
+      gs_tree-comp = gs_alv-comp.
+      gs_tree-diff = gs_alv-diff.
+      gs_tree-pct_diff = gs_alv-pct_diff.
+      gs_tree-waers = gs_alv-waers.
+      PERFORM create_item_layouts USING abap_false
+                                  CHANGING lt_layout_item.
+
+      lv_node_text = gs_alv-txt20.
+      CALL METHOD go_tree-&gt;add_node
+        EXPORTING
+          i_relat_node_key = lv_lvl2_key           " 상위 노드 키
+          i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+          i_node_text      = lv_node_text
+          it_item_layout   = lt_layout_item
+          is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+        IMPORTING
+          e_new_node_key   = lv_last_key.
+
+      CONTINUE.
+    ENDIF.
+
+    " 세번째 폴더
+    ON CHANGE OF gs_alv-bs_lvl2.
+      READ TABLE gt_result INTO gs_result
+                           WITH KEY acdes = gs_alv-bs_lvl2
+                           BINARY SEARCH.
+      IF sy-subrc = 0.
+        CLEAR gs_tree.
+<font color ="#0000FF">*        gs_tree-saknr = gs_alv-saknr.</font>
+        gs_tree-txt20 = gs_alv-bs_lvl2.
+        gs_tree-acdes = gs_result-acdes.
+        gs_tree-total = gs_result-total.
+        gs_tree-comp = gs_result-comp.
+        gs_tree-diff = gs_result-diff.
+        gs_tree-pct_diff = gs_result-pct_diff.
+        gs_tree-waers = gs_alv-waers.
+        gs_tree-level = abap_true.
+        PERFORM create_item_layouts USING abap_false
+                                    CHANGING lt_layout_item.
+
+        lv_node_text = gs_alv-bs_lvl2.
+        CALL METHOD go_tree-&gt;add_node
+          EXPORTING
+            i_relat_node_key = lv_lvl2_key           " 상위 노드 키
+            i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+            i_node_text      = lv_node_text
+            is_node_layout   = ls_layout
+            it_item_layout   = lt_layout_item
+            is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+          IMPORTING
+            e_new_node_key   = lv_lvl3_key.
+        APPEND lv_lvl3_key TO lt_nodes.
+      ENDIF.
+    ENDON.
+
+    CLEAR gs_tree.
+    gs_tree-saknr = gs_alv-saknr.
+    gs_tree-txt20 = gs_alv-txt20.
+    gs_tree-acdes = gs_alv-acdes.
+    gs_tree-total = gs_alv-total.
+    gs_tree-comp = gs_alv-comp.
+    gs_tree-diff = gs_alv-diff.
+    gs_tree-pct_diff = gs_alv-pct_diff.
+    gs_tree-waers = gs_alv-waers.
+    PERFORM create_item_layouts USING abap_false
+                                CHANGING lt_layout_item.
+
+    lv_node_text = gs_alv-txt20.
+    CALL METHOD go_tree-&gt;add_node
+      EXPORTING
+        i_relat_node_key = lv_lvl3_key           " 상위 노드 키
+        i_relationship   = cl_gui_column_tree=&gt;relat_last_child
+        i_node_text      = lv_node_text
+        it_item_layout   = lt_layout_item
+        is_outtab_line   = gs_tree               " 위에서 넣은 라인 그대로 넣음
+      IMPORTING
+        e_new_node_key   = lv_last_key.
+
+  ENDLOOP.
+
+  " 추가된 노드를 자동으로 펼침
+  CALL METHOD go_tree-&gt;expand_nodes
+    EXPORTING
+      it_node_key = lt_nodes.
+
+<font color ="#0000FF">*-- Tree 출력</font>
+  CALL METHOD : go_tree-&gt;update_calculations,
+              go_tree-&gt;frontend_update,
+              cl_gui_cfw=&gt;flush.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form calc_sum</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM calc_sum .
+
+  DATA : lv_profit_total TYPE zvfaglflextc102-hsl01,
+         lv_lose_total   TYPE zvfaglflextc102-hsl01,
+         lv_profit_comp  TYPE zvfaglflextc102-hsl01,
+         lv_lose_comp    TYPE zvfaglflextc102-hsl01,
+         lv_result_total TYPE zvfaglflextc102-hsl01,
+         lv_result_comp  TYPE zvfaglflextc102-hsl01.
+
+  LOOP AT gt_alv INTO gs_alv.
+
+    CASE gs_alv-acdes.
+      WHEN '비용'.
+        lv_lose_total += gs_alv-total.
+        lv_lose_comp  += gs_alv-comp.
+      WHEN '수익'.
+        lv_profit_total += gs_alv-total.
+        lv_profit_comp  += gs_alv-comp.
+    ENDCASE.
+
+  ENDLOOP.
+
+<font color ="#0000FF">*-- 당기 이익금 계산</font>
+  lv_result_total = lv_profit_total + lv_lose_total.
+  lv_result_comp  = lv_profit_comp + lv_lose_comp.
+
+  gs_result = VALUE #(
+     acdes    = '당기 이익금'
+      total    = lv_result_total
+      comp     = lv_result_comp
+      diff     = lv_result_total - lv_result_comp
+      pct_diff =
+        COND #( WHEN lv_result_comp = 0 THEN 0
+                ELSE ( ( lv_result_total - lv_result_comp ) * 100 )
+                       / lv_result_comp )
+      waers = gs_alv-waers
+
+    ).
+
+  APPEND gs_result TO gt_result.
+  SORT gt_result BY acdes ASCENDING.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_item_layouts</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; ABAP_FALSE</font>
+<font color ="#0000FF">*&      &lt;-- LT_LAYOUT_ITEM</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_item_layouts USING pv_mode
+                         CHANGING pt_item_layout TYPE lvc_t_layi.
+
+  DATA: ls_item_layout TYPE lvc_s_layi.
+
+  CLEAR pt_item_layout.
+
+  CLEAR ls_item_layout.
+  ls_item_layout-fieldname = go_tree-&gt;c_hierarchy_column_name.
+<font color ="#0000FF">*  ls_item_layout-class = cl_gui_column_tree=&gt;item_class_checkbox.</font>
+  ls_item_layout-editable = pv_mode.
+  ls_item_layout-chosen = pv_mode.
+  APPEND ls_item_layout TO pt_item_layout.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form excel_job</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM excel_job .
+
+  DATA : lv_answer.
+
+  PERFORM pop_to_confirm USING TEXT-q02 TEXT-q01 lv_answer.
+  CHECK lv_answer = '1'.
+
+<font color ="#0000FF">*-- 엑셀 형식 생성</font>
+  IF objfile IS INITIAL.
+    TRY.
+        CREATE OBJECT objfile.
+      CATCH cx_root.
+    ENDTRY.
+  ENDIF.
+
+<font color ="#0000FF">*-- 윈도우 저장 창 생성</font>
+  IF pfolder IS NOT INITIAL.
+    initialfolder = pfolder.
+  ELSE.
+    objfile-&gt;get_temp_directory( CHANGING temp_dir = initialfolder
+                                 EXCEPTIONS cntl_error = 1
+                                            error_no_gui = 2
+                                            not_supported_by_gui = 3 ).
+  ENDIF.
+
+  objfile-&gt;directory_browse( EXPORTING initial_folder = initialfolder
+                             CHANGING selected_folder = pickedfolder
+                             EXCEPTIONS cntl_error = 1
+                                        error_no_gui = 2
+                                        not_supported_by_gui = 3 ).
+
+  IF sy-subrc = 0.
+    pfolder = pickedfolder.
+  ELSE.
+    MESSAGE i053 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+  IF pfolder IS INITIAL.
+    EXIT.
+  ENDIF.
+
+  CALL METHOD objfile-&gt;free.
+  FREE objfile.
+
+  PERFORM download_excel.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form pop_to_confirm</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; TEXT_Q01</font>
+<font color ="#0000FF">*&      --&gt; LV_ANSWER</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM pop_to_confirm USING pv_title pv_question pv_answer.
+
+  call function <a href ="zfm_cl102_cm_pop_up/zfm_cl102_cm_pop_up.html">'ZFM_CL102_CM_POP_UP'</a>
+    EXPORTING
+      iv_titlebar = pv_title
+      iv_question = pv_question
+    IMPORTING
+      ev_answer   = pv_answer.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form download_excel</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM download_excel .
+
+  DATA : lv_rc TYPE i.
+
+<font color ="#0000FF">*-- File name</font>
+  CLEAR gv_temp_filename.
+  CONCATENATE pfolder '\' TEXT-t03 '_' sy-datum '.xlsx'
+         INTO gv_temp_filename.
+
+  gv_form = 'ZEXCEL_PRINT_CL102_FI02'.
+  PERFORM download_template   USING gv_form gv_temp_filename.
+  PERFORM open_excel_template USING gv_form.
+  PERFORM fill_excel_line.
+
+<font color ="#0000FF">*-- 기본 sheet 1 세팅</font>
+  CALL METHOD OF excel 'SHEETS' = sheet EXPORTING #1 = 1.
+  CALL METHOD OF sheet 'SELECT' NO FLUSH.
+
+<font color ="#0000FF">*-- 모두 출력 후 맨 위로 커서 이동</font>
+  CALL METHOD OF excel 'Cells' = cell EXPORTING #1 = 1 #2 = 2.
+
+  CALL METHOD OF cell 'Select'.
+
+  SET PROPERTY OF excel 'VISIBLE' = 1. " 엑셀 데이터 출력
+
+<font color ="#0000FF">*-- PDF 변환</font>
+  PERFORM convert_to_pdf.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form download_template</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GV_FORM</font>
+<font color ="#0000FF">*&      --&gt; GV_TEMP_FILENAME</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM download_template USING pv_zform pv_filename.
+
+  DATA : wwwdata_item TYPE wwwdatatab,
+         rc           TYPE i.
+
+  gv_file = pv_filename.
+
+  CALL FUNCTION 'WS_FILE_DELETE'
+    EXPORTING
+      file   = pv_filename
+    IMPORTING
+      return = rc.
+
+  IF ( rc NE 0 ) AND ( rc NE 1 ).
+    MESSAGE s000 WITH '임시파일 초기화 실패.' '이전에 Excel에서 자료를 Open하였는지 확인.'
+                 DISPLAY LIKE 'E'.
+  ENDIF.
+
+  SELECT SINGLE *
+    INTO CORRESPONDING FIELDS OF wwwdata_item
+    FROM wwwdata
+    WHERE objid = pv_zform.
+
+  CALL FUNCTION 'DOWNLOAD_WEB_OBJECT'
+    EXPORTING
+      key         = wwwdata_item
+      destination = gv_file.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form open_excel_template</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; GV_FORM</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM open_excel_template USING pv_form.
+
+  IF excel IS INITIAL.
+    CREATE OBJECT excel 'EXCEL.APPLICATION'.
+  ENDIF.
+
+  IF sy-subrc NE 0.
+    MESSAGE i001 WITH sy-msgli.
+  ENDIF.
+
+  CALL METHOD OF excel 'WORKBOOKS' = workbook.
+  SET PROPERTY OF excel 'VISIBLE' = 0.
+
+  CALL METHOD OF workbook 'OPEN' EXPORTING #1 = gv_file.
+
+<font color ="#0000FF">*-- Sheet 설정</font>
+  GET PROPERTY OF : workbook    'Application' = application,
+                    application 'ActiveSheet' = activesheet.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_excel_line</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_excel_line .
+
+  DATA : lv_row      TYPE i VALUE 2,
+         lv_col      TYPE i VALUE 9,
+         lv_row_next TYPE i VALUE 3,
+         lv_col_now  TYPE i VALUE 2,
+         lv_col_prev TYPE i VALUE 3,
+         lv_value    TYPE string,
+         lv_count    TYPE sy-dbcnt,
+         lv_category TYPE i VALUE 1,
+         lv_series   TYPE i VALUE 1,
+         lv_wrbtr    TYPE zc102fit0016-wrbtr.
+
+  FIELD-SYMBOLS : &lt;fs_field&gt; TYPE any.
+
+  IF ( pa_gjahr = sy-datum(4) ) AND
+     ( so_monat-high = sy-datum+4(2) ).
+
+    CONCATENATE pa_gjahr '년 ' so_monat-low  '월 01일 부터 '
+                pa_gjahr '년 ' so_monat-high '월 ' sy-datum+6(2) '일까지'
+           INTO lv_value
+           RESPECTING BLANKS.
+
+  ELSE.
+    CONCATENATE pa_gjahr `년 ` so_monat-low  `월부터`
+                pa_gjahr `년 ` so_monat-high `월까지`
+           INTO lv_value.
+  ENDIF.
+
+  PERFORM fill_cells USING 5 1 lv_value.
+
+<font color ="#0000FF">*-- gt_tree 사이즈</font>
+  lv_count = lines( gt_tree ).
+
+<font color ="#0000FF">*-- 1. 수익</font>
+<font color ="#0000FF">*-- 1-1. 매출, 1-2. 외환차익, 1-3. 기타수익, 1-4 금융수익, 1-5. 공동기업손익</font>
+<font color ="#0000FF">*-- 1-6. 기타포괄손익, 1-7. 해외사업 환산 손익, 1-8. 지분상품평가손익, 1-9. 현금흐름위험회피 손익</font>
+<font color ="#0000FF">*-- 2. 비용</font>
+<font color ="#0000FF">*-- 2-1. 판관비, 2-2. 보험료, 2-3. 급여, 2-4. 매출원가, 2-5. 자산 처분 손실, 2-6. 감가상각비</font>
+<font color ="#0000FF">*-- 2-7. 외환차손, 2-8. 기타비용, 2-9. 금융비용, 2-10. 법인세비용</font>
+  LOOP AT gt_tree INTO gs_tree FROM 2.
+
+    IF gs_tree-level IS INITIAL.
+      lv_wrbtr = gs_tree-total * 100.
+      PERFORM fill_cells USING lv_col lv_row lv_wrbtr.
+      lv_wrbtr = gs_tree-comp * 100.
+      PERFORM fill_cells USING lv_col lv_row_next lv_wrbtr.
+      lv_col += 1.
+    ENDIF.
+
+  ENDLOOP.
+  gs_tree = gt_tree[ 1 ].
+
+  lv_wrbtr = gs_tree-total * 100.
+  PERFORM fill_cells USING lv_col lv_row lv_wrbtr.
+  lv_wrbtr = gs_tree-comp * 100.
+  PERFORM fill_cells USING lv_col lv_row_next lv_wrbtr.
+
+<font color ="#0000FF">*  LOOP AT gt_tree TO lv_count - 1 INTO gs_tree.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**-- 계정 과목</font>
+<font color ="#0000FF">*    IF gs_tree-saknr IS INITIAL.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*      CASE gs_tree-acdes.</font>
+<font color ="#0000FF">*        WHEN '수익'.</font>
+<font color ="#0000FF">*          lv_value = 'Ⅰ' && `. ` && gs_tree-acdes.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 9 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 9.</font>
+<font color ="#0000FF">*        WHEN '비용'.</font>
+<font color ="#0000FF">*          lv_value = 'Ⅱ' && `. ` && gs_tree-acdes.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 19 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 19.</font>
+<font color ="#0000FF">*        WHEN OTHERS.</font>
+<font color ="#0000FF">*      ENDCASE.</font>
+<font color ="#0000FF">*      lv_series = 1.</font>
+<font color ="#0000FF">*    ELSE.</font>
+<font color ="#0000FF">*      CASE gs_tree-txt20.</font>
+<font color ="#0000FF">*        WHEN '매출'.</font>
+<font color ="#0000FF">*          lv_value = `1. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 10 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 10.</font>
+<font color ="#0000FF">*        WHEN '외환차익'.</font>
+<font color ="#0000FF">*          lv_value = `2. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 11 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 11.</font>
+<font color ="#0000FF">*        WHEN '기타수익'.</font>
+<font color ="#0000FF">*          lv_value = `3. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 12 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 12.</font>
+<font color ="#0000FF">*        WHEN '금융수익'.</font>
+<font color ="#0000FF">*          lv_value = `4. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 13 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 13.</font>
+<font color ="#0000FF">*        WHEN '공동기업손익'.</font>
+<font color ="#0000FF">*          lv_value = `5. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 14 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 14.</font>
+<font color ="#0000FF">*        WHEN '기타포괄손익'.</font>
+<font color ="#0000FF">*          lv_value = `6. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 15 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 15.</font>
+<font color ="#0000FF">*        WHEN '해외사업 환산 손익'.</font>
+<font color ="#0000FF">*          lv_value = `7. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 16 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 16.</font>
+<font color ="#0000FF">*        WHEN '지분상품평가손익'.</font>
+<font color ="#0000FF">*          lv_value = `8. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 17 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 17.</font>
+<font color ="#0000FF">*        WHEN '현금흐름위험회피 손익'.</font>
+<font color ="#0000FF">*          lv_value = `9. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 18 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 18.</font>
+<font color ="#0000FF">*        WHEN '판관비'.</font>
+<font color ="#0000FF">*          lv_value = `1. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 20 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 20.</font>
+<font color ="#0000FF">*        WHEN '보험료'.</font>
+<font color ="#0000FF">*          lv_value = `2. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 21 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 21.</font>
+<font color ="#0000FF">*        WHEN '급여'.</font>
+<font color ="#0000FF">*          lv_value = `3. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 22 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 22.</font>
+<font color ="#0000FF">*        WHEN '매출원가'.</font>
+<font color ="#0000FF">*          lv_value = `4. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 23 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 23.</font>
+<font color ="#0000FF">*        WHEN '자산 처분 손실'.</font>
+<font color ="#0000FF">*          lv_value = `5. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 24 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 24.</font>
+<font color ="#0000FF">*        WHEN '감가상각비'.</font>
+<font color ="#0000FF">*          lv_value = `6. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 25 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 25.</font>
+<font color ="#0000FF">*        WHEN '외환차손'.</font>
+<font color ="#0000FF">*          lv_value = `7. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 26 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 26.</font>
+<font color ="#0000FF">*        WHEN '기타비용'.</font>
+<font color ="#0000FF">*          lv_value = `8. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 27 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 27.</font>
+<font color ="#0000FF">*        WHEN '금융비용'.</font>
+<font color ="#0000FF">*          lv_value = `9. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 28 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 28.</font>
+<font color ="#0000FF">*        WHEN '법인세비용'.</font>
+<font color ="#0000FF">*          lv_value = `10. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">*          PERFORM fill_cells USING 29 lv_col lv_value.</font>
+<font color ="#0000FF">*          lv_row = 29.</font>
+<font color ="#0000FF">*      ENDCASE.</font>
+<font color ="#0000FF">**      lv_value = lv_series && `. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">**      PERFORM fill_cells USING lv_row lv_col lv_value.</font>
+<font color ="#0000FF">**      lv_series += 1.</font>
+<font color ="#0000FF">*    ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**    IF gs_tree-saknr IS INITIAL.</font>
+<font color ="#0000FF">**      lv_value = 'Ⅰ' && `. ` && gs_tree-acdes.</font>
+<font color ="#0000FF">**      PERFORM fill_cells USING lv_row lv_col lv_value.</font>
+<font color ="#0000FF">**      lv_category += 'Ⅰ'.</font>
+<font color ="#0000FF">**      lv_series = 1.</font>
+<font color ="#0000FF">**    ELSE.</font>
+<font color ="#0000FF">**      lv_value = lv_series && `. ` && gs_tree-txt20.</font>
+<font color ="#0000FF">**      PERFORM fill_cells USING lv_row lv_col lv_value.</font>
+<font color ="#0000FF">**      lv_series += 1.</font>
+<font color ="#0000FF">**    ENDIF.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">**-- 당기 금액</font>
+<font color ="#0000FF">*    PERFORM fill_cells USING lv_row lv_col_now gs_tree-total.</font>
+<font color ="#0000FF">**-- 전기 금액</font>
+<font color ="#0000FF">*    PERFORM fill_cells USING lv_row lv_col_prev gs_tree-comp.</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">*    lv_row += 1.</font>
+<font color ="#0000FF">*  ENDLOOP.</font>
+
+<font color ="#0000FF">*  gs_tree = gt_tree[ lv_count ].</font>
+
+<font color ="#0000FF">**-- 당기 순이익금 맨 밑으로</font>
+<font color ="#0000FF">*  PERFORM fill_cells USING 30 1 `Ⅲ. 당기 순이익`.</font>
+<font color ="#0000FF">**-- 당기 금액</font>
+<font color ="#0000FF">*  PERFORM fill_cells USING 30 2 gs_tree-total.</font>
+<font color ="#0000FF">**-- 전기 금액</font>
+<font color ="#0000FF">*  PERFORM fill_cells USING 30 3 gs_tree-comp.</font>
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form fill_cells</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; LV_ROW</font>
+<font color ="#0000FF">*&      --&gt; LV_COL</font>
+<font color ="#0000FF">*&      --&gt; LV_VALUE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM fill_cells  USING pv_row pv_col pv_value.
+
+  CALL METHOD OF excel 'CELLS' = cell
+    EXPORTING
+      #1 = pv_row  " 행
+      #2 = pv_col. " 열
+
+  SET PROPERTY OF cell 'VALUE' = pv_value.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form convert_to_pdf</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM convert_to_pdf .
+
+  DATA lv_rc TYPE i.
+
+  CLEAR gv_temp_filename_pdf.
+  CONCATENATE pfolder '\' TEXT-t03 '_' sy-datum '.pdf'
+              INTO gv_temp_filename_pdf.
+
+  GET PROPERTY OF excel 'Workbooks' = workbook
+    EXPORTING #1 = 1.
+
+  CALL METHOD OF workbook 'ExportAsFixedFormat'
+    EXPORTING
+      #1 = '0'
+      #2 = gv_temp_filename_pdf.
+
+  CALL METHOD OF workbook 'Close'
+    EXPORTING
+      #1 = 0.
+
+  CALL METHOD OF excel 'Quit'.
+
+  CALL METHOD cl_gui_frontend_services=&gt;file_delete
+    EXPORTING
+      filename = CONV #( gv_temp_filename )
+    CHANGING
+      rc       = lv_rc.
+
+<font color ="#0000FF">*-- PDF 가로로 조정 및 Excel 파일 사이즈에 맞게 조절</font>
+<font color ="#0000FF">*  SET PROPERTY OF pagesetup 'Orientation' = 2.  " 2 = Landscape, 1 = Portrait</font>
+<font color ="#0000FF">*  GET PROPERTY OF excel 'Workbooks' = workbook EXPORTING #1 = 1.</font>
+<font color ="#0000FF">*  GET PROPERTY OF workbook 'Worksheets' = worksheet EXPORTING #1 = 1.</font>
+  " 열 너비 자동 조정
+  GET PROPERTY OF worksheet 'Columns' = columns.
+  CALL METHOD OF columns 'AutoFit'.
+  GET PROPERTY OF worksheet 'PageSetup' = pagesetup.
+
+  " 인쇄 비율을 한 페이지에 맞추기
+  SET PROPERTY OF pagesetup 'Zoom' = 0.
+  SET PROPERTY OF pagesetup 'FitToPagesWide' = 1.
+  SET PROPERTY OF pagesetup 'FitToPagesTall' = 1.
+
+  CALL METHOD OF workbook 'ExportAsFixedFormat'
+    EXPORTING
+      #1 = 0
+      #2 = gv_temp_filename_pdf.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form calc_remain</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM calc_remain .
+
+  LOOP AT gt_alv INTO gs_alv.
+
+    gs_alv-diff = gs_alv-total - gs_alv-comp.
+    IF gs_alv-comp NE 0.
+      gs_alv-pct_diff = ( gs_alv-diff * 100 ) / gs_alv-comp.
+    ENDIF.
+    MODIFY gt_alv FROM gs_alv INDEX sy-tabix TRANSPORTING diff pct_diff.
+
+    gs_result-acdes = gs_alv-acdes.
+    gs_result-total = gs_alv-total.
+    gs_result-comp = gs_alv-comp.
+    gs_result-pct_diff = gs_alv-pct_diff.
+    gs_result-diff = gs_alv-diff.
+    COLLECT gs_result INTO gt_result.
+    CLEAR gs_result.
+
+    gs_result-acdes = gs_alv-bs_lvl1.
+    gs_result-total = gs_alv-total.
+    gs_result-comp = gs_alv-comp.
+    gs_result-pct_diff = gs_alv-pct_diff.
+    gs_result-diff = gs_alv-diff.
+    COLLECT gs_result INTO gt_result.
+    CLEAR gs_result.
+
+    IF gs_alv-bs_lvl2 IS NOT INITIAL.
+      gs_result-acdes = gs_alv-bs_lvl2.
+      gs_result-total = gs_alv-total.
+      gs_result-comp = gs_alv-comp.
+      gs_result-pct_diff = gs_alv-pct_diff.
+      gs_result-diff = gs_alv-diff.
+      COLLECT gs_result INTO gt_result.
+      CLEAR gs_result.
+    ENDIF.
+
+  ENDLOOP.
+
+  SORT gt_alv BY saknr.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form check_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM check_value .
+
+  IF pa_gjahr = sy-datum(4).
+
+    IF so_monat-low &gt; sy-datum+4(2).
+      MESSAGE s000 WITH '조건월은 현재월보다 클 수 없습니다.' DISPLAY LIKE 'E'.
+      STOP.
+    ENDIF.
+
+  ENDIF.
+
+  IF so_monat-low &gt; 12.
+    MESSAGE s000 WITH '조건월은 12월보다 클 수 없습니다.' DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

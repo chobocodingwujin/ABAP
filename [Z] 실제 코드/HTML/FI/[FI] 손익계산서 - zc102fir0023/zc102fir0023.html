@@ -1,0 +1,116 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0023</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0023</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  [FI] 손익계산서(P/L)</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Report ZC102FIR0023</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+
+include <a href ="zc102fir0023top.html">zc102fir0023top</a>.    " Global Data
+
+include <a href ="zc102fir0023s01.html">zc102fir0023s01</a>.  " Selection screen
+include <a href ="zc102fir0023c01.html">zc102fir0023c01</a>.  " Event
+include <a href ="zc102fir0023o01.html">zc102fir0023o01</a>.  " PBO-Modules
+include <a href ="zc102fir0023i01.html">zc102fir0023i01</a>.  " PAI-Modules
+include <a href ="zc102fir0023f01.html">zc102fir0023f01</a>.  " FORM-Routines
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* INITIALIZATION</font>
+<font color ="#0000FF">**********************************************************************</font>
+INITIALIZATION.
+  PERFORM set_init_value.
+
+<font color ="#0000FF">**********************************************************************`</font>
+<font color ="#0000FF">* AT SELECTION-SCREEN OUTPUT</font>
+<font color ="#0000FF">**********************************************************************</font>
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM set_screen.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* AT SELECTION-SCREEN</font>
+<font color ="#0000FF">**********************************************************************</font>
+AT SELECTION-SCREEN.
+  PERFORM check_value.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* START-OF-SELECTION</font>
+<font color ="#0000FF">**********************************************************************</font>
+START-OF-SELECTION.
+
+<font color ="#0000FF">*-- SO_MONDAT-HIGH 조건이 없다면</font>
+  IF ( so_monat-high IS INITIAL ) OR
+     ( so_monat-high &gt; sy-datum+4(2) ).
+    " 회계년도가 해당 년이라면 현재 월까지 아니면 12월
+    IF pa_gjahr = sy-datum(4).
+      so_monat-high = sy-datum+4(2).
+    ELSE.
+      so_monat-high = 12.
+    ENDIF.
+  ENDIF.
+
+<font color ="#0000FF">*-- 계정 마스터 데이터 가져오기</font>
+  PERFORM get_saknr_data.
+
+<font color ="#0000FF">*-- P/L 누계 데이터 가져오기</font>
+  PERFORM get_body_data.
+<font color ="#0000FF">*-- P/L 누계 데이터 총합</font>
+  PERFORM set_sum_data.
+<font color ="#0000FF">*-- P/L 차액 계산</font>
+  PERFORM calc_remain.
+
+  CASE 'X'.
+    WHEN pa_alv.
+      PERFORM set_month_base.
+      PERFORM set_month_total.
+      CALL SCREEN 100.
+    WHEN pa_tree.
+<font color ="#0000FF">*-- 수익, 비용 총 합 계산</font>
+      PERFORM calc_sum.
+      CALL SCREEN 200.
+  ENDCASE.
+
+<font color ="#0000FF">*GUI Texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* TITLE100 --&gt; 손익 계산서 ALV 출력</font>
+<font color ="#0000FF">* TITLE200 --&gt; 손익 계산서 ALV Tree</font>
+
+<font color ="#0000FF">*Text elements</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* Q01 PDF로 출력 하시겠습니까?</font>
+<font color ="#0000FF">* Q02 PDF출력</font>
+<font color ="#0000FF">* T01 출력 조건 선택</font>
+<font color ="#0000FF">* T02 출력 형식 선택</font>
+<font color ="#0000FF">* T03 손익 계산</font>
+
+
+<font color ="#0000FF">*Selection texts</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">* PA_ALV         ALV 출력</font>
+<font color ="#0000FF">* PA_BUKRS D       .</font>
+<font color ="#0000FF">* PA_GJAHR D       .</font>
+<font color ="#0000FF">* PA_TREE         TREE 출력</font>
+<font color ="#0000FF">* SO_MONAT         회계기간</font>
+
+
+<font color ="#0000FF">*Messages</font>
+<font color ="#0000FF">*----------------------------------------------------------</font>
+<font color ="#0000FF">*</font>
+<font color ="#0000FF">* Message class: ZC102MSG</font>
+<font color ="#0000FF">*000   &</font>
+<font color ="#0000FF">*001   & &</font>
+<font color ="#0000FF">*053   폴더 선택에 오류가 발생했습니다.</font>
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

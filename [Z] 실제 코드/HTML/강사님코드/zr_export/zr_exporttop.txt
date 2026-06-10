@@ -1,0 +1,15 @@
+*&---------------------------------------------------------------------*
+*& Include          ZREXPORTTOP
+*&---------------------------------------------------------------------*
+REPORT zr_export.
+
+TABLES scarr.
+
+DATA : gt_scarr TYPE TABLE OF scarr,
+       gs_scarr TYPE scarr.
+
+*-- Selection screen
+SELECT-OPTIONS s_carrid FOR scarr-carrid.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

@@ -1,0 +1,69 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102MMR0007
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102mmr0007top                         .    " Global Data
+
+INCLUDE ZC102MMR0007s01                         .  " Selection screen
+INCLUDE ZC102MMR0007c01                         .  " ALV Events
+INCLUDE zc102mmr0007o01                         .  " PBO-Modules
+INCLUDE zc102mmr0007i01                         .  " PAI-Modules
+INCLUDE zc102mmr0007f01                         .  " FORM-Routines
+
+**********************************************************************
+* INITIALIZATION
+**********************************************************************
+INITIALIZATION.
+  PERFORM set_init_value.
+
+**********************************************************************
+* AT SELECTION-SCREEN
+**********************************************************************
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR so_mblnr-low.
+  PERFORM f4_mblnr.
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+  PERFORM get_tree_data.
+  PERFORM get_base_data.
+
+  IF lines( gt_header ) GT 0.
+    CALL SCREEN 100.
+  ELSE.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+  ENDIF.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> 자재문서 이동 관리
+* TITLE120 --> 자재문서 이동 생성
+
+*Text elements
+*----------------------------------------------------------
+* T01 검색 조건
+* T02 차트 유형
+
+
+*Selection texts
+*----------------------------------------------------------
+* P_COLUMN         막대 그래프
+* P_LINE         라인 그래프
+* SO_BWART         자재이동 유형
+* SO_CPUDT         생성 일자
+* SO_MBLNR         자재문서 번호
+* SO_RYEAR         연도
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*003   안녕하세요?
+*004   데이터가 존재하지 않습니다
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

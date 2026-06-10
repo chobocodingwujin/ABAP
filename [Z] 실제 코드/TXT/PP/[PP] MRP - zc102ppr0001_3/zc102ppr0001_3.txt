@@ -1,0 +1,48 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102PPR0001_2
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102ppr0001_3top.
+*INCLUDE zc102ppr0001_2top                       .  " Global Data
+
+INCLUDE zc102ppr0001_3o01.
+*INCLUDE zc102ppr0001_2o01                       .  " PBO-Modules
+INCLUDE zc102ppr0001_3i01.
+*INCLUDE zc102ppr0001_2i01                       .  " PAI-Modules
+INCLUDE zc102ppr0001_3f01.
+*INCLUDE zc102ppr0001_2f01                       .  " FORM-Routines
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+  PERFORM get_matnr_master.
+  PERFORM get_plant_master.
+  PERFORM set_stock_info.
+  PERFORM set_avail_stock.
+
+  IF sy-batch IS INITIAL.
+    CALL SCREEN 100.
+  ELSE.
+    PERFORM set_main_data.
+    PERFORM execute_mrp.
+  ENDIF.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> [PP] MRP
+* TITLE110 --> [PP] MRP 실행 결과
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*001   & &
+*002   & & &
+*031   &가 생성되었습니다.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

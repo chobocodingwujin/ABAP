@@ -1,0 +1,89 @@
+*&---------------------------------------------------------------------*
+*& Report ZC102COR0001
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zc102cor0001top                         .  " Global Data
+INCLUDE zc102cor0001s01                         .  " Selection Screen
+INCLUDE zc102cor0001c01                         .  " Event
+INCLUDE zc102cor0001o01                         .  " PBO-Modules
+INCLUDE zc102cor0001i01                         .  " PAI-Modules
+INCLUDE zc102cor0001f01                         .  " FORM-Routines
+
+**********************************************************************
+* INITIALIZATION
+**********************************************************************
+INITIALIZATION.
+  PERFORM set_init_value.
+
+**********************************************************************
+* AT SELECTION-SCREEN OUTPUT
+**********************************************************************
+AT SELECTION-SCREEN OUTPUT.
+  PERFORM screen_ctrl.
+
+**********************************************************************
+* AT SELECTION-SCREEN
+**********************************************************************
+AT SELECTION-SCREEN ON VALUE-REQUEST FOR so_kostl-low.
+  PERFORM f4_kostl.
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+  PERFORM get_hierachy_data.
+  PERFORM get_cost_data.
+  PERFORM get_cel_data.
+  PERFORM get_txt20.
+
+  CASE 'X'.
+    WHEN pa_alv.
+      CALL SCREEN 100.
+    WHEN pa_tree.
+      PERFORM make_tree_body.
+      CALL SCREEN 200.
+  ENDCASE.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> [ALV] 코스트센터 비용 집계 현황
+* TITLE200 --> [Tree] 코스트센터 비용 집계 현황
+
+*Text elements
+*----------------------------------------------------------
+* 001 Tree
+* 002 ALV
+* S01 코스트 센터 비용 집계 현황
+* S02 세부 내역
+* T01 코스트 센터 조건
+* T02 출력 조건
+* W01 푸드 온 보람
+* W02 1000
+* W03 1000
+* W04 년
+* W05 회사명
+* W06 관리 회계 영역
+* W07 회사 코드
+* W08 회계 연도
+
+
+*Selection texts
+*----------------------------------------------------------
+* PA_ALV         ALV 조회
+* PA_CHECK         No top-of-page
+* PA_KOKRS D       .
+* PA_TREE         Tree 조회
+* SO_KOSTL D       .
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: ZC102MSG
+*004   데이터가 존재하지 않습니다
+*010   & 건이 조회되었습니다.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

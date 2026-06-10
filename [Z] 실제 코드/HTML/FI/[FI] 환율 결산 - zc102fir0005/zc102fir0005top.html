@@ -1,0 +1,150 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0005TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0005TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0005TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102FIR0005TOP                          - Report ZC102FIR0005</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102fir0005 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES : zc102fit0009, zc102fit0010, zc102fit0015, zc102fit0016.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* CLASS INSTANCE</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- 전표 조회</font>
+DATA : go_base_cont   TYPE REF TO cl_gui_custom_container,
+       go_split_cont  TYPE REF TO cl_gui_splitter_container,
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+       go_top_cont    TYPE REF TO cl_gui_container,
+       go_tsplit_cont TYPE REF TO cl_gui_splitter_container,
+       go_tleft_cont  TYPE REF TO cl_gui_container,
+       go_tright_cont TYPE REF TO cl_gui_container,
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+       go_bottom_cont TYPE REF TO cl_gui_container,
+       go_bsplit_cont TYPE REF TO cl_gui_splitter_container,
+       go_btop_cont   TYPE REF TO cl_gui_container,
+       go_bbot_cont   TYPE REF TO cl_gui_container,
+<font color ="#0000FF">*--------------------------------------------------------------------*</font>
+       go_left_grid   TYPE REF TO cl_gui_alv_grid,
+       go_right_grid  TYPE REF TO cl_gui_alv_grid,
+       go_top_grid    TYPE REF TO cl_gui_alv_grid,
+       go_bottom_grid TYPE REF TO cl_gui_alv_grid.
+
+DATA : go_pop_cont TYPE REF TO cl_gui_custom_container,
+       go_pop_grid TYPE REF TO cl_gui_alv_grid.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* ITAB & WA</font>
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*-- Open Docu Header</font>
+DATA : BEGIN OF gs_open.
+         include structure <a href ="zc102fit0009/dictionary-zc102fit0009.html">zc102fit0009</a>.
+DATA :   icon TYPE icon_d,
+       END OF gs_open,
+       gt_open LIKE TABLE OF gs_open.
+
+<font color ="#0000FF">*-- Clear Docu Header</font>
+DATA : BEGIN OF gs_clear.
+         include structure <a href ="zc102fit0009/dictionary-zc102fit0009.html">zc102fit0009</a>.
+DATA :   ltext(10),
+         cell_tab  TYPE lvc_t_styl,
+       END OF gs_clear,
+       gt_clear LIKE TABLE OF gs_clear.
+
+<font color ="#0000FF">*-- Docu Line</font>
+DATA : BEGIN OF gs_line.
+         include structure <a href ="zc102fit0010/dictionary-zc102fit0010.html">zc102fit0010</a>.
+DATA :   txt20 TYPE zc102fit0002-txt20,
+       END OF gs_line,
+       gt_line LIKE TABLE OF gs_line.
+
+DATA : BEGIN OF gs_clear_line.
+         include structure <a href ="zc102fit0016/dictionary-zc102fit0016.html">zc102fit0016</a>.
+DATA :   txt20 TYPE zc102fit0002-txt20,
+       END OF gs_clear_line,
+       gt_clear_line LIKE TABLE OF gs_clear_line.
+
+DATA : BEGIN OF gs_pop_line.
+         include structure <a href ="zc102fit0010/dictionary-zc102fit0010.html">zc102fit0010</a>.
+DATA :   txt20 TYPE zc102fit0002-txt20,
+       END OF gs_pop_line,
+       gt_pop_line LIKE TABLE OF gs_pop_line.
+
+<font color ="#0000FF">*-- Text Data</font>
+DATA : gt_txt20 TYPE TABLE OF zc102fit0002,
+       gs_txt20 TYPE zc102fit0002.
+
+<font color ="#0000FF">*-- Exchange Rate</font>
+DATA : gt_rate TYPE TABLE OF zc102fit0015,
+       gs_rate TYPE zc102fit0015.
+
+<font color ="#0000FF">*-- For ALV</font>
+DATA : gt_open_fcat  TYPE lvc_t_fcat,
+       gs_open_fcat  TYPE lvc_s_fcat,
+       gt_clear_fcat TYPE lvc_t_fcat,
+       gs_clear_fcat TYPE lvc_s_fcat,
+       gt_line_fcat  TYPE lvc_t_fcat,
+       gs_line_fcat  TYPE lvc_s_fcat,
+       gt_cline_fcat TYPE lvc_t_fcat,
+       gs_cline_fcat TYPE lvc_s_fcat,
+       gs_layout     TYPE lvc_s_layo,
+       gs_variant    TYPE disvariant,
+       gt_sort       TYPE lvc_t_sort,
+       gs_sort       TYPE lvc_s_sort.
+
+DATA : gt_pop_fcat TYPE lvc_t_fcat,
+       gs_pop_fcat TYPE lvc_s_fcat.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* SCREEN ELEMENT</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_belnr     TYPE zc102fit0009-belnr,
+       gv_waers     TYPE zc102fit0009-waers,
+       gv_open      TYPE wrbtr,
+       gv_clear     TYPE wrbtr,
+       gv_exchange  TYPE wrbtr,
+       gv_open_cnt  TYPE i,
+       gv_clear_cnt TYPE i,
+       gv_icon      TYPE icon_d,
+       gv_krw       TYPE waers.
+
+<font color ="#0000FF">*-- Popup</font>
+DATA : gv_pop_open     TYPE wrbtr,
+       gv_pop_clear    TYPE wrbtr,
+       gv_pop_exchange TYPE wrbtr,
+       gv_pop_icon     TYPE icon_d,
+       gv_open_amount  TYPE wrbtr,
+       gv_clear_amount TYPE wrbtr,
+       gv_ex_amount    TYPE zc102fit0010-wrbtr,
+       gv_text(50)     TYPE c.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">* COMMON VARIABLE</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA : gv_okcode TYPE sy-ucomm,
+       gv_tabix  TYPE sy-tabix,
+       gv_check  TYPE bool,
+       gv_num    TYPE zc102fit0009-belnr.
+
+<font color ="#0000FF">*-- 환율 소수점</font>
+DATA: gv_amount  TYPE wrbtr,
+      gv_currdec TYPE tcurx-currdec,
+      gv_divider TYPE f,
+      gv_answer.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

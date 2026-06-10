@@ -1,0 +1,695 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102FIR0012F01</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102FIR0012F01</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102FIR0012F01</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include          ZC102FIR0012F01</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_init_value</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_value .
+
+  pa_bukrs = '1000'.
+  pa_gjahr = sy-datum(4).
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_init_screen .
+
+  LOOP AT SCREEN.
+
+    IF screen-name = 'PA_BUKRS'.
+      screen-input = 0.
+    ENDIF.
+
+    MODIFY SCREEN.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_base_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_base_data .
+
+  DATA : lv_koart TYPE zc102fit0010-koart,
+         lv_blart TYPE zc102fit0009-blart,
+         lv_dbcnt TYPE sy-dbcnt.
+
+  CLEAR gt_trade.
+
+  CASE pa_btype.
+    WHEN 'C'.
+      lv_koart = 'D'.
+      lv_blart = 'DR'.
+    WHEN 'V'.
+      lv_koart = 'K'.
+      lv_blart = 'KR'.
+    WHEN OTHERS.
+  ENDCASE.
+
+
+  CASE 'X'.
+<font color ="#0000FF">*-- 미결만 조회</font>
+    WHEN pa_open.
+      PERFORM get_open_item USING lv_koart.
+<font color ="#0000FF">*-- 반제만 조회</font>
+    WHEN pa_clear.
+<font color ="#0000FF">*-- 반제된 미결전표 조회</font>
+      PERFORM get_open_clear_item USING lv_koart.
+<font color ="#0000FF">*-- 반제된 미결전표의 반제 전표 조회</font>
+      PERFORM get_clear_only_item USING lv_koart.
+<font color ="#0000FF">*-- 전체 조회</font>
+    WHEN OTHERS.
+      PERFORM get_open_item USING lv_koart.
+      PERFORM get_clear_item USING lv_koart.
+  ENDCASE.
+
+  lv_dbcnt = lines( gt_trade ).
+  IF lv_dbcnt = 0.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+  IF pa_maxr &gt; 0.
+    DELETE gt_trade FROM pa_maxr + 1 TO lines( gt_trade ).
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_all_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM  get_open_item USING pv_koart.
+
+  SELECT a~belnr, a~gjahr, bktxt, blart, bldat, b~duedt,
+         wrbtr, a~waers, augbl
+  INTO CORRESPONDING FIELDS OF TABLE @gt_trade
+  FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b
+    ON a~bukrs = b~bukrs
+   AND a~belnr = b~belnr
+   AND a~gjahr = b~gjahr
+  WHERE "partner = pa_bpart
+        a~belnr IN ( SELECT belnr
+                   FROM zc102fit0010 WHERE partner = @pa_bpart )
+    AND a~gjahr = @pa_gjahr
+    AND koart = @pv_koart
+    AND blart IN ( 'KR', 'DR' )
+    AND augbl = ''
+    AND a~bukrs = @pa_bukrs
+    AND a~budat IN @so_budat
+    AND b~bpact &lt;&gt; ''
+    AND b~partner &lt;&gt; ''.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form display_screen_0100</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM display_screen_0100 .
+
+  IF go_container IS NOT BOUND.
+
+    CLEAR : gt_fcat, gs_fcat.
+    PERFORM set_fcat USING : 'X' 'STATUS'      ' '            'C' ' ',
+                             'X' 'BELNR'       'ZC102FIT0009' 'C' ' ',
+                             'X' 'GJAHR'       'ZC102FIT0009' 'C' ' ',
+                             ' ' 'BKTXT'       'ZC102FIT0009' ' ' 'X',
+                             ' ' 'BLART'       'ZC102FIT0009' 'C' ' ',
+                             ' ' 'BLDAT'       'ZC102FIT0009' 'C' ' ',
+                             ' ' 'DUEDT'       'ZC102FIT0010' 'C' ' ',
+<font color ="#0000FF">*                             ' ' 'DSTAT'  ' '            'C' 'X',</font>
+                             ' ' 'WRBTR'       'ZC102FIT0010' ' ' ' ',
+                             ' ' 'WAERS'       'ZC102FIT0010' 'C' 'X',
+                             ' ' 'AUGBL'       'ZC102FIT0010' 'C' ' ',
+                             ' ' 'SGTXT'       'ZC102FIT0010' ' ' 'X',
+                             ' ' 'REBZG'       'ZC102FIT0016' ' ' ' ',
+                             ' ' 'REMAIN_DATE' ' '            'C' 'X',
+                             ' ' 'CALC_DATE'   ' '            'C' 'X'.
+
+    PERFORM set_layout.
+    PERFORM create_object.
+
+    SET HANDLER : lcl_event_handler=&gt;hotspot_click FOR go_alv_grid.
+    CALL METHOD go_alv_grid-&gt;set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_layout
+      CHANGING
+        it_outtab       = gt_trade
+        it_fieldcatalog = gt_fcat
+        it_sort         = gt_sort.
+
+
+  ENDIF.
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_fcat</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_fcat USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_fcat-key       = pv_key.
+  gs_fcat-fieldname = pv_field.
+  gs_fcat-ref_table = pv_table.
+  gs_fcat-just      = pv_just.
+  gs_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'BELNR'.
+      gs_fcat-hotspot = abap_true.
+    WHEN 'WRBTR'.
+      gs_fcat-cfieldname = 'WAERS'.
+      gs_fcat-do_sum = abap_true.
+    WHEN 'STATUS'.
+      gs_fcat-coltext = '반제 상태'.
+    WHEN 'REMAIN_DATE'.
+      gs_fcat-coltext = '남은 납기일'.
+      CASE 'X'.
+        WHEN pa_clear.
+          gs_fcat-no_out = abap_true.
+      ENDCASE.
+<font color ="#0000FF">*      gs_fcat-no_zero = abap_true.</font>
+    WHEN 'CALC_DATE'.
+
+      gs_fcat-no_out = abap_true.
+
+    WHEN 'REBZG'.
+      gs_fcat-no_out = abap_true.
+  ENDCASE.
+
+  APPEND gs_fcat TO gt_fcat.
+  CLEAR gs_fcat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_layout</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_layout .
+
+  gs_layout-zebra      = abap_true.
+  gs_layout-cwidth_opt = 'A'.
+  gs_layout-sel_mode   = 'D'.
+  gs_layout-ctab_fname = 'COLOR'.
+
+  gs_variant-report  = sy-repid.
+  gs_variant-variant = pa_layo.
+  gs_variant-handle  = 'ALV1'.
+
+  CLEAR : gt_sort, gs_sort.
+  CASE 'X'.
+    WHEN pa_open.
+      PERFORM set_sort USING 1 'CALC_DATE' abap_false abap_false.
+<font color ="#0000FF">*-- 반제 선택 시</font>
+    WHEN pa_clear.
+      PERFORM set_sort USING 1 'REBZG' abap_true abap_true.
+
+<font color ="#0000FF">*-- 전체 선택시</font>
+    WHEN OTHERS.
+<font color ="#0000FF">*-- SET SORT</font>
+      PERFORM set_sort USING 1 'STATUS' abap_true abap_true.
+      PERFORM set_sort USING 2 'CALC_DATE' abap_false abap_false.
+  ENDCASE.
+
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form create_object</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM create_object .
+
+  CREATE OBJECT go_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_alv_grid
+    EXPORTING
+      i_parent = go_container.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_screen_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_screen_data .
+
+  DATA : lv_tabix TYPE sy-tabix,
+         lv_date  TYPE p,
+         ls_scol  TYPE lvc_s_scol.
+
+<font color ="#0000FF">*-- 헤더값 변경</font>
+  gs_partner-partner = pa_bpart.
+
+<font color ="#0000FF">*-- 여신 한도 및 사용 한도에 따른 상태 관리</font>
+  IF gs_partner-total &gt;= gs_partner-used.
+    gs_partner-status = icon_led_green.
+  ELSE.
+    gs_partner-status = icon_led_red.
+  ENDIF.
+
+<font color ="#0000FF">*-- 아이콘 및 지급 상태 상태 변경</font>
+  LOOP AT gt_trade INTO gs_trade.
+
+    lv_tabix = sy-tabix.
+
+<font color ="#0000FF">*-- 반제된 미결전표 번호 = 미결전표 원전표 번호 세팅</font>
+    IF gs_trade-rebzg IS INITIAL.
+      gs_trade-rebzg = gs_trade-belnr.
+    ENDIF.
+
+<font color ="#0000FF">*-- 헤더면 BKTXT를 아이템 상세로</font>
+    IF gs_trade-sgtxt IS INITIAL.
+      gs_trade-sgtxt = gs_trade-bktxt.
+    ENDIF.
+
+<font color ="#0000FF">*-- 남은 지급 기한에 따른 색 조정</font>
+    " 7일 전 분홍색, 당일 주황색, 지나면 빨간색
+    CLEAR lv_date.
+    IF ( gs_trade-duedt IS NOT INITIAL ) AND
+       ( gs_trade-augbl IS INITIAL ).
+      lv_date = gs_trade-duedt - sy-datum.
+
+      IF lv_date = 1.
+        PERFORM set_color USING ' ' 7 1 1 ' '
+                          CHANGING ls_scol.
+      ELSEIF lv_date = 0.
+        PERFORM set_color USING ' ' 3 1 1 ' '
+                          CHANGING ls_scol.
+      ELSEIF lv_date &lt; 0.
+        PERFORM set_color USING ' ' 6 1 1 ' '
+                          CHANGING ls_scol.
+      ELSEIF lv_date &lt;= 7.
+        PERFORM set_color USING ' ' 1 1 1 ' '
+                          CHANGING ls_scol.
+      ENDIF.
+
+      gs_trade-calc_date = lv_date.
+      gs_trade-remain_date = lv_date.
+    ENDIF.
+
+<font color ="#0000FF">*-- 아이콘 변경</font>
+    IF gs_trade-augbl IS INITIAL.
+      gs_trade-status = icon_led_red.
+    ELSE.
+      gs_trade-status = icon_led_green.
+    ENDIF.
+
+    MODIFY gt_trade FROM gs_trade INDEX lv_tabix
+                                  TRANSPORTING status color
+                                               remain_date calc_date
+                                               rebzg sgtxt.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_partner_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_partner_data .
+
+  CLEAR gs_partner.
+  gs_partner-bukrs = pa_bukrs.
+  CASE pa_btype.
+    WHEN 'C'.
+      PERFORM get_customer_data.
+    WHEN 'V'.
+      PERFORM get_vender_data.
+  ENDCASE.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_customer_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_customer_data .
+
+  SELECT SINGLE a~partner a~name1 bp_role c~cusno AS bpno stras
+                b~credit_limit AS total d~credit_used AS used b~waers
+  INTO CORRESPONDING FIELDS OF gs_partner
+  FROM zc102bpt0001 AS a INNER JOIN zc102fit0008 AS b
+                                 ON a~partner = b~partner
+                         INNER  JOIN zc102sdt0001 AS c
+                                 ON a~partner = c~partner
+                         LEFT   JOIN zvficreditc102 AS d
+                                 ON a~partner = d~partner
+  WHERE a~partner = pa_bpart.
+
+  gs_partner-waers_used    = gs_partner-waers.
+  gs_partner-waers_remain  = gs_partner-waers.
+  gs_partner-remain        = gs_partner-total - gs_partner-used.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_clear_item</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; LV_KOART</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_clear_item USING pv_koart.
+
+  SELECT a~belnr, a~gjahr, bktxt, blart, bldat, duedt,
+         wrbtr, a~waers, augbl, sgtxt
+  APPENDING CORRESPONDING FIELDS OF TABLE @gt_trade
+  FROM zc102fit0009 AS a INNER JOIN zc102fit0016 AS b
+    ON a~bukrs = b~bukrs
+   AND a~belnr = b~belnr
+   AND a~gjahr = b~gjahr
+  WHERE "partner = pa_bpart
+        a~belnr IN ( SELECT belnr
+                       FROM zc102fit0016 WHERE partner = @pa_bpart )
+    AND a~gjahr = @pa_gjahr
+    AND koart = @pv_koart
+<font color ="#0000FF">*    AND shkzg = 'S'</font>
+    AND a~bukrs = @pa_bukrs
+    AND a~budat IN @so_budat.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_clear_only_item</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; LV_KOART</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_clear_only_item USING pv_koart.
+
+  SELECT a~belnr, a~gjahr, a~bktxt, a~blart, a~bldat,
+         b~wrbtr, a~waers, b~augbl, b~rebzg, b~shkzg
+    FROM zc102fit0009 AS a INNER JOIN zc102fit0016 AS b
+                                   ON a~bukrs = b~bukrs
+                           INNER JOIN @gt_trade AS c
+                                   ON b~rebzg = c~belnr
+     AND a~belnr = b~belnr
+     AND a~gjahr = b~gjahr
+    WHERE b~shkzg = 'H'
+      AND a~gjahr = @pa_gjahr
+  APPENDING CORRESPONDING FIELDS OF TABLE @gt_trade.
+
+<font color ="#0000FF">*-- 반제 금액 음수로</font>
+  LOOP AT gt_trade INTO gs_trade WHERE shkzg = 'H'.
+
+    gs_trade-wrbtr *= -1.
+    MODIFY gt_trade FROM gs_trade INDEX sy-tabix TRANSPORTING wrbtr.
+
+  ENDLOOP.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_open_clear_item</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; LV_KOART</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_open_clear_item USING pv_koart.
+
+  SELECT a~belnr, a~gjahr, bktxt, blart, bldat, duedt,
+        SUM( b~wrbtr ) AS wrbtr, a~waers, augbl
+    INTO CORRESPONDING FIELDS OF TABLE @gt_trade
+    FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b
+      ON a~bukrs = b~bukrs
+     AND a~belnr = b~belnr
+     AND a~gjahr = b~gjahr
+    WHERE "partner = pa_bpart
+        a~belnr IN ( SELECT belnr
+                   FROM zc102fit0010 WHERE partner = @pa_bpart )
+      AND koart = @pv_koart
+<font color ="#0000FF">*      AND shkzg = 'H'</font>
+      AND a~gjahr = @pa_gjahr
+      AND augbl NE ''
+      AND a~bukrs = @pa_bukrs
+      AND a~budat IN @so_budat
+    GROUP BY a~belnr, a~gjahr, bktxt, blart, bldat,
+               duedt, a~waers, augbl.
+
+<font color ="#0000FF">*  CLEAR gt_store_belnr.</font>
+<font color ="#0000FF">*  MOVE-CORRESPONDING gt_trade TO gt_store_belnr.</font>
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_color</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; P_7</font>
+<font color ="#0000FF">*&      --&gt; P_1</font>
+<font color ="#0000FF">*&      --&gt; P_1</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      &lt;-- LS_SCOL</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_color USING pv_field pv_color pv_int pv_inv pv_nokey
+               CHANGING ps_scol TYPE lvc_s_scol.
+
+  ps_scol-fname     = pv_field.
+  ps_scol-color-col = pv_color.
+  ps_scol-color-int = pv_int.
+  ps_scol-color-inv = pv_inv.
+  ps_scol-nokeycol  = pv_nokey.
+  INSERT ps_scol INTO TABLE gs_trade-color.
+  CLEAR ps_scol.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form set_sort</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; P_1</font>
+<font color ="#0000FF">*&      --&gt; P_</font>
+<font color ="#0000FF">*&      --&gt; ABAP_TRUE</font>
+<font color ="#0000FF">*&      --&gt; ABAP_TRUE</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM set_sort USING pv_spos pv_field pv_down pv_subtot.
+
+  gs_sort-spos      = pv_spos.
+  gs_sort-fieldname = pv_field.
+  gs_sort-down      = pv_down.
+  gs_sort-subtot    = pv_subtot.
+  APPEND gs_sort TO gt_sort.
+  CLEAR gs_sort.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form handle_hotspot_click</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*&      --&gt; E_COLUMN_ID</font>
+<font color ="#0000FF">*&      --&gt; E_ROW_ID</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM handle_hotspot_click USING pv_column_id pv_row_id.
+
+  DATA : lv_type TYPE dd01v-datatype.
+
+  RANGES : lr_belnr FOR zc102fit0009-belnr.
+
+<font color ="#0000FF">*-- 누른 핫스팟이 정상적인 로우인지 확인</font>
+  CALL FUNCTION 'NUMERIC_CHECK'
+    EXPORTING
+      string_in = pv_row_id
+    IMPORTING
+      htype     = lv_type.
+
+  CHECK lv_type = 'NUMC'.
+
+  CLEAR gs_trade.
+  READ TABLE gt_trade INTO gs_trade INDEX pv_row_id.
+
+  IF sy-subrc = 0.
+
+    CASE pv_column_id.
+      WHEN 'BELNR'.
+
+        REFRESH lr_belnr.
+        CLEAR lr_belnr.
+        lr_belnr-sign   = 'I'.
+        lr_belnr-option = 'EQ'.
+        lr_belnr-low    = gs_trade-belnr.
+        APPEND lr_belnr.
+
+        SUBMIT zc102fir0003 WITH pa_gjahr = gs_trade-gjahr
+                            WITH so_belnr IN lr_belnr
+                            AND RETURN.
+
+    ENDCASE.
+
+  ENDIF.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form leave_screen</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM leave_screen .
+
+  CALL METHOD : go_alv_grid-&gt;free, go_container-&gt;free.
+
+  FREE : go_alv_grid, go_container.
+
+  LEAVE TO SCREEN 0.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form get_vender_data</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM get_vender_data .
+
+  SELECT SINGLE a~partner a~name1 bp_role c~venno AS bpno stras
+                total_payable AS total d~need_payable AS used waers
+  INTO CORRESPONDING FIELDS OF gs_partner
+  FROM zc102bpt0001 AS a  INNER JOIN zc102mmt0002 AS c
+                                  ON a~partner = c~partner
+                          LEFT  JOIN zvfiapsumc102 AS d
+                                  ON a~partner = d~partner
+  WHERE a~partner = pa_bpart.
+
+  IF gs_partner IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+  gs_partner-waers_used    = gs_partner-waers.
+  gs_partner-waers_remain  = gs_partner-waers.
+  gs_partner-remain        = gs_partner-total -
+                             gs_partner-used.
+
+ENDFORM.
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Form f4_btype</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& --&gt;  p1        text</font>
+<font color ="#0000FF">*& &lt;--  p2        text</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+FORM f4_btype .
+
+<font color ="#0000FF">*-- Screen 110 Data 추출</font>
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF ls_search,
+           bptype TYPE zc102bpt0001-bp_type,
+           descpt TYPE char10,
+         END OF ls_search,
+         lt_search LIKE TABLE OF ls_search.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+<font color ="#0000FF">*-- 소스 코드 구현 위한 Function 호출 (Screen 110 Data 추출)</font>
+  CALL FUNCTION 'DYNP_VALUES_READ'
+    EXPORTING
+      dyname     = sy-repid
+      dynumb     = sy-dynnr
+      request    = 'A'
+    TABLES
+      dynpfields = dynpfields
+    EXCEPTIONS
+      OTHERS     = 01.
+
+<font color ="#0000FF">**-- Search Help 데이터 추출</font>
+  lt_search = VALUE #( ( bptype = 'C' descpt = '고객' )
+                       ( bptype = 'V' descpt = '벤더' ) ).
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'BPTYPE'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'PA_BTYPE'
+      window_title = 'BP 타입'
+      value_org    = 'S'
+    TABLES
+      value_tab    = lt_search
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

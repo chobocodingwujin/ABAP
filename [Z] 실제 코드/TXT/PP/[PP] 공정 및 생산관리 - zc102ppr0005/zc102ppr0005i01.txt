@@ -1,0 +1,54 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0005I01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  EXIT  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE exit INPUT.
+
+  LEAVE TO SCREEN 0.
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0100  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE user_command_0100 INPUT.
+
+  CASE gv_okcode.
+    WHEN 'SERC'.
+
+      IF gs_pdo-werks IS INITIAL.
+        MESSAGE s001 WITH 'Plant 번호는 필수 입력 값입니다!' DISPLAY LIKE 'E'.
+        RETURN.
+      ENDIF.
+
+      PERFORM get_plant_num.
+      PERFORM set_route_1.
+      PERFORM set_route_2.
+      PERFORM set_route_3.
+      PERFORM set_route_4.
+    WHEN OTHERS.
+      gc_tab-activetab = gv_okcode.
+  ENDCASE.
+
+
+ENDMODULE.
+*&---------------------------------------------------------------------*
+*&      Module  CUST_F4_WERKS  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE cust_f4_werks INPUT.
+
+  IF gs_pdo-werks IS INITIAL.
+    PERFORM set_search_help_werks.
+  ENDIF.
+
+ENDMODULE.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

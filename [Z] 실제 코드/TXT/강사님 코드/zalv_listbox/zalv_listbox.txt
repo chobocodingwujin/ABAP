@@ -1,0 +1,64 @@
+*&---------------------------------------------------------------------*
+*& Report ZALV_LISTBOX
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+
+INCLUDE zalv_listboxtop                         .    " Global Data
+
+INCLUDE zalv_listboxs01                         .  " Selection screen
+INCLUDE zalv_listboxc01                         .  " ALV Events
+INCLUDE zalv_listboxo01                         .  " PBO-Modules
+INCLUDE zalv_listboxi01                         .  " PAI-Modules
+INCLUDE zalv_listboxf01                         .  " FORM-Routines
+
+
+**********************************************************************
+* INITIALIZATION
+**********************************************************************
+INITIALIZATION.
+  PERFORM set_init_value.
+
+**********************************************************************
+* START-OF-SELECTION
+**********************************************************************
+START-OF-SELECTION.
+
+  PERFORM get_base_data.
+  PERFORM screen_change.
+
+  CALL SCREEN 100.
+
+*GUI Texts
+*----------------------------------------------------------
+* TITLE100 --> [C1] Conference room Reservation System
+
+*Text elements
+*----------------------------------------------------------
+* E01 삭제할 행을 선택하세요.
+* E02 저장 할 데이터가 없습니다.
+* E03 사용자가 현재 편집 중 입니다.
+* I01 Reservate date
+* I02 Team
+* L00 전체
+* L01 1조 - 성우야 chill해조
+* L02 2조 - SYNCRoad
+* L03 3조 - 삼만리 항공
+* T01 Condition
+
+
+*Selection texts
+*----------------------------------------------------------
+* PA_GROUP         Team
+* SO_RESDT D       .
+
+
+*Messages
+*----------------------------------------------------------
+*
+* Message class: K5
+*001   & & & &
+*102   Data has been saved
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

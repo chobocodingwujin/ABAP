@@ -1,0 +1,924 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102PPR0004F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form get_dody_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_body_data .
+
+  CLEAR : gt_tab1,gt_tab1.
+
+  SELECT  *
+    INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+    FROM zc102ppt0012.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen .
+
+  IF ( go_tab_cont1 IS NOT BOUND ) AND
+     ( go_tab_cont2 IS NOT BOUND ) AND
+     ( go_tab_cont3 IS NOT BOUND ).
+
+    CLEAR : gt_tab_fcat1, gs_tab_fcat1,
+            gt_tab_fcat2, gs_tab_fcat2,
+            gt_tab_fcat3, gs_tab_fcat3.
+
+    PERFORM set_tab1_fcat USING :      'X' 'OSTATUS' 'ICON'         'C' '',
+                                       'X' 'PDONO'   'zc102ppt0012' 'C' '',
+                                       'X' 'WKCNO'   'zc102ppt0012' 'C' '',
+                                       ' ' 'WERKS'   'zc102ppt0012' 'C' '',
+                                       ' ' 'PLONO'   'zc102ppt0012' 'C' '',
+*                                       ' ' 'MRPNO'   'zc102ppt0012'  '' '',
+*                                       ' ' 'BOMNO'   'zc102ppt0012'  '' '',
+                                       ' ' 'PDSTT'   'zc102ppt0012' 'C' '',
+                                       ' ' 'PDFNS'   'zc102ppt0012' 'C' ''.
+*                                     ' ' 'MKSTA'   'zc102ppt0012'  '' ''.
+
+
+
+    PERFORM set_tab2_fcat USING :    'X' 'OSTATUS' 'ICON'       'C'  ' ',
+                                     'X' 'PDONO' 'zc102ppt0012'  'C' '',
+                                     'X' 'WKCNO' 'zc102ppt0012'  'C' '',
+                                     ' ' 'WERKS' 'zc102ppt0012'  'C' '',
+                                     ' ' 'PLONO' 'zc102ppt0012'  'C' '',
+*                                     ' ' 'MRPNO' 'zc102ppt0012'  '' '',
+*                                     ' ' 'BOMNO' 'zc102ppt0012'  '' '',
+                                     ' ' 'PDSTT' 'zc102ppt0012'  'C' '',
+                                     ' ' 'PDFNS' 'zc102ppt0012'  'C' ''.
+
+    PERFORM set_tab3_fcat USING :    'X' 'OSTATUS' 'ICON'       'C'  ' ',
+                                     'X' 'PDONO' 'zc102ppt0012'  'C' '',
+                                     'X' 'WKCNO' 'zc102ppt0012'  'C' '',
+                                     ' ' 'WERKS' 'zc102ppt0012'  'C' '',
+                                     ' ' 'PLONO' 'zc102ppt0012'  'C' '',
+*                                     ' ' 'MRPNO' 'zc102ppt0012'  '' '',
+*                                     ' ' 'BOMNO' 'zc102ppt0012'  '' '',
+                                     ' ' 'PDSTT' 'zc102ppt0012'  'C' '',
+                                     ' ' 'PDFNS' 'zc102ppt0012'  'C' ''.
+
+    PERFORM set_layout.
+    PERFORM create_object.
+
+
+
+    PERFORM set_display_screen.
+*    PERFORM refresh_table.
+
+  ENDIF.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_layout .
+
+*-- Set layout
+  gs_layout-zebra       = abap_true.
+  gs_layout-cwidth_opt  = 'A'.
+  gs_layout-sel_mode    = 'D'.
+  gs_layout-stylefname  = 'CELL_TAB'.
+  gs_layout-grid_title = '생산 오더 목록'.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+
+
+  CREATE OBJECT go_tab_cont1
+    EXPORTING
+      container_name = 'TAB1'.
+
+  CREATE OBJECT go_tab_cont2
+    EXPORTING
+      container_name = 'TAB2'.
+
+
+  CREATE OBJECT go_tab_cont3
+    EXPORTING
+      container_name = 'TAB3'.
+
+  CREATE OBJECT go_tab_grid1
+    EXPORTING
+      i_parent = go_tab_cont1.
+
+  CREATE OBJECT go_tab_grid2
+    EXPORTING
+      i_parent = go_tab_cont2.
+
+  CREATE OBJECT go_tab_grid3
+    EXPORTING
+      i_parent = go_tab_cont3.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_display_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_display_screen .
+
+*-- Display TAB 1,2,3
+
+  PERFORM set_variant USING 'ALV1'.
+  CALL METHOD go_tab_grid1->set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_layout
+    CHANGING
+      it_outtab       = gt_tab1
+      it_fieldcatalog = gt_tab_fcat1.
+
+  PERFORM set_variant USING 'ALV2'.
+  CALL METHOD go_tab_grid2->set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_layout
+    CHANGING
+      it_outtab       = gt_tab2
+      it_fieldcatalog = gt_tab_fcat2.
+
+  PERFORM set_variant USING 'ALV3'.
+  CALL METHOD go_tab_grid3->set_table_for_first_display
+    EXPORTING
+      is_variant      = gs_variant
+      i_save          = 'A'
+      i_default       = 'X'
+      is_layout       = gs_layout
+    CHANGING
+      it_outtab       = gt_tab3
+      it_fieldcatalog = gt_tab_fcat3.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_table
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_table .
+  CALL METHOD go_tab_grid1->refresh_table_display.
+  CALL METHOD go_tab_grid2->refresh_table_display.
+  CALL METHOD go_tab_grid3->refresh_table_display.
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_user_command
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_UCOMM
+*&---------------------------------------------------------------------*
+FORM handle_user_command  USING  pv_ucomm.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab1_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_tab1_fcat  USING    pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_tab_fcat1-key       = pv_key.
+  gs_tab_fcat1-fieldname = pv_field.
+  gs_tab_fcat1-ref_table = pv_table.
+  gs_tab_fcat1-just      = pv_just.
+  gs_tab_fcat1-emphasize = pv_emph.
+
+  CASE pv_field.
+
+    WHEN 'OSTATUS'.
+      gs_tab_fcat1-coltext = '진행상태'.
+      gs_tab_fcat1-icon = 'X'.
+    WHEN 'PDONO'.
+      gs_tab_fcat1-coltext = '생산오더번호'.
+    WHEN 'WKCNO'.
+      gs_tab_fcat1-coltext = 'WC번호'.
+    WHEN 'WERKS'.
+      gs_tab_fcat1-coltext = 'Plant 번호'.
+    WHEN 'PLONO'.
+      gs_tab_fcat1-coltext = '계획오더번호'.
+*    WHEN 'MRPNO'.
+*      gs_tab_fcat1-coltext = 'MRP번호'.
+*    WHEN 'BOMNO'.
+*      gs_tab_fcat1-coltext = 'BOM번호'.
+    WHEN 'PDSTT'.
+      gs_tab_fcat1-coltext = '생산시작일'.
+      gs_tab_fcat1-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'PDFNS'.
+      gs_tab_fcat1-coltext = '생산종료일'.
+      gs_tab_fcat1-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'MKSTA'.
+      gs_tab_fcat1-coltext = '상태'.
+
+
+  ENDCASE.
+
+
+  APPEND  gs_tab_fcat1 TO  gt_tab_fcat1.
+  CLEAR gs_tab_fcat1.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab2_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_tab2_fcat  USING  pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_tab_fcat2-key       = pv_key.
+  gs_tab_fcat2-fieldname = pv_field.
+  gs_tab_fcat2-ref_table = pv_table.
+  gs_tab_fcat2-just      = pv_just.
+  gs_tab_fcat2-emphasize = pv_emph.
+
+  CASE pv_field.
+
+    WHEN 'OSTATUS'.
+      gs_tab_fcat2-coltext = '진행상태'.
+      gs_tab_fcat2-icon = 'X'.
+    WHEN 'PDONO'.
+      gs_tab_fcat2-coltext = '생산오더번호'.
+    WHEN 'WKCNO'.
+      gs_tab_fcat2-coltext = 'WC번호'.
+    WHEN 'WERKS'.
+      gs_tab_fcat2-coltext = 'Plant 번호'.
+    WHEN 'PLONO'.
+      gs_tab_fcat2-coltext = '계획오더번호'.
+*    WHEN 'MRPNO'.
+*      gs_tab_fcat2-coltext = 'MRP번호'.
+*    WHEN 'BOMNO'.
+*      gs_tab_fcat2-coltext = 'BOM번호'.
+    WHEN 'PDSTT'.
+      gs_tab_fcat2-coltext = '생산시작일'.
+      gs_tab_fcat2-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'PDFNS'.
+      gs_tab_fcat2-coltext = '생산종료일'.
+      gs_tab_fcat2-datatype = 'DATS'.      " ← 날짜 타입 지정
+
+
+  ENDCASE.
+
+
+  APPEND  gs_tab_fcat2 TO  gt_tab_fcat2.
+  CLEAR gs_tab_fcat2.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab3_fcat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_tab3_fcat  USING    pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_tab_fcat3-key       = pv_key.
+  gs_tab_fcat3-fieldname = pv_field.
+  gs_tab_fcat3-ref_table = pv_table.
+  gs_tab_fcat3-just      = pv_just.
+  gs_tab_fcat3-emphasize = pv_emph.
+
+  CASE pv_field.
+
+    WHEN 'OSTATUS'.
+      gs_tab_fcat3-coltext = '진행상태'.
+      gs_tab_fcat3-icon = 'X'.
+    WHEN 'PDONO'.
+      gs_tab_fcat3-coltext = '생산오더번호'.
+    WHEN 'WKCNO'.
+      gs_tab_fcat3-coltext = 'WC번호'.
+    WHEN 'WERKS'.
+      gs_tab_fcat3-coltext = 'Plant 번호'.
+    WHEN 'PLONO'.
+      gs_tab_fcat3-coltext = '계획오더번호'.
+*    WHEN 'MRPNO'.
+*      gs_tab_fcat3-coltext = 'MRP번호'.
+*    WHEN 'BOMNO'.
+*      gs_tab_fcat3-coltext = 'BOM번호'.
+    WHEN 'PDSTT'.
+      gs_tab_fcat3-coltext = '생산시작일'.
+      gs_tab_fcat3-datatype = 'DATS'.      " ← 날짜 타입 지정
+    WHEN 'PDFNS'.
+      gs_tab_fcat3-coltext = '생산종료일'.
+      gs_tab_fcat3-datatype = 'DATS'.      " ← 날짜 타입 지정
+
+
+  ENDCASE.
+
+
+  APPEND  gs_tab_fcat3 TO  gt_tab_fcat3.
+  CLEAR gs_tab_fcat3.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_variant
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_variant  USING     pv_handle.
+
+  gs_variant-report = sy-repid.
+  gs_variant-handle = pv_handle.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tabscreen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tabscreen .
+
+  CASE gc_tab-activetab.
+    WHEN 'TAB1'.
+      gv_subscreen = '0101'.
+    WHEN 'TAB2'.
+      gv_subscreen = '0102'.
+    WHEN 'TAB3'.
+      gv_subscreen = '0103'.
+    WHEN OTHERS.
+      gc_tab-activetab = 'TAB1'.
+      gv_subscreen     = '0101'.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_data .
+  PERFORM set_range.
+
+  PERFORM set_tab1.
+  PERFORM set_tab2.
+  PERFORM set_tab3.
+  PERFORM set_status_date.
+*  PERFORM show_message.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab1
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tab1 .
+  CLEAR: gt_tab1.
+
+  IF ( zc102ppt0012-pdono IS NOT INITIAL ) AND
+   ( gv_pdstt_fr IS NOT INITIAL ).
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+        INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+        FROM zc102ppt0012
+       WHERE pdono = zc102ppt0012-pdono
+         AND pdstt IN gr_pdstt
+*          AND pdstt >  sy-datum
+            AND mksta = 'R'.
+
+  ELSEIF ( zc102ppt0012-pdono IS INITIAL ) AND
+         ( gv_pdstt_fr IS NOT INITIAL ).
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+      FROM zc102ppt0012
+    WHERE pdstt IN gr_pdstt
+*             AND pdstt >  sy-datum.
+          AND mksta = 'R'.
+
+
+  ELSEIF ( zc102ppt0012-pdono IS NOT INITIAL ) AND
+         ( gv_pdstt_fr IS INITIAL ).
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+       INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+       FROM zc102ppt0012
+        WHERE pdono = zc102ppt0012-pdono
+*             AND pdstt >  sy-datum
+          AND mksta = 'R'.
+  ELSE.
+
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+      FROM zc102ppt0012
+*      WHERE pdstt > sy-datum.
+      WHERE    mksta = 'R'.
+  ENDIF.
+
+  SORT gt_tab1 BY pdstt ASCENDING.
+
+*  IF gt_tab1 IS INITIAL.
+*    MESSAGE s000 WITH '조회되는 데이터가 없습니다.' DISPLAY LIKE 'E'.
+*  ELSE.
+*    MESSAGE s000 WITH '데이터가 조회되었습니다.'.
+*  ENDIF.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_status_date
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_status_date .
+  DATA : lv_tabix TYPE sy-tabix.
+
+
+  LOOP AT gt_tab1 INTO gs_tab1.
+
+
+    lv_tabix = sy-tabix.
+
+    gs_tab1-ostatus = icon_led_red.
+
+    MODIFY gt_tab1 FROM gs_tab1 INDEX lv_tabix
+                                TRANSPORTING ostatus.
+
+
+  ENDLOOP.
+
+  LOOP AT gt_tab2 INTO gs_tab2.
+
+
+    lv_tabix = sy-tabix.
+
+    gs_tab2-ostatus = icon_led_yellow.  "생산 중
+
+    MODIFY gt_tab2 FROM gs_tab2 INDEX lv_tabix
+                                TRANSPORTING  ostatus.
+
+
+  ENDLOOP.
+
+
+  LOOP AT gt_tab3 INTO gs_tab3.
+
+
+    lv_tabix = sy-tabix.
+
+    gs_tab3-ostatus  = icon_led_green.
+
+    MODIFY gt_tab3 FROM gs_tab3 INDEX lv_tabix
+                                TRANSPORTING  ostatus.
+
+
+  ENDLOOP.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab2
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tab2 .
+  CLEAR: gt_tab2.
+
+  IF ( zc102ppt0012-pdono IS NOT INITIAL ) AND ( gv_pdstt_fr IS NOT INITIAL ) AND ( gv_pdstt_to IS NOT INITIAL ).
+    " pdono, gv_pdstt_fr, gv_pdstt_to가 모두 주어졌을 때, 날짜 범위 조건 적용
+    SELECT pdono wkcno werks plono
+            menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0012
+     WHERE pdono = zc102ppt0012-pdono
+       AND pdstt BETWEEN gv_pdstt_fr AND gv_pdstt_to
+       AND pdstt <= sy-datum
+       AND pdfns > sy-datum
+      AND mksta = 'I'.
+
+  ELSEIF ( zc102ppt0012-pdono IS INITIAL ) AND ( gv_pdstt_fr IS NOT INITIAL ) AND ( gv_pdstt_to IS NOT INITIAL ).
+    " pdono가 없는 경우, gv_pdstt_fr, gv_pdstt_to 범위 내의 데이터만 조회
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0012
+     WHERE pdstt BETWEEN gv_pdstt_fr AND gv_pdstt_to
+       AND pdstt <= sy-datum
+       AND pdfns > sy-datum
+           AND mksta = 'I'.
+
+*-- PDONO만 있을 때
+  ELSEIF zc102ppt0012-pdono IS NOT INITIAL
+     AND gv_pdstt_fr IS INITIAL
+     AND gv_pdstt_to IS INITIAL.
+
+    SELECT pdono wkcno werks plono
+             menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0012
+     WHERE pdono = zc102ppt0012-pdono
+       AND pdstt <= sy-datum
+       AND pdfns > sy-datum
+           AND mksta = 'I'.
+
+*⬇️ 신규 추가: 시작일만 있는 경우**
+  ELSEIF gv_pdstt_fr IS NOT INITIAL AND
+          gv_pdstt_to IS INITIAL AND
+          zc102ppt0012-pdono IS INITIAL.
+*         and MKSTA = 'I'.
+
+*     시작일 이후부터 오늘까지의 유효한 데이터만 조회
+    SELECT pdono wkcno werks plono
+            menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0012
+     WHERE pdstt = gv_pdstt_fr
+       AND pdstt <= sy-datum
+       AND pdfns > sy-datum
+           AND mksta = 'I'.
+
+*-- PDONO와 시작일만 있을때
+  ELSEIF ( zc102ppt0012-pdono IS NOT INITIAL )
+      AND ( gv_pdstt_fr IS NOT INITIAL )
+      AND ( gv_pdstt_to IS INITIAL ).
+
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0012
+     WHERE pdono = zc102ppt0012-pdono
+       AND pdstt = gv_pdstt_fr
+       AND pdstt <= sy-datum
+       AND pdfns > sy-datum
+           AND mksta = 'I'.
+
+  ELSE.
+    " 아무 조건도 없을 때, 기본적으로 sy-datum을 기준으로 데이터를 조회
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+      FROM zc102ppt0012
+     WHERE pdstt <= sy-datum
+       AND pdfns > sy-datum
+           AND mksta = 'I'.
+*
+  ENDIF..
+
+  " 정렬: pdstt 기준으로 오름차순 정렬
+  SORT gt_tab2 BY pdstt ASCENDING.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_tab3
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_tab3 .
+
+  CLEAR: gt_tab3.
+
+
+  IF ( zc102ppt0012-pdono IS NOT INITIAL ) AND
+   ( gv_pdstt_fr IS NOT INITIAL ).
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+        INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+        FROM zc102ppt0012
+       WHERE pdono = zc102ppt0012-pdono
+         AND pdstt IN gr_pdstt
+*         AND pdfns < sy-datum
+AND mksta = 'F'.
+
+
+  ELSEIF ( zc102ppt0012-pdono IS INITIAL ) AND
+         ( gv_pdstt_fr IS NOT INITIAL ).
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+      FROM zc102ppt0012
+    WHERE pdstt IN gr_pdstt
+*         AND pdfns < sy-datum
+      AND mksta = 'F'.
+
+  ELSEIF ( zc102ppt0012-pdono IS NOT INITIAL ) AND
+         ( gv_pdstt_fr IS INITIAL ).
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+       INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+       FROM zc102ppt0012
+        WHERE pdono = zc102ppt0012-pdono
+*         AND pdfns < sy-datum
+      AND mksta = 'F'.
+
+  ELSE.
+
+    SELECT pdono wkcno werks plono
+           menge meins pdstt pdfns
+      INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+      FROM zc102ppt0012
+*         WHERE pdfns < sy-datum
+      WHERE mksta = 'F'.
+
+  ENDIF.
+
+  SORT gt_tab3 BY pdstt ASCENDING.
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_range
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_range .
+
+  IF gv_pdstt_fr IS NOT INITIAL AND gv_pdstt_to IS NOT INITIAL.
+    " 시작일이 종료일보다 늦을 경우 메시지 띄우기
+    IF gv_pdstt_fr > gv_pdstt_to.
+      MESSAGE i000 WITH '생산시작일 범위가 올바르지 않습니다. 올바른 조회 조건을 입력하세요'.
+      EXIT.
+    ENDIF.
+  ENDIF.
+
+  IF ( gv_pdstt_fr IS NOT INITIAL ) AND
+      ( gv_pdstt_to IS NOT INITIAL ).
+    PERFORM set_date_value USING 'I' 'BT' gv_pdstt_fr gv_pdstt_to.
+  ELSEIF ( gv_pdstt_fr IS NOT INITIAL ).
+    PERFORM set_date_value USING 'I' 'EQ' gv_pdstt_fr gv_pdstt_to.
+  ELSEIF ( gv_pdstt_to IS NOT INITIAL ).
+    " 종료일만 입력된 경우는 허용하지 않음
+    MESSAGE i000 WITH '조회일을 하나만 입력할 경우 시작일로 입력해주세요.'.
+    RETURN.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_date_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> GV_PDSTT_FR
+*&      --> _TO
+*&---------------------------------------------------------------------*
+FORM set_date_value  USING    pv_sign pv_option pv_from pv_to.
+  REFRESH gr_pdstt.
+  CLEAR gr_pdstt.
+
+  gr_pdstt-sign   = pv_sign.
+  gr_pdstt-option = pv_option.
+  gr_pdstt-low    = pv_from.
+  gr_pdstt-high   = pv_to.
+  APPEND gr_pdstt.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_base_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_base_data .
+
+  SELECT pdono wkcno werks plono
+         pdstt pdfns
+  INTO CORRESPONDING FIELDS OF TABLE gt_tab1
+  FROM zc102ppt0012
+    WHERE pdstt > sy-datum.
+
+
+  SELECT pdono wkcno werks plono
+         pdstt pdfns
+  INTO CORRESPONDING FIELDS OF TABLE gt_tab2
+  FROM zc102ppt0012
+        WHERE pdstt <= sy-datum AND pdfns > sy-datum.
+
+
+
+  SELECT pdono wkcno werks plono
+         pdstt pdfns
+  INTO CORRESPONDING FIELDS OF TABLE gt_tab3
+  FROM zc102ppt0012
+        WHERE pdfns < sy-datum.
+
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form count_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM count_data .
+
+  DATA : lv_cnt TYPE i.
+  lv_cnt = lines( gt_body ).
+  gv_cnt1 = lines( gt_tab1 ) .
+  gv_cnt2 = lines( gt_tab2 ).
+  gv_cnt3 = lines( gt_tab3 ).
+
+  CONCATENATE `생산전 (` gv_cnt1 `)건` INTO gv_title1 SEPARATED BY space.  "탭스트립에 데이터 건수 띄움
+  CONCATENATE `생산중 (` gv_cnt2 `)건` INTO gv_title2 SEPARATED BY space.
+  CONCATENATE `생산완료(` gv_cnt3 `)건` INTO gv_title3 SEPARATED BY space.
+
+  CONDENSE : gv_title1, gv_title2, gv_title3.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_pdono
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_pdono .
+
+  CLEAR gt_pdono.
+
+  SELECT pdono
+    INTO CORRESPONDING FIELDS OF TABLE gt_pdono
+    FROM zc102ppt0012.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_search_help_pdono
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_search_help_pdono .
+
+
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE,
+         ls_modi   TYPE lvc_s_modi.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'PDONO'
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'GT_PDONO-PDONO'
+      window_title = '생산 오더 번호'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_pdono
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form show_message
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM show_message .
+
+
+  IF gv_cnt1 = 0 AND gv_cnt2 = 0 AND gv_cnt3 = 0.
+    MESSAGE s000 WITH '조회되는 데이터가 없습니다.' DISPLAY LIKE 'E'.
+  ELSE.
+    gv_cnt4 =  gv_cnt1 + gv_cnt2 + gv_cnt3.
+    DATA(lv_msg) = |총 { gv_cnt4 }건이 조회되었습니다. (생산전: { gv_cnt1 }, 생산중: { gv_cnt2 }, 생산완료: { gv_cnt3 })|.
+
+    MESSAGE lv_msg TYPE 'S'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_f4_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_f4_data .
+
+
+
+  CLEAR gt_pdono.
+  SELECT pdono
+    INTO CORRESPONDING FIELDS OF TABLE gt_pdono
+    FROM zc102ppt0012
+    ORDER BY pdono.
+
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form refresh_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM refresh_screen .
+
+  " 다시 세팅 해주기
+  CLEAR : zc102ppt0012-pdono , gv_pdstt_fr ,gv_pdstt_to.
+  PERFORM set_data.
+  PERFORM count_data.
+  " ALV 갱신
+  PERFORM refresh_table.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758

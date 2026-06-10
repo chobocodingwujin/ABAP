@@ -1,0 +1,179 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<html>
+<head>
+<title>ZC102MM0006TOP</title>
+</head>
+<body bgcolor="#FFFFE0">
+<font size="3" face = "Arial" color="#000000"><b>Code listing for: ZC102MM0006TOP</b></font>
+<br>
+<font size="3" face = "Arial" color="#000000"><b>Description:  Include ZC102MM0006TOP</b></font>
+<hr>
+<pre width="100">
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+<font color ="#0000FF">*& Include ZC102MM0006TOP                           - Report ZC102MMR0006</font>
+<font color ="#0000FF">*&---------------------------------------------------------------------*</font>
+REPORT zc102mmr0006 MESSAGE-ID zc102msg.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*TABLES</font>
+<font color ="#0000FF">**********************************************************************</font>
+TABLES: zc102mmt0016, zc102mmt0017, zc102hrt0001.
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*alv envent</font>
+<font color ="#0000FF">**********************************************************************</font>
+CLASS: lcl_event_handler DEFINITION DEFERRED.
+
+<font color ="#0000FF">*---locla class--*</font>
+DATA: go_event TYPE REF TO lcl_event_handler.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*call instance</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA: go_container        TYPE REF TO cl_gui_custom_container,
+      go_split_container  TYPE REF TO cl_gui_splitter_container,
+
+      go_top_container    TYPE REF TO cl_gui_container,
+      go_bottom_container TYPE REF TO cl_gui_container,
+
+      go_top_grid         TYPE REF TO cl_gui_alv_grid,
+      go_bottom_grid      TYPE REF TO cl_gui_alv_grid,
+
+<font color ="#0000FF">*--item 팝업 띄우기</font>
+      go_pop_container    TYPE REF TO cl_gui_custom_container,
+      go_pop_grid         TYPE REF TO cl_gui_alv_grid,
+
+      go_pop_container2   TYPE REF TO cl_gui_custom_container,
+      go_pop_grid2        TYPE REF TO cl_gui_alv_grid.
+
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*itab and work area</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA: BEGIN OF gs_input,
+        matnr    TYPE zc102mmt0017-matnr,
+        pequan   TYPE zc102mmt0017-pequan,
+        meins    TYPE zc102mmt0017-meins,
+        redat    TYPE zc102mmt0016-redat,
+        depno    TYPE zc102mmt0016-depno,
+        maktx    TYPE zc102mmt0004-maktx,
+        cell_tab TYPE lvc_t_styl,
+        modi_yn,
+      END OF gs_input,
+      gt_input LIKE TABLE OF gs_input.
+
+<font color ="#0000FF">*--BP 자재 매핑--*</font>
+DATA: gs_bpmaster TYPE zc102mmt0019,
+      gt_bpmaster TYPE TABLE OF zc102mmt0019.
+
+<font color ="#0000FF">*--구매요청 header--*</font>
+DATA: BEGIN OF gs_header.
+        include structure <a href ="zc102mmt0016/dictionary-zc102mmt0016.html">zc102mmt0016</a>.
+
+DATA:   cell_tab TYPE lvc_t_styl,
+        modi_yn,
+      END   OF   gs_header,
+      gt_header LIKE TABLE OF gs_header.
+
+<font color ="#0000FF">*--구매요청 헤더 서치헬프--*</font>
+DATA: BEGIN OF gs_search_pr,
+        prno TYPE zc102mmt0016-prno,
+      END OF gs_search_pr,
+      gt_search_pr LIKE TABLE OF gs_search_pr.
+
+
+<font color ="#0000FF">*--우측 alv itme--*</font>
+DATA: BEGIN OF gs_ritem.
+        include structure <a href ="zc102mmt0017/dictionary-zc102mmt0017.html">zc102mmt0017</a>.
+
+DATA:   cell_tab TYPE lvc_t_styl,
+<font color ="#0000FF">*        depno    TYPE zc102mmt0016-depno,</font>
+        redat    TYPE zc102mmt0016-redat,
+        modi_yn,
+      END   OF   gs_ritem,
+      gt_ritem LIKE TABLE OF gs_ritem.
+
+<font color ="#0000FF">*--구매요청 item--*</font>
+DATA: BEGIN OF gs_item.
+        include structure <a href ="zc102mmt0017/dictionary-zc102mmt0017.html">zc102mmt0017</a>.
+
+DATA:   cell_tab TYPE lvc_t_styl,
+        status   TYPE icon-id,
+        modi_yn,
+      END   OF   gs_item,
+      gt_item LIKE TABLE OF gs_item.
+
+<font color ="#0000FF">*-- F4 Search help gs_item</font>
+DATA : BEGIN OF gs_matnr,
+         matnr TYPE zc102mmt0017-matnr,
+         maktx TYPE zc102mmt0004-maktx,
+       END OF gs_matnr,
+       gt_matnr LIKE TABLE OF gs_matnr.
+
+<font color ="#0000FF">*--move data용</font>
+DATA: gt_moveh  TYPE TABLE OF zc102mmt0016,
+      gs_moveh  TYPE zc102mmt0016,
+      gt_moveit TYPE TABLE OF zc102mmt0017,
+      gs_moveit TYPE zc102mmt0017.
+
+<font color ="#0000FF">*--delete용</font>
+DATA: gt_delth  TYPE TABLE OF zc102mmt0016,
+      gs_delth  TYPE zc102mmt0016,
+      gt_deltit TYPE TABLE OF zc102mmt0017,
+      gs_deltit TYPE zc102mmt0017.
+
+<font color ="#0000FF">*--자재마스터 테이블</font>
+DATA: gt_master TYPE TABLE OF zc102mmt0004,
+      gs_master TYPE zc102mmt0004.
+
+<font color ="#0000FF">*--아이템 생성 화면 자재번호 서치헬프--*</font>
+DATA: BEGIN OF gs_search,
+        matnr TYPE zc102mmt0004-matnr,
+        maktx TYPE zc102mmt0004-maktx,
+      END OF gs_search,
+      gt_search LIKE TABLE OF gs_search.
+
+<font color ="#0000FF">*--아이템 생성 화면 부서번호 서치헬프--*</font>
+DATA: BEGIN OF gs_depno,
+        depno TYPE zc102mmt0016-depno,
+        desc  TYPE dd07t-ddtext,
+      END OF gs_depno,
+      gt_depno LIKE TABLE OF gs_depno.
+
+<font color ="#0000FF">*--구매요청 번호</font>
+DATA: gv_prno TYPE string.
+
+<font color ="#0000FF">*--for ALV</font>
+DATA: gt_tfcat       TYPE lvc_t_fcat,
+      gt_bfcat       TYPE lvc_t_fcat,
+      gt_pfcat       TYPE lvc_t_fcat,
+
+      gs_tfcat       TYPE lvc_s_fcat,
+      gs_bfcat       TYPE lvc_s_fcat,
+      gs_pfcat       TYPE lvc_s_fcat,
+
+      gs_layout      TYPE lvc_s_layo,
+      gs_blayout     TYPE lvc_s_layo,
+      gs_playout     TYPE lvc_s_layo,
+      gs_variant     TYPE disvariant,
+      gs_variant_pop TYPE disvariant.
+
+
+<font color ="#0000FF">*--toolbar</font>
+DATA: gt_ui_functions TYPE ui_functions,
+      gs_button       TYPE stb_button,
+      gs_button_pop   TYPE stb_button.
+
+<font color ="#0000FF">**********************************************************************</font>
+<font color ="#0000FF">*variant</font>
+<font color ="#0000FF">**********************************************************************</font>
+DATA: gv_okcode         TYPE sy-ucomm,
+      gv_mode           VALUE 'E',
+      gv_insert_disable TYPE abap_bool. "상태 값에 따라 토글 막기위함.
+</pre>
+<hr>
+<font size="2" face = "Sans Serif">Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
+</font>
+</body>
+</html>

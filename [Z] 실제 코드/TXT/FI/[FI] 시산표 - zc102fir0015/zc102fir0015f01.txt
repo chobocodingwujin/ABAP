@@ -1,0 +1,1169 @@
+*&---------------------------------------------------------------------*
+*& Include          ZC102FIR0015F01
+*&---------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*& Form set_init_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_init_screen .
+
+*  CLEAR : pa_gjahr.
+*  REFRESH : so_saknr, so_monat.
+
+  LOOP AT SCREEN.
+    IF screen-name = 'PA_BUKRS'.
+      screen-input = '0'.
+    ELSEIF screen-name = 'PA_WAERS'.
+      screen-input = '0'.
+    ENDIF.
+
+    MODIFY SCREEN.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_init_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_init_value .
+
+  pa_bukrs = '1000'.
+  pa_waers = 'KRW'.
+  pa_gjahr = sy-datum(4).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form monat_term
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM monat_term .
+
+  DATA : lv_count TYPE i,
+         lv_start TYPE i.
+
+  CASE so_monat-low.
+    WHEN '1'.  " 1분기
+      PERFORM get_month USING 3 0  .
+    WHEN '2'.  " 2분기
+      PERFORM get_month USING 3 3.
+    WHEN '3'.  " 3분기
+      PERFORM get_month USING 3 6.
+    WHEN '4'.  " 4분기
+      PERFORM get_month USING 3 9.
+    WHEN OTHERS. " 입력하지 않았을 때 1월부터 12월까지 12번 반복
+      PERFORM get_month USING 12 0.
+  ENDCASE.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_month1
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_month USING pv_count pv_start.
+
+*-- gt_total -> 1~12월까지 다 있으니까
+*-- gt_total에서 1분기 데이터만 추출
+
+  DATA : lv_s_sum TYPE zvfaglflextc102-hsl01,
+         lv_h_sum TYPE zvfaglflextc102-hsl01,
+         lv_tabix TYPE sy-tabix,
+         lv_month TYPE bkpf-monat, " 01 02 03
+         lv_value TYPE string. " hs101 hsl02 hsl03
+
+  SORT gt_total BY saknr ASCENDING shkzg DESCENDING.
+
+  LOOP AT gt_total INTO gs_total.
+
+    lv_tabix = sy-tabix.
+
+    READ TABLE gt_txt20 INTO gs_txt20 WITH KEY saknr = gs_total-saknr.
+
+    gs_csanpyo-saknr = gs_txt20-saknr.
+    gs_csanpyo-txt20 = gs_txt20-txt20.
+    gs_csanpyo-waers = gs_total-waers.
+
+    CLEAR : lv_s_sum, lv_h_sum.
+
+    IF gs_total-shkzg = 'S'.
+      DO pv_count TIMES.
+        lv_month = sy-index + pv_start. " 1월 pv_start 0 4월 pv_start 3 ...
+        lv_value = 'HSL' && lv_month.
+        ASSIGN COMPONENT lv_value OF STRUCTURE gs_total TO <gv_fs>.
+        IF <gv_fs> IS ASSIGNED.
+          lv_s_sum += <gv_fs>. " 차변 누적 합계
+          UNASSIGN  <gv_fs>.
+        ENDIF.
+      ENDDO.
+      gs_csanpyo-total_s = lv_s_sum.
+
+    ELSEIF gs_total-shkzg = 'H'.
+      DO pv_count TIMES.
+        lv_month = sy-index + pv_start.
+        lv_value = 'HSL' && lv_month.
+        ASSIGN COMPONENT lv_value OF STRUCTURE gs_total TO <gv_fs>.
+        IF <gv_fs> IS ASSIGNED.
+          lv_h_sum += <gv_fs>. " 대변 누적 합계
+          UNASSIGN  <gv_fs>.
+        ENDIF.
+      ENDDO.
+      gs_csanpyo-total_h = lv_h_sum.
+
+    ENDIF.
+
+    COLLECT gs_csanpyo INTO gt_csanpyo.
+    CLEAR gs_csanpyo.
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_csanpyo_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_total_data .
+
+  CLEAR gt_total.
+  SELECT bukrs gjahr saknr shkzg waers
+         hsl01 hsl02 hsl03 hsl04 hsl05 hsl06
+         hsl07 hsl08 hsl09 hsl10 hsl11 hsl12
+    FROM zvfaglflextc102
+    INTO CORRESPONDING FIELDS OF TABLE gt_total
+   WHERE gjahr EQ pa_gjahr
+     AND saknr IN so_saknr.
+
+  IF gt_total IS INITIAL .
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen .
+
+  IF go_base_container IS NOT BOUND.
+
+    CLEAR : gt_left_fcat, gs_left_fcat.
+    PERFORM set_left_field_catalog USING : 'X' 'SAKNR'   'ZC102FIT0002' 'C' ' ',
+                                           ' ' 'TXT20'   'ZC102FIT0002' ' ' ' ',
+                                           ' ' 'TOTAL_S' ' '            ' ' ' ',
+                                           ' ' 'TOTAL_H' ' '            ' ' ' ',
+                                           ' ' 'BALAN'   ' '            ' ' ' ',
+                                           ' ' 'BALDIR'  ' '            'C' ' ',
+                                           ' ' 'WAERS'   'ZC102FIT0010' 'C' ' '.
+
+    PERFORM set_left_layout.
+    PERFORM create_object.
+
+    SET HANDLER : lcl_event_handler=>top_of_page   FOR go_lbottom_alv_grid,
+                  lcl_event_handler=>hotspot_click FOR go_lbottom_alv_grid,
+                  lcl_event_handler=>double_click  FOR go_lbottom_alv_grid.
+
+    CALL METHOD go_lbottom_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_left_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_left_layout
+      CHANGING
+        it_outtab       = gt_csanpyo
+        it_fieldcatalog = gt_left_fcat.
+*        it_sort                       =
+
+    PERFORM register_event.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_left_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_left_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_left_fcat = VALUE #( key       = pv_key
+                          fieldname = pv_field
+                          ref_table = pv_table
+                          just      = pv_just
+                          emphasize = pv_emph ).
+
+
+  CASE pv_field.
+    WHEN 'TOTAL_S'.
+      gs_left_fcat-coltext    = '차변합계'.
+      gs_left_fcat-cfieldname = 'WAERS'.
+      gs_left_fcat-do_sum     = abap_true.
+    WHEN 'TOTAL_H'.
+      gs_left_fcat-coltext    = '대변합계'.
+      gs_left_fcat-cfieldname = 'WAERS'.
+      gs_left_fcat-do_sum     = abap_true.
+    WHEN 'BALAN'.
+      gs_left_fcat-coltext    = '차액'.
+      gs_left_fcat-cfieldname = 'WAERS'.
+    WHEN 'SAKNR'.
+      gs_left_fcat-hotspot    = abap_true.
+    WHEN 'BALDIR'.
+      gs_left_fcat-coltext    = '차액방향'.
+  ENDCASE.
+
+  APPEND gs_left_fcat TO gt_left_fcat.
+  CLEAR gs_left_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form left_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_left_layout .
+
+  gs_left_layout-zebra      = abap_true.
+  gs_left_layout-cwidth_opt = abap_true.
+  gs_left_layout-sel_mode   = 'B'.
+  gs_left_layout-totals_bef = 'X'.
+
+  gs_left_variant-report = sy-repid.
+  gs_left_variant-handle = 'ALV1'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_object .
+
+  CREATE OBJECT go_top_container
+    EXPORTING
+      repid     = sy-cprog
+      dynnr     = sy-dynnr
+      side      = go_top_container->dock_at_top
+      extension = 70.
+
+  CREATE OBJECT go_base_container
+    EXPORTING
+      container_name = 'MAIN_CONT'.
+
+  CREATE OBJECT go_split_cont
+    EXPORTING
+      parent  = go_base_container
+      rows    = 1
+      columns = 2.
+
+  CALL METHOD go_split_cont->get_container
+    EXPORTING
+      row       = 1
+      column    = 1
+    RECEIVING
+      container = go_lbottom_cont.
+
+  CALL METHOD go_split_cont->get_container
+    EXPORTING
+      row       = 1
+      column    = 2
+    RECEIVING
+      container = go_rbottom_cont.
+
+* 계정과목 별 차대합계 그리고 차액 보여주는 ALV
+  CREATE OBJECT go_lbottom_alv_grid
+    EXPORTING
+      i_parent = go_lbottom_cont.
+
+* 그리고 왼쪽 ALV 결과를 오른쪽 그래프로 보여줌
+  CREATE OBJECT go_chart
+    EXPORTING
+      parent = go_rbottom_cont.
+
+* Create TOP-Document
+  CREATE OBJECT go_dyndoc_id
+    EXPORTING
+      style = 'ALV_GRID'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form event_top_of_page
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM event_top_of_page .
+
+  DATA : lr_dd_table TYPE REF TO cl_dd_table_element,
+         col_field   TYPE REF TO cl_dd_area,
+         col_value   TYPE REF TO cl_dd_area.
+
+  DATA : lv_text  TYPE sdydo_text_element,
+         lv_text2 TYPE sdydo_text_element.
+
+  DATA :lt_top_of_page TYPE slis_t_listheader.
+
+  CALL METHOD go_dyndoc_id->add_table
+    EXPORTING
+      no_of_columns = 2
+      border        = '0'
+    IMPORTING
+      table         = lr_dd_table.
+
+*-- Set column
+  CALL METHOD lr_dd_table->add_column
+    IMPORTING
+      column = col_field.
+
+  CALL METHOD lr_dd_table->add_column
+    IMPORTING
+      column = col_value.
+
+*-- 회사코드
+  lv_text = pa_bukrs.
+  PERFORM add_row USING lr_dd_table col_field col_value '회사코드' lv_text.
+
+*-- 회계연도
+*sy-datum(4)
+  lv_text = pa_gjahr && '년'.
+  PERFORM add_row USING lr_dd_table col_field col_value '회계연도' lv_text.
+
+*-- 분기
+  lv_text = so_monat-low.
+  IF so_monat-low IS INITIAL.
+    lv_text = '전체'.
+  ENDIF.
+  PERFORM add_row USING lr_dd_table col_field col_value '분기' lv_text.
+
+  lv_text  = so_saknr-low.
+  lv_text2 = so_saknr-high.
+
+  IF so_saknr-high IS NOT INITIAL.
+    lv_text = '100000'. " 현재 갖고있는 계정과목 번호 제일 낮은 값 기준으로 조회
+    CONCATENATE lv_text ` ~ ` lv_text2 INTO lv_text.
+  ELSEIF so_saknr-low IS INITIAL AND so_saknr-high IS INITIAL.
+    lv_text = '전체'.
+  ENDIF.
+  PERFORM add_row USING lr_dd_table col_field col_value '계정과목' lv_text.
+
+  lv_text  = pa_waers.
+  PERFORM add_row USING lr_dd_table col_field col_value '통화키' lv_text.
+
+  PERFORM set_top_of_page.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form add_row
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> LR_DD_TABLE
+*&      --> COL_FIELD
+*&      --> COL_VALUE
+*&      --> P_
+*&      --> LV_TEXT
+*&---------------------------------------------------------------------*
+FORM add_row  USING pr_dd_table  TYPE REF TO cl_dd_table_element
+                    pv_col_field TYPE REF TO cl_dd_area
+                    pv_col_value TYPE REF TO cl_dd_area
+                    pv_field
+                    pv_text.
+
+  DATA : lv_text TYPE sdydo_text_element.
+
+*-- Field.
+  lv_text = pv_field.
+
+  CALL METHOD pv_col_field->add_text
+    EXPORTING
+      text         = lv_text
+      sap_emphasis = cl_dd_document=>strong
+      sap_color    = cl_dd_document=>list_heading_inv.
+
+  CALL METHOD pv_col_field->add_gap
+    EXPORTING
+      width = 3.
+
+*-- Value.
+  lv_text = pv_text.
+
+  CALL METHOD pv_col_value->add_text
+    EXPORTING
+      text         = lv_text
+      sap_emphasis = cl_dd_document=>heading
+      sap_color    = cl_dd_document=>list_negative_inv.
+
+  CALL METHOD pv_col_value->add_gap
+    EXPORTING
+      width = 3.
+
+  CALL METHOD pr_dd_table->new_row.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_top_of_page
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_top_of_page .
+
+* Creating html control
+  IF go_html_cntrl IS INITIAL.
+    CREATE OBJECT go_html_cntrl
+      EXPORTING
+        parent = go_top_container.
+  ENDIF.
+
+  CALL METHOD go_dyndoc_id->merge_document.
+  go_dyndoc_id->html_control = go_html_cntrl.
+
+* Display document
+  CALL METHOD go_dyndoc_id->display_document
+    EXPORTING
+      reuse_control      = 'X'
+      parent             = go_top_container
+    EXCEPTIONS
+      html_display_error = 1.
+
+  IF sy-subrc NE 0.
+    MESSAGE s001 WITH TEXT-e01 DISPLAY LIKE 'E'.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form register_event
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM register_event .
+
+  CALL METHOD go_dyndoc_id->initialize_document
+    EXPORTING
+      background_color = cl_dd_area=>col_textarea.
+
+  CALL METHOD go_lbottom_alv_grid->list_processing_events
+    EXPORTING
+      i_event_name = 'TOP_OF_PAGE'
+      i_dyndoc_id  = go_dyndoc_id.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form get_saknr_text
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM get_saknr_text .
+
+  CLEAR gt_txt20.
+  SELECT saknr txt20
+    FROM zc102fit0002
+    INTO CORRESPONDING FIELDS OF TABLE gt_txt20.
+
+  IF gt_txt20 IS INITIAL. " 나중에 메세지 바꾸기
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+  SORT gt_txt20 BY saknr ASCENDING.
+
+  CLEAR gs_txt20.
+  READ TABLE gt_txt20 INTO gs_txt20 WITH KEY saknr = so_saknr-high
+                                    BINARY SEARCH.
+  IF gs_txt20 IS INITIAL AND so_saknr-high IS NOT INITIAL.
+    MESSAGE s076 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_chart
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_chart .
+
+  PERFORM set_chart_data.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_chart_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_chart_data .
+
+  CLEAR : go_ixml,
+          go_ixml_sf,
+          go_ixml_docu,
+          go_ixml_ostream,
+          go_ixml_encoding,
+          go_chartdata,
+          go_categories,
+          go_category,
+          go_series,
+          go_point,
+          go_value.
+  CLEAR : gv_xstring.
+
+  go_ixml = cl_ixml=>create(  ).
+  go_ixml_sf = go_ixml->create_stream_factory( ).
+
+  go_ixml_docu = go_ixml->create_document( ).
+
+  go_ixml_encoding = go_ixml->create_encoding(
+                       byte_order    = if_ixml_encoding=>co_little_endian
+                       character_set = 'utf-8' ).
+
+  go_ixml_docu->set_encoding( encoding = go_ixml_encoding ).
+
+*-- Now build a DOM, representing an XML document with chart data
+  go_chartdata = go_ixml_docu->create_simple_element(
+                                        name   = 'ChartData'
+                                        parent = go_ixml_docu ).
+
+*-- Categories (parent)
+  go_categories = go_ixml_docu->create_simple_element(
+                                        name   = 'Categories'
+                                        parent = go_chartdata ).
+
+  PERFORM set_category_value.
+  PERFORM set_chart_value.
+
+  go_chart->set_data( xdata = gv_xstring ).
+  go_chart->render( ).
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_category_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_category_value .
+
+  DATA : lv_value TYPE string.
+
+*-- Categories (children)
+  go_category = go_ixml_docu->create_simple_element(
+                                        name   = 'Category'
+                                        parent = go_categories ).
+  go_category->if_ixml_node~set_value( pa_gjahr && '시산표' ).
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_chart_value
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM  set_chart_value .
+
+  DATA : lv_value TYPE string.
+
+  LOOP AT gt_all_total INTO gs_all_total.
+
+    " 차변합계 Series
+    lv_value = gs_all_total-all_total_s. " 차변합계 값
+
+    go_series = go_ixml_docu->create_simple_element(
+      name = 'Series'
+      parent = go_chartdata ).
+    go_series->set_attribute( name = 'label' value = '차변합계' ).
+
+    " 차변합계의 각 Point 추가
+    go_point = go_ixml_docu->create_simple_element(
+      name = 'Point'
+      parent = go_series ).
+    go_point->set_attribute( name = 'label' value = lv_value ).
+
+    go_value = go_ixml_docu->create_simple_element(
+      name = 'Value'
+      parent = go_point ).
+    go_value->if_ixml_node~set_value( lv_value ).
+
+    " 대변합계 Series
+    lv_value = gs_all_total-all_total_h. " 대변합계 값
+
+    go_series = go_ixml_docu->create_simple_element(
+      name = 'Series'
+      parent = go_chartdata ).
+    go_series->set_attribute( name = 'label' value = '대변합계' ).
+
+    " 대변합계의 각 Point 추가
+    go_point = go_ixml_docu->create_simple_element(
+      name = 'Point'
+      parent = go_series ).
+    go_point->set_attribute( name = 'label' value = lv_value ).
+
+    go_value = go_ixml_docu->create_simple_element(
+      name = 'Value'
+      parent = go_point ).
+    go_value->if_ixml_node~set_value( lv_value ).
+
+    " 차액 Series
+    lv_value = gs_all_total-balan_total. " 차액 값
+
+    go_series = go_ixml_docu->create_simple_element(
+      name = 'Series'
+      parent = go_chartdata ).
+    go_series->set_attribute( name = 'label' value = '차액' ).
+
+    " 차액의 각 Point 추가
+    go_point = go_ixml_docu->create_simple_element(
+      name = 'Point'
+      parent = go_series ).
+    go_point->set_attribute( name = 'label' value = lv_value ).
+
+    go_value = go_ixml_docu->create_simple_element(
+      name = 'Value'
+      parent = go_point ).
+    go_value->if_ixml_node~set_value( lv_value ).
+
+  ENDLOOP.
+
+*-- create ostream (into string variable) and render document into stream
+  go_ixml_ostream = go_ixml_sf->create_ostream_xstring( gv_xstring ).
+  go_ixml_docu->render( go_ixml_ostream ). "here f_xstring is filled
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form sum_s
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_total_shb . " 모든 계정 과목의 차변합과 대변합 그리고 차액
+
+  DATA : lv_s_sum TYPE zvfaglflextc102-hsl01,
+         lv_h_sum TYPE zvfaglflextc102-hsl01.
+
+  LOOP AT gt_csanpyo INTO gs_csanpyo.
+
+    gs_all_total-all_total_s += gs_csanpyo-total_s.
+    gs_all_total-all_total_h += gs_csanpyo-total_h.
+
+  ENDLOOP.
+
+  gs_all_total-balan_total " 차변 합계 - 대변합계
+  = gs_all_total-all_total_s - gs_all_total-all_total_h.
+
+  INSERT gs_all_total INTO TABLE gt_all_total.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_balan
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_balan .
+
+  LOOP AT gt_csanpyo INTO gs_csanpyo.
+
+* 대변 값이 클 상황을 고려해 차액을 절대값으로 처리
+    gs_csanpyo-balan = abs( gs_csanpyo-total_s - gs_csanpyo-total_h ).
+
+    IF gs_csanpyo-total_s > gs_csanpyo-total_h.
+      gs_csanpyo-baldir = '차변'.
+    ELSEIF gs_csanpyo-total_s < gs_csanpyo-total_h.
+      gs_csanpyo-baldir = '대변'.
+    ELSE.
+      gs_csanpyo-baldir = ' '. " 차변과 대변 금액이 같을 때 공백처리
+    ENDIF.
+
+    MODIFY gt_csanpyo FROM gs_csanpyo INDEX sy-tabix
+                                      TRANSPORTING balan baldir.
+
+  ENDLOOP.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_hotspot_click
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM handle_hotspot_click USING pv_row_id pv_column_id.
+
+* 핫스팟 클릭을 통해 계정과목이 사용된 전표내용을 보여줌
+  DATA : lv_tabix TYPE sy-tabix.
+  DATA : lv_type TYPE dd01v-datatype.
+
+  CALL FUNCTION 'NUMERIC_CHECK'
+    EXPORTING
+      string_in = pv_row_id
+    IMPORTING
+      htype     = lv_type.
+
+  CHECK lv_type = 'NUMC'.
+
+  CLEAR : gs_csanpyo.
+  READ TABLE gt_csanpyo INTO gs_csanpyo INDEX pv_row_id.
+
+  CLEAR : gt_jeonpyo.
+  SELECT a~bukrs a~gjahr a~belnr blart bldat budat bktxt a~waers saknr
+    FROM zc102fit0009 AS a INNER JOIN zc102fit0010 AS b
+      ON a~bukrs EQ b~bukrs
+     AND a~gjahr EQ b~gjahr
+     AND a~belnr EQ b~belnr
+    INTO CORRESPONDING FIELDS OF TABLE gt_jeonpyo
+   WHERE a~gjahr EQ pa_gjahr
+     AND saknr   EQ gs_csanpyo-saknr
+     AND a~belnr LIKE '00100%'.
+
+  IF gt_jeonpyo IS INITIAL.
+    MESSAGE s004 DISPLAY LIKE 'E'.
+    EXIT.
+  ENDIF.
+
+* 차변 금액과 대변 금액을 따로 보여주기 위한 SELECT
+  SELECT gjahr belnr shkzg wrbtr
+    FROM zc102fit0010
+    INTO CORRESPONDING FIELDS OF TABLE gt_sh_wrbtr
+   WHERE gjahr EQ pa_gjahr.
+
+  LOOP AT gt_sh_wrbtr INTO gs_sh_wrbtr.
+
+    lv_tabix = sy-tabix.
+
+    IF gs_sh_wrbtr-shkzg = 'S'.
+      gs_jeonpyo-s_amount += gs_sh_wrbtr-wrbtr.
+    ELSE.
+      gs_jeonpyo-h_amount += gs_sh_wrbtr-wrbtr.
+    ENDIF.
+
+    MODIFY gt_jeonpyo FROM gs_jeonpyo INDEX lv_tabix
+                                      TRANSPORTING s_amount
+                                                   h_amount.
+
+    CLEAR : gs_jeonpyo.
+  ENDLOOP.
+
+  SORT gt_jeonpyo BY belnr ASCENDING.
+
+  CALL SCREEN 110 STARTING AT 10 15
+                    ENDING AT 120 40.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form display_screen_110
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM display_screen_110 .
+
+  IF go_pop_container IS NOT BOUND.
+
+    CLEAR : gt_pop_fcat, gs_pop_fcat.
+    PERFORM set_pop_field_catalog USING : 'X' 'BUKRS' 'ZC102FIT0009' 'C' ' ',
+                                          'X' 'GJAHR' 'ZC102FIT0009' 'C' ' ',
+                                          'X' 'BELNR' 'ZC102FIT0009' 'C' ' ',
+                                          ' ' 'BLART' 'ZC102FIT0009' 'C' 'X',
+                                          ' ' 'BLDAT' 'ZC102FIT0009' 'C' ' ',
+                                          ' ' 'BUDAT' 'ZC102FIT0009' 'C' ' ',
+                                          ' ' 'S_AMOUNT' ' '         ' ' ' ',
+                                          ' ' 'H_AMOUNT' ' '         ' ' ' ',
+                                          ' ' 'BKTXT' 'ZC102FIT0009' ' ' 'X',
+                                          ' ' 'WAERS' 'ZC102FIT0009' 'C' ' '.
+
+    PERFORM set_pop_layout.
+    PERFORM create_pop_object.
+
+    CALL METHOD go_pop_alv_grid->set_table_for_first_display
+      EXPORTING
+        is_variant      = gs_pop_variant
+        i_save          = 'A'
+        i_default       = 'X'
+        is_layout       = gs_pop_layout
+      CHANGING
+        it_outtab       = gt_jeonpyo
+        it_fieldcatalog = gt_pop_fcat.
+
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_pop_field_catalog
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM set_pop_field_catalog  USING pv_key pv_field pv_table pv_just pv_emph.
+
+  gs_pop_fcat-key       = pv_key.
+  gs_pop_fcat-fieldname = pv_field.
+  gs_pop_fcat-ref_table = pv_table.
+  gs_pop_fcat-just      = pv_just.
+  gs_pop_fcat-emphasize = pv_emph.
+
+  CASE pv_field.
+    WHEN 'S_AMOUNT'.
+      gs_pop_fcat-coltext    = '차변금액'.
+      gs_pop_fcat-cfieldname = 'WAERS'.
+      gs_pop_fcat-do_sum     = abap_true.
+    WHEN 'H_AMOUNT'.
+      gs_pop_fcat-coltext    = '대변금액'.
+      gs_pop_fcat-cfieldname = 'WAERS'.
+      gs_pop_fcat-do_sum     = abap_true.
+  ENDCASE.
+
+  APPEND gs_pop_fcat TO gt_pop_fcat.
+  CLEAR gs_pop_fcat.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_pop_layout
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_pop_layout .
+
+  gs_pop_layout-zebra      = abap_true.
+  gs_pop_layout-cwidth_opt = abap_true.
+  gs_pop_layout-sel_mode   = ' '.
+  gs_pop_layout-totals_bef = 'X'.
+
+  gs_pop_variant-report = sy-repid.
+  gs_pop_variant-handle = 'ALV2'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form create_pop_object
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM create_pop_object .
+
+  CREATE OBJECT go_pop_container
+    EXPORTING
+      container_name = 'POP_CONT'.
+
+
+  CREATE OBJECT go_pop_alv_grid
+    EXPORTING
+      i_parent = go_pop_container.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form set_check_data
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM set_check_data .
+
+* 회사 설립일 2023년 그리고 현재년도 기준으로 이하 이상 값을 막음
+  IF pa_gjahr > sy-datum(4) OR pa_gjahr < '2023' .
+    MESSAGE s075 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+* 분기는 1 2 3 4 가 존재하기에 다른 값을 막음
+  IF so_monat-low > '4' OR
+     so_monat-low = '0'.
+    MESSAGE s074 DISPLAY LIKE 'E'.
+    STOP.
+  ENDIF.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form f4_monat
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM f4_monat.
+*-- Screen 110 DATA 추출
+  DATA : lt_return LIKE ddshretval OCCURS 0 WITH HEADER LINE.
+*  DATA : lv_dynfield TYPE help_info-dynprofld.
+
+  DATA : BEGIN OF dynpfields OCCURS 0.
+           INCLUDE TYPE dynpread.
+  DATA : END OF dynpfields.
+
+  DATA : BEGIN OF gs_bungi,
+           bungi TYPE bkpf-monat,
+         END OF gs_bungi,
+         gt_bungi LIKE TABLE OF gs_bungi.
+
+  CLEAR gs_bungi.
+  gs_bungi-bungi = '1'.
+  APPEND gs_bungi TO gt_bungi.
+
+  CLEAR gs_bungi.
+  gs_bungi-bungi = '2'.
+  APPEND gs_bungi TO gt_bungi.
+
+  CLEAR gs_bungi.
+  gs_bungi-bungi = '3'.
+  APPEND gs_bungi TO gt_bungi.
+
+  CLEAR gs_bungi.
+  gs_bungi-bungi = '4'.
+  APPEND gs_bungi TO gt_bungi.
+
+*  lv_dynfield = 'BUNGI'.
+
+*-- 소스 코드 구현 위한 Function 호출 (Screen 110 Data 추출)
+*  CALL FUNCTION 'DYNP_VALUES_READ'
+*    EXPORTING
+*      dyname     = sy-repid
+*      dynumb     = sy-dynnr
+*      request    = 'A'
+*    TABLES
+*      dynpfields = dynpfields
+*    EXCEPTIONS
+*      OTHERS     = 01.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield     = 'BUNGI' " ALV 에 박히는 값
+      dynpprog     = sy-cprog
+      dynpnr       = sy-dynnr
+      dynprofield  = 'SO_MONAT-LOW'
+      window_title = '분기'
+      value_org    = 'S'
+    TABLES
+      value_tab    = gt_bungi
+      return_tab   = lt_return.
+
+  READ TABLE dynpfields WITH KEY fieldname = lt_return-retfield.
+  IF sy-subrc = 0.
+    dynpfields-fieldvalue = lt_return-fieldval.
+    MODIFY dynpfields INDEX sy-tabix.
+  ENDIF.
+
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form handle_double_click
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> E_ROW
+*&      --> E_COLUMN
+*&---------------------------------------------------------------------*
+FORM handle_double_click  USING  pv_row
+                                 pv_column.
+
+  DATA: lv_total_s TYPE zc102_fi_faglflext-hsl01,
+        lv_total_h TYPE zc102_fi_faglflext-hsl01.
+
+  DATA : lv_type TYPE dd01v-datatype.
+
+  CALL FUNCTION 'NUMERIC_CHECK'
+    EXPORTING
+      string_in = pv_row
+    IMPORTING
+      htype     = lv_type.
+
+  CHECK lv_type = 'NUMC'.
+
+  READ TABLE gt_csanpyo INTO gs_csanpyo INDEX pv_row.
+  lv_total_s = gs_csanpyo-total_s.
+  lv_total_h = gs_csanpyo-total_h.
+
+  CLEAR gt_all_total.
+
+  gs_all_total-all_total_s = gs_csanpyo-total_s.
+  gs_all_total-all_total_h = gs_csanpyo-total_h.
+  gs_all_total-balan_total = lv_total_s - lv_total_h.
+
+  APPEND gs_all_total TO gt_all_total.
+
+  PERFORM display_chart.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form inco_page
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM inco_page .
+
+  CALL TRANSACTION 'ZC102FIR0023'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form bala_page
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM bala_page .
+
+  CALL TRANSACTION 'ZC102FIR0016'.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form f4_saknr
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*&      --> P_
+*&---------------------------------------------------------------------*
+FORM f4_saknr.
+
+  DATA : lt_return LIKE TABLE OF ddshretval WITH HEADER LINE.
+  DATA : lv_dynfield TYPE help_info-dynprofld.
+
+  DATA : BEGIN OF gs_saknr OCCURS 0,
+           saknr TYPE zc102fit0002-saknr,
+           txt20 TYPE zc102fit0002-txt20,
+         END OF gs_saknr,
+         gt_saknr LIKE TABLE OF gs_saknr.
+
+  SELECT saknr txt20
+    INTO CORRESPONDING FIELDS OF TABLE gt_saknr
+    FROM zc102fit0002
+   WHERE spras EQ sy-langu
+     AND saknr NOT LIKE '6%' AND saknr NOT LIKE '7%'.
+
+  lv_dynfield = 'SAKNR'.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'SAKNR'           "선택화면에서 선택한 필드명
+      dynpprog        = sy-cprog
+      dynpnr          = sy-dynnr
+      dynprofield     = lv_dynfield    "선택한 필드를 받을 화면상의 개체 이름
+      window_title    = '계정과목'    "팝업 제목"
+      value_org       = 'S'                 "Return종류 C [Cell], S[Structure]
+    TABLES
+      value_tab       = gt_saknr            "select때 사용한 인터널 테입블
+      return_tab      = lt_return        "선택한 값이 리턴될 인터널 테이블
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+ENDFORM.
+*&---------------------------------------------------------------------*
+*& Form f4_saknr2
+*&---------------------------------------------------------------------*
+*& text
+*&---------------------------------------------------------------------*
+*& -->  p1        text
+*& <--  p2        text
+*&---------------------------------------------------------------------*
+FORM f4_saknr2 .
+
+  DATA : lt_return LIKE TABLE OF ddshretval WITH HEADER LINE.
+  DATA : lv_dynfield TYPE help_info-dynprofld.
+
+  DATA : BEGIN OF gs_saknr OCCURS 0,
+           saknr TYPE zc102fit0002-saknr,
+           txt20 TYPE zc102fit0002-txt20,
+         END OF gs_saknr,
+         gt_saknr LIKE TABLE OF gs_saknr.
+
+  SELECT saknr txt20
+    INTO CORRESPONDING FIELDS OF TABLE gt_saknr
+    FROM zc102fit0002
+   WHERE spras EQ sy-langu
+     AND saknr NOT LIKE '6%' AND saknr NOT LIKE '7%'.
+
+  lv_dynfield = 'SAKNR'.
+
+  CALL FUNCTION 'F4IF_INT_TABLE_VALUE_REQUEST'
+    EXPORTING
+      retfield        = 'SAKNR'           "선택화면에서 선택한 필드명
+      dynpprog        = sy-cprog
+      dynpnr          = sy-dynnr
+      dynprofield     = lv_dynfield    "선택한 필드를 받을 화면상의 개체 이름
+      window_title    = '계정과목'    "팝업 제목"
+      value_org       = 'S'                 "Return종류 C [Cell], S[Structure]
+    TABLES
+      value_tab       = gt_saknr            "select때 사용한 인터널 테입블
+      return_tab      = lt_return        "선택한 값이 리턴될 인터널 테이블
+    EXCEPTIONS
+      parameter_error = 1
+      no_values_found = 2
+      OTHERS          = 3.
+
+ENDFORM.
+
+----------------------------------------------------------------------------------
+Extracted by Direct Download Enterprise version 1.3.1 - E.G.Mellodew. 1998-2005 UK. Sap Release 758
